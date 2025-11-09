@@ -1,0 +1,51 @@
+timeunit 1ns;
+timeprecision 1ps;
+
+import riscv_defines::*;
+
+module instruction_memory(
+    input   logic   start, clk,
+    input   logic   [31:0] pc,
+    input   logic   instmisalign,
+    input   logic   flush_d,
+    input   logic   stall_d,
+    output  logic   imemfault,
+    output  inst_t  inst
+);
+
+    logic [29:0] pc_word;
+    assign pc_word = pc[31:2];
+
+    (* ram_style="block" *) logic [31:0] inst_mem [0:IMEM_WORD-1];
+
+    initial begin
+        $readmemh("./program.hex", inst_mem);
+    end
+    
+    always_ff@(posedge clk) begin
+        if (!start) begin
+            imemfault <= 0;
+            inst <= INST_NOP;
+        end
+        else begin
+            if (instmisalign || flush_d) begin
+                imemfault <= 0;
+                inst <= INST_NOP;
+            end
+            else if (stall_d) begin
+                imemfault <= 0;
+                inst <= inst;
+            end
+            else begin
+                if (pc_word >= IMEM_WORD) begin // Word Aligned
+                    imemfault <= 1;
+                    inst <= INST_NOP;
+                end
+                else begin
+                    imemfault <= 0;
+                    inst <= inst_mem[pc_word];
+                end
+            end
+        end
+    end
+endmodule
