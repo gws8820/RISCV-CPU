@@ -70,9 +70,9 @@ A 5-stage pipelined RISC-V processor core implementation in SystemVerilog, desig
 ### Hazard Penalties
 | Hazard Type | Penalty (Cycles) | Detection Stage | Notes |
 |-------------|------------------|-----------------|-------|
-| **Data Hazard (RAW)** | 0 | ID/EX/MEM | Resolved by forwarding from EX, MEM, WB stages |
+| **Data Hazard (RAW)** | 0 | EX | Resolved by forwarding from MEM/WB stages |
 | **Load-Use Hazard** | 1 | ID | Pipeline stall inserted, then forwarding |
-| **Store-Data Hazard** | 0 | MEM | Resolved by store-data forwarding |
+| **Store-Data Hazard** | 0 | MEM | Resolved by forwarding from WB stages |
 | **Branch Misprediction** | 2 | EX | Flush IF and ID stages, redirect PC |
 | **Jump (JAL/JALR)** | 2 | EX | Unconditional redirect, flush IF and ID |
 
