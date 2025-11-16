@@ -1,3 +1,5 @@
+localparam INST_NOP = 32'h00000013; // ADDI x0, x0, 0
+
 typedef enum logic [6:0] {
     OP_OP           = 7'b01_100_11,
     OP_OPIMM        = 7'b00_100_11,

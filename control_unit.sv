@@ -21,9 +21,11 @@ module control_unit (
 );
     
     aluop_t aluop;
-    logic is_rtype;
+    logic is_rtype, is_alt;
     
-    assign funct3 = inst.i.funct3;
+    logic [6:0] funct7;
+    assign funct3 = inst.r.funct3;
+    assign funct7 = inst.r.funct7;
     
     logic illegal_op, illegal_csr;
     assign instillegal = illegal_op || illegal_csr;
@@ -39,6 +41,7 @@ module control_unit (
     main_decoder main_decoder (
         .opcode     (inst.i.opcode),
         .funct3     (funct3),
+        .funct7     (funct7),
         .imm        (inst.i.imm),
         .nextpc_mode(nextpc_mode),
         .cflow_mode (cflow_mode),
@@ -51,14 +54,15 @@ module control_unit (
         .resultsrc  (resultsrc),
         .regwrite   (regwrite),
         .is_rtype   (is_rtype),
+        .is_alt     (is_alt),
         .illegal_op (illegal_op)
     );
     
     alu_decoder alu_decoder (
         .aluop      (aluop),
         .is_rtype   (is_rtype),
+        .is_alt     (is_alt),
         .funct3     (funct3),
-        .funct7_5   (inst.r.funct7[5]),
         .alucontrol (alucontrol)
     );
     

@@ -7,6 +7,7 @@ A 5-stage pipelined RISC-V processor core implementation in SystemVerilog, desig
 ### ISA Support
 - **Base ISA**: RV32I (RISC-V 32-bit Integer Base Instruction Set)
 - **Extensions**:
+  - **M**: Integer Multiplication and Division
   - **Zicsr**: Control and Status Register (CSR) Instructions
   - **Zifencei**: Instruction-Fetch Fence (FENCE.I)
 
@@ -94,6 +95,10 @@ A 5-stage pipelined RISC-V processor core implementation in SystemVerilog, desig
 - **Jump**: JAL, JALR
 - **Upper Immediate**: LUI, AUIPC
 - **System**: ECALL, EBREAK, MRET
+
+### M Extension (Multiply/Divide)
+- **Multiply**: MUL, MULH, MULHSU, MULHU
+- **Divide**: DIV, DIVU, REM, REMU
 
 ### Zicsr Extension
 - CSRRW, CSRRS, CSRRC

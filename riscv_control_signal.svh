@@ -1,3 +1,9 @@
+localparam FUNCT3_FENCEI    = 3'b001;
+
+localparam FUNCT7_STD       = 7'b0000000;
+localparam FUNCT7_MUL       = 7'b0000001;
+localparam FUNCT7_ALT       = 7'b0100000;
+
 // Branch Unit
 typedef enum logic [1:0] {
     PC_REDIR,
@@ -81,12 +87,13 @@ typedef enum logic [0:0] {
 } alusrcb_t;
 
 // Internal Signal of Control Unit
-typedef enum logic [0:0] {
+typedef enum logic [1:0] {
     ALUOP_ADD,
+    ALUOP_MUL,
     ALUOP_ARITH
 } aluop_t;
 
-typedef enum logic [3:0] {
+typedef enum logic [4:0] {
     ALU_ADD,
     ALU_SUB,
     ALU_SLT,
@@ -96,7 +103,15 @@ typedef enum logic [3:0] {
     ALU_AND,
     ALU_SLL,
     ALU_SRL,
-    ALU_SRA
+    ALU_SRA,
+    ALU_MUL,
+    ALU_MULH,
+    ALU_MULHSU,
+    ALU_MULHU,
+    ALU_DIV,
+    ALU_DIVU,
+    ALU_REM,
+    ALU_REMU
 } alucontrol_t;
 
 typedef enum logic [1:0] {
