@@ -22,13 +22,7 @@ typedef struct packed {
     logic           imemfault;
     logic           datamisalign;
     logic           dmemfault;
-} trap_req_t;
-
-typedef struct packed {
-    logic           redirflag;
-    logic [31:0]    rediraddr;
-    logic           flushflag;
-} trap_res_t;
+} trap_flag_t;
 
 typedef struct packed {
     logic           valid;
@@ -36,4 +30,10 @@ typedef struct packed {
     trap_cause_t    cause;
     logic [31:0]    pc;
     logic [31:0]    tval;
-} trap_pkt_t;
+} trap_req_t;
+
+typedef struct packed {
+    logic           redirflag;
+    logic [31:0]    rediraddr;
+    logic           flushflag;
+} trap_res_t;

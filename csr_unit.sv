@@ -5,80 +5,79 @@ import riscv_defines::*;
 
 module csr_unit (
     input   logic           start, clk,
-    input   csr_pkt_t       csr_pkt,
-    input   logic [31:0]    csr_wdata,
-    input   trap_pkt_t      trap_pkt,
-    output  logic [31:0]    csr_result,
-    output  logic [31:0]    mtvec_o, mepc_o
+    output  logic [31:0]    mtvec_o, mepc_o,
+
+    csr_interface.completer csr_bus
 );
 
-    csr_t csr;
-    logic [31:0] wmask, wdata, eff_data;
+    csr_t                   csr;
+    logic [31:0]            rdata, wmask, wdata, eff_data;
     
     always_comb begin
-        mtvec_o = csr.mtvec;
-        mepc_o  = csr.mepc;
+        csr_bus.rdata       = rdata;
+        mtvec_o             = csr.mtvec;
+        mepc_o              = csr.mepc;
     end
     
     always_comb begin
-        if (csr_pkt.valid) begin
-            unique case(csr_pkt.csr_target)
+        if (csr_bus.pkt.valid) begin
+            unique case(csr_bus.pkt.csr_target)
                 CSR_ADDR_MSTATUS:   begin
-                    csr_result = csr.mstatus;
+                    rdata      = csr.mstatus;
                     wmask      = CSR_MASK_MSTATUS;
                 end
                 CSR_ADDR_MTVEC:     begin
-                    csr_result = csr.mtvec;
+                    rdata      = csr.mtvec;
                     wmask      = CSR_MASK_MTVEC;
                 end
                 CSR_ADDR_MIE:       begin
-                    csr_result = csr.mie;
+                    rdata      = csr.mie;
                     wmask      = CSR_MASK_MIE;
                 end
                 CSR_ADDR_MIP:       begin
-                    csr_result = csr.mip;
+                    rdata      = csr.mip;
                     wmask      = CSR_MASK_MIP;
                 end
                 CSR_ADDR_MEPC:      begin
-                    csr_result = csr.mepc;
+                    rdata      = csr.mepc;
                     wmask      = CSR_MASK_MEPC;
                 end
                 CSR_ADDR_MCAUSE:    begin
-                    csr_result = csr.mcause;
+                    rdata      = csr.mcause;
                     wmask      = CSR_MASK_MCAUSE;
                 end
                 CSR_ADDR_MTVAL:     begin
-                    csr_result = csr.mtval;
+                    rdata      = csr.mtval;
                     wmask      = CSR_MASK_MTVAL;
                 end
                 CSR_ADDR_MHARTID:   begin
-                    csr_result = csr.mhartid;
+                    rdata      = csr.mhartid;
                     wmask      = CSR_MASK_MHARTID;
                 end
                 CSR_ADDR_MSCRATCH:  begin
-                    csr_result = csr.mscratch;
+                    rdata      = csr.mscratch;
                     wmask      = CSR_MASK_MSCRATCH;
                 end
                 default:            begin
-                    csr_result = 32'b0;
+                    rdata      = 32'b0;
                     wmask      = 32'b0;
                 end
             endcase
             
-            unique case (csr_pkt.csr_mode)
+            unique case (csr_bus.pkt.csr_mode)
                 CSR_RW,
-                CSR_RWI:    wdata = csr_wdata;
+                CSR_RWI:    wdata = csr_bus.wdata;
                 CSR_RS,
-                CSR_RSI:    wdata = csr_result | csr_wdata; // Set bits
+                CSR_RSI:    wdata = rdata | csr_bus.wdata; // Set bits
                 CSR_RC,
-                CSR_RCI:    wdata = csr_result & ~csr_wdata; // Clear bits
-                default:    wdata = csr_result;
+                CSR_RCI:    wdata = rdata & ~csr_bus.wdata; // Clear bits
+                default:    wdata = rdata;
             endcase
             
-            eff_data = (csr_result & ~wmask) | (wdata & wmask);
+            eff_data = (rdata  & ~wmask) | (wdata & wmask);
          end
          else begin
-            csr_result  = 32'b0;
+            rdata       = 32'b0;
             wmask       = 32'b0;
             wdata       = 32'b0;
             eff_data    = 32'b0;
@@ -99,15 +98,15 @@ module csr_unit (
         end
         
         else begin
-            if (trap_pkt.mode != TRAP_NONE) begin // Trap Handling
-                unique case (trap_pkt.mode)
+            if (csr_bus.trap.mode != TRAP_NONE) begin // Trap Handling
+                unique case (csr_bus.trap.mode)
                     TRAP_ENTER: begin
                         csr.mstatus[MPIE_BIT] <= csr.mstatus[MIE_BIT];    // Push
                         csr.mstatus[MIE_BIT] <= 0;
                         
-                        csr.mcause  <= {1'b0, trap_pkt.cause[30:0]};   // Interrupt
-                        csr.mepc    <= {trap_pkt.pc[31:2], 2'b00};     // PC Alignment
-                        csr.mtval   <= trap_pkt.tval;
+                        csr.mcause  <= {1'b0, csr_bus.trap.cause[30:0]};   // Interrupt
+                        csr.mepc    <= {csr_bus.trap.pc[31:2], 2'b00};     // PC Alignment
+                        csr.mtval   <= csr_bus.trap.tval;
                     end
                     TRAP_RETURN: begin
                         csr.mstatus[MIE_BIT] <= csr.mstatus[MPIE_BIT];    // Pop
@@ -117,8 +116,8 @@ module csr_unit (
                 endcase
             end
             
-            else if (csr_pkt.valid) begin // CSR
-                unique case (csr_pkt.csr_target)
+            else if (csr_bus.pkt.valid) begin // CSR
+                unique case (csr_bus.pkt.csr_target)
                     CSR_ADDR_MSTATUS:   csr.mstatus  <= eff_data;
                     CSR_ADDR_MTVEC:     csr.mtvec    <= eff_data;
                     CSR_ADDR_MIE:       csr.mie      <= eff_data;
