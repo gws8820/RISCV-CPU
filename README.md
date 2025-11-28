@@ -15,10 +15,13 @@ A 5-stage pipelined RISC-V processor core implementation in SystemVerilog, desig
 ![CPU Architecture Diagram](architecture.png)
 
 - **Pipeline**: 5-stage (Fetch, Decode, Execute, Memory, Writeback)
+- **Branch Resolution**: Early branch resolution in ID stage
+  - Dedicated PCJump generator in ID stage (supports JAL, JALR, Branch)
+  - PCSrc MUX in IF stage selects between PC+4, Jump target, and Trap redirect
 - **Hazard Handling**:
-  - Data forwarding for RAW (Read-After-Write) hazards from EX, MEM, and WB stages
-  - Store-data forwarding to resolve memory data hazards
-  - Load-use hazard detection with 1-cycle pipeline stall
+  - Data forwarding for RAW hazards from EX, MEM, and WB stages to ID and EX
+  - Store-data forwarding to resolve memory data hazards (MEM/WB)
+  - Load-use hazard detection with 1 to 2 cycle pipeline stall
   - Branch misprediction recovery with pipeline flush
 - **Trap/Exception Support**:
   - ECALL, EBREAK, MRET
@@ -71,11 +74,12 @@ A 5-stage pipelined RISC-V processor core implementation in SystemVerilog, desig
 ### Hazard Penalties
 | Hazard Type | Penalty (Cycles) | Detection Stage | Notes |
 |-------------|------------------|-----------------|-------|
-| **Data Hazard (RAW)** | 0 | EX | Resolved by forwarding from MEM/WB stages |
-| **Load-Use Hazard** | 1 | ID | Pipeline stall inserted, then forwarding |
-| **Store-Data Hazard** | 0 | MEM | Resolved by forwarding from WB stages |
-| **Branch Misprediction** | 2 | EX | Flush IF and ID stages, redirect PC |
-| **Jump (JAL/JALR)** | 2 | EX | Unconditional redirect, flush IF and ID |
+| **Data Hazard (RAW)** | 0 | ID/EX | Resolved by forwarding from EX/MEM/WB stages |
+| **Load-Use Hazard (Basic)** | 1 | ID | Detect on ID → use in EX (next cycle) |
+| **Load-Use Hazard (Branch)** | 2 | ID | Detect on ID → use in ID (same cycle) |
+| **Store-Data Hazard** | 0 | MEM | Resolved by forwarding from WB stage |
+| **Branch Misprediction** | 1 | ID | Flush IF stage, redirect PC |
+| **Jump (JAL/JALR)** | 1 | ID | Unconditional redirect, flush IF stage |
 
 ### Trap/Exception Penalties
 | Trap/Flush Type | Penalty (Cycles) | Processing Stage | Notes |
