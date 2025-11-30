@@ -5,7 +5,7 @@ import riscv_defines::*;
 
 module load_use_resolver (
     input   memaccess_t     memaccess_e, memaccess_m,
-    input   nextpc_mode_t   nextpc_mode,
+    input   cflow_mode_t    cflow_mode,
     input   logic [4:0]     rd_e, rd_m,
     input   logic [4:0]     rs1_d, rs2_d,
     output  logic           flag,
@@ -45,7 +45,7 @@ module load_use_resolver (
         
         if (
             memaccess_m == MEM_READ &&
-            (nextpc_mode == NEXTPC_BRANCH || nextpc_mode == NEXTPC_JALR) &&
+            (cflow_mode == CFLOW_BRANCH || cflow_mode == CFLOW_JALR) &&
             rd_m != 0 &&
             (rd_m == rs1_d || rd_m == rs2_d)
         ) begin

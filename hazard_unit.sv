@@ -7,14 +7,13 @@ module hazard_unit (
     input   logic                   start,
     hazard_interface.completer      hazard_bus
 );
-    logic stall_d, flush_d_sd, flush_e_lu;
+    logic flush_d_sd, flush_e_lu;
     
     always_comb begin
         if (!start) begin
             hazard_bus.res = '0;
         end
         else begin
-            hazard_bus.res.stall_d  = stall_d;
             hazard_bus.res.flush_d  = hazard_bus.req.flushflag || flush_d_sd;
             hazard_bus.res.flush_e  = hazard_bus.req.flushflag || flush_e_lu;
             hazard_bus.res.flush_m  = hazard_bus.req.flushflag;
@@ -43,14 +42,14 @@ module hazard_unit (
     load_use_resolver load_use_resolver(
         .memaccess_e                (hazard_bus.req.memaccess_e),
         .memaccess_m                (hazard_bus.req.memaccess_m),
-        .nextpc_mode                (hazard_bus.req.nextpc_mode),
+        .cflow_mode                 (hazard_bus.req.cflow_mode),
         .rd_e                       (hazard_bus.req.rd_e),
         .rd_m                       (hazard_bus.req.rd_m),
         .rs1_d                      (hazard_bus.req.rs1_d),
         .rs2_d                      (hazard_bus.req.rs2_d),
         .flag                       (hazard_bus.res.hazard_cause.load_use),
         .stall_f                    (hazard_bus.res.stall_f),
-        .stall_d                    (stall_d),
+        .stall_d                    (hazard_bus.res.stall_d),
         .flush_e                    (flush_e_lu)
     );
     
@@ -64,8 +63,7 @@ module hazard_unit (
     );
     
     branch_mispredict_resolver branch_mispredict_resolver(
-        .pcsrc                      (hazard_bus.req.pcsrc),
-        .stall_d                    (stall_d),
+        .mispredict                 (hazard_bus.req.mispredict),
         .flag                       (hazard_bus.res.hazard_cause.branch_mispredict),
         .flush_d                    (flush_d_sd)
     );

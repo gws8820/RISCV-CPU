@@ -5,8 +5,8 @@ import riscv_defines::*;
 
 module control_unit (
     input   inst_t          inst,
-    output  nextpc_mode_t   nextpc_mode,
     output  cflow_mode_t    cflow_mode,
+    output  sysop_mode_t    sysop_mode,
     output  funct3_t        funct3,
     output  csr_req_t       csr_req,
     output  logic           fencei,
@@ -43,8 +43,8 @@ module control_unit (
         .funct3     (funct3),
         .funct7     (funct7),
         .imm        (inst.i.imm),
-        .nextpc_mode(nextpc_mode),
         .cflow_mode (cflow_mode),
+        .sysop_mode (sysop_mode),
         .fencei     (fencei),
         .immsrc     (immsrc),
         .alusrc_a   (alusrc_a),
@@ -69,7 +69,7 @@ module control_unit (
     csr_decoder csr_decoder (
         .opcode     (inst.i.opcode),
         .wtarget    (inst.i.rs1),
-        .csr_mode   (funct3),
+        .csr_mode   (funct3.csr_mode),
         .csr_target (inst.i.imm),
         .csr_req    (csr_req_reg),
         .illegal_csr(illegal_csr)

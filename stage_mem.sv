@@ -100,7 +100,7 @@ module stage_mem (
         .addr                       (aluresult_m),
         .data                       (store_data),
         .memaccess                  (kill_m ? MEM_DISABLED : control_signal_m.memaccess), // PREVENT MEMORY ACCESS IF TRAP OCCURRED
-        .mask_mode                  (control_signal_m.funct3),
+        .mask_mode                  (control_signal_m.funct3.mask_mode),
         .rdata_ext                  (memresult_m),
         .dmemfault                  (trap_flag.dmemfault)
     );

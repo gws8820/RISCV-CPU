@@ -4,26 +4,19 @@ localparam FUNCT7_STD       = 7'b0000000;
 localparam FUNCT7_MUL       = 7'b0000001;
 localparam FUNCT7_ALT       = 7'b0100000;
 
-// Branch Unit
 typedef enum logic [1:0] {
-    PC_REDIR,
-    PC_PLUS4,
-    PC_JUMP
-} pcsrc_t;
-
-typedef enum logic [1:0] {
-    NEXTPC_PLUS4,
-    NEXTPC_BRANCH,
-    NEXTPC_JAL,
-    NEXTPC_JALR
-} nextpc_mode_t;
-
-typedef enum logic [1:0] {
-    CFLOW_NORMAL,
-    CFLOW_ECALL,
-    CFLOW_EBREAK,
-    CFLOW_MRET
+    CFLOW_PLUS4,
+    CFLOW_BRANCH,
+    CFLOW_JAL,
+    CFLOW_JALR
 } cflow_mode_t;
+
+typedef enum logic [1:0] {
+    SYSOP_NORMAL,
+    SYSOP_ECALL,
+    SYSOP_EBREAK,
+    SYSOP_MRET
+} sysop_mode_t;
 
 typedef enum logic [2:0] {
     BRANCH_BEQ      = 3'b000,
@@ -127,8 +120,8 @@ typedef enum logic [1:0] {
 } resultsrc_t;
 
 typedef struct packed {
-    nextpc_mode_t   nextpc_mode;
     cflow_mode_t    cflow_mode;
+    sysop_mode_t    sysop_mode;
     funct3_t        funct3;
     csr_req_t       csr_req;
     logic           fencei;

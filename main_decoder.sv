@@ -8,8 +8,8 @@ module main_decoder(
     input   logic [2:0]     funct3,
     input   logic [6:0]     funct7,
     input   logic [11:0]    imm,
-    output  nextpc_mode_t   nextpc_mode,
     output  cflow_mode_t    cflow_mode,
+    output  sysop_mode_t    sysop_mode,
     output  logic           fencei,
     output  immsrc_t        immsrc,
     output  alusrca_t       alusrc_a,
@@ -27,8 +27,8 @@ module main_decoder(
     assign csr_mode = csr_mode_t'(funct3);
     
     always_comb begin
-        nextpc_mode         = NEXTPC_PLUS4;
-        cflow_mode          = CFLOW_NORMAL;
+        cflow_mode          = CFLOW_PLUS4;
+        sysop_mode          = SYSOP_NORMAL;
         fencei              = 0;
         immsrc              = IMM_I;
         alusrc_a            = SRCA_REG;
@@ -59,8 +59,8 @@ module main_decoder(
                     default:    illegal_op = 1;
                 endcase
                 
-                nextpc_mode = NEXTPC_PLUS4;
-                cflow_mode  = CFLOW_NORMAL;
+                cflow_mode  = CFLOW_PLUS4;
+                sysop_mode  = SYSOP_NORMAL;
                 immsrc      = IMM_I;
                 alusrc_a    = SRCA_REG;
                 alusrc_b    = SRCB_REG;
@@ -76,8 +76,8 @@ module main_decoder(
                     default:    is_alt = 0;
                 endcase
                 
-                nextpc_mode = NEXTPC_PLUS4;
-                cflow_mode  = CFLOW_NORMAL;
+                cflow_mode  = CFLOW_PLUS4;
+                sysop_mode  = SYSOP_NORMAL;
                 immsrc      = IMM_I;
                 alusrc_a    = SRCA_REG;
                 alusrc_b    = SRCB_IMM;
@@ -87,8 +87,8 @@ module main_decoder(
                 regwrite    = 1;
             end
             OP_LOAD: begin
-                nextpc_mode = NEXTPC_PLUS4;
-                cflow_mode  = CFLOW_NORMAL;
+                cflow_mode  = CFLOW_PLUS4;
+                sysop_mode  = SYSOP_NORMAL;
                 immsrc      = IMM_I;
                 alusrc_a    = SRCA_REG;
                 alusrc_b    = SRCB_IMM;
@@ -98,8 +98,8 @@ module main_decoder(
                 regwrite    = 1;
             end
             OP_STORE: begin
-                nextpc_mode = NEXTPC_PLUS4;
-                cflow_mode  = CFLOW_NORMAL;
+                cflow_mode  = CFLOW_PLUS4;
+                sysop_mode  = SYSOP_NORMAL;
                 immsrc      = IMM_S;
                 alusrc_a    = SRCA_REG;
                 alusrc_b    = SRCB_IMM;
@@ -109,8 +109,8 @@ module main_decoder(
                 regwrite    = 0;
             end
             OP_LUI: begin
-                nextpc_mode = NEXTPC_PLUS4;
-                cflow_mode  = CFLOW_NORMAL;
+                cflow_mode  = CFLOW_PLUS4;
+                sysop_mode  = SYSOP_NORMAL;
                 immsrc      = IMM_U;
                 alusrc_a    = SRCA_ZERO;
                 alusrc_b    = SRCB_IMM;
@@ -120,8 +120,8 @@ module main_decoder(
                 regwrite    = 1;
             end
             OP_AUIPC: begin
-                nextpc_mode = NEXTPC_PLUS4;
-                cflow_mode  = CFLOW_NORMAL;
+                cflow_mode  = CFLOW_PLUS4;
+                sysop_mode  = SYSOP_NORMAL;
                 immsrc      = IMM_U;
                 alusrc_a    = SRCA_PC;
                 alusrc_b    = SRCB_IMM;
@@ -131,8 +131,8 @@ module main_decoder(
                 regwrite    = 1;
             end
             OP_BRANCH: begin
-                nextpc_mode = NEXTPC_BRANCH;
-                cflow_mode  = CFLOW_NORMAL;
+                cflow_mode  = CFLOW_BRANCH;
+                sysop_mode  = SYSOP_NORMAL;
                 immsrc      = IMM_B;
                 alusrc_a    = SRCA_REG;
                 alusrc_b    = SRCB_REG;
@@ -142,8 +142,8 @@ module main_decoder(
                 regwrite    = 0;
             end
             OP_JALR: begin
-                nextpc_mode = NEXTPC_JALR;
-                cflow_mode  = CFLOW_NORMAL;
+                cflow_mode  = CFLOW_JALR;
+                sysop_mode  = SYSOP_NORMAL;
                 immsrc      = IMM_I;
                 alusrc_a    = SRCA_REG;
                 alusrc_b    = SRCB_IMM;
@@ -153,8 +153,8 @@ module main_decoder(
                 regwrite    = 1;
             end
             OP_JAL: begin
-                nextpc_mode = NEXTPC_JAL;
-                cflow_mode  = CFLOW_NORMAL;
+                cflow_mode  = CFLOW_JAL;
+                sysop_mode  = SYSOP_NORMAL;
                 immsrc      = IMM_J;
                 alusrc_a    = SRCA_REG;
                 alusrc_b    = SRCB_IMM;
@@ -169,16 +169,16 @@ module main_decoder(
             OP_SYSTEM: begin
                 if (csr_mode == CSR_NOP) begin
                     unique case (imm)
-                        12'h000: cflow_mode = CFLOW_ECALL;
-                        12'h001: cflow_mode = CFLOW_EBREAK;
-                        12'h302: cflow_mode = CFLOW_MRET;
+                        12'h000: sysop_mode = SYSOP_ECALL;
+                        12'h001: sysop_mode = SYSOP_EBREAK;
+                        12'h302: sysop_mode = SYSOP_MRET;
                         12'h105: ; // WFI Instruction (Hint)
                         default: illegal_op = 1;
                     endcase
                 end
                 else begin // Zicsr Extension
-                    nextpc_mode = NEXTPC_PLUS4;
-                    cflow_mode  = CFLOW_NORMAL;
+                    cflow_mode  = CFLOW_PLUS4;
+                    sysop_mode  = SYSOP_NORMAL;
                     immsrc      = IMM_Z;
                     alusrc_a    = SRCA_REG;
                     alusrc_b    = SRCB_REG;

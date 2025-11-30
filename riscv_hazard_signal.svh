@@ -14,8 +14,8 @@ typedef struct packed {
 } hazard_cause_t;
 
 typedef struct packed {
-    pcsrc_t         pcsrc;
-    nextpc_mode_t   nextpc_mode;
+    cflow_mode_t    cflow_mode;
+    logic           mispredict;
     logic [4:0]     rs1_d, rs1_e;
     logic [4:0]     rs2_d, rs2_e, rs2_m;
     logic [4:0]     rd_e, rd_m, rd_w;

@@ -130,7 +130,7 @@ module stage_ex (
     lsu_misalign_checker lsu_misalign_checker (
         .aluresult                          (aluresult_e),
         .memaccess                          (control_signal_e.memaccess),
-        .mask_mode                          (control_signal_e.funct3),
+        .mask_mode                          (control_signal_e.funct3.mask_mode),
         .datamisalign                       (trap_flag.datamisalign)
     );
     
@@ -149,22 +149,22 @@ module stage_ex (
             trap_req_e                      = trap_req_prev;
         end
         else begin 
-            unique case (control_signal_e.cflow_mode)
-                CFLOW_ECALL: begin
+            unique case (control_signal_e.sysop_mode)
+                SYSOP_ECALL: begin
                     trap_req_e.valid        = 1;
                     trap_req_e.mode         = TRAP_ENTER;
                     trap_req_e.cause        = CAUSE_ECALL_MMODE;
                     trap_req_e.pc           = pc_e;
                     trap_req_e.tval         = 32'b0;
                 end
-                CFLOW_EBREAK: begin
+                SYSOP_EBREAK: begin
                     trap_req_e.valid        = 1;
                     trap_req_e.mode         = TRAP_ENTER;
                     trap_req_e.cause        = CAUSE_BREAKPOINT;
                     trap_req_e.pc           = pc_e;
                     trap_req_e.tval         = 32'b0;
                 end
-                CFLOW_MRET: begin
+                SYSOP_MRET: begin
                     trap_req_e.valid        = 1;
                     trap_req_e.mode         = TRAP_RETURN;
                     trap_req_e.pc           = pc_e;

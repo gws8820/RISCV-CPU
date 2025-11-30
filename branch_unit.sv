@@ -4,18 +4,23 @@ timeprecision 1ps;
 import riscv_defines::*;
 
 module branch_unit (
-    input   nextpc_mode_t   nextpc_mode,
+    input   cflow_mode_t    cflow_mode,
     input   branch_mode_t   branch_mode,
     input   logic [31:0]    in_a, in_b,
-    input   logic           redirflag,
-    output  pcsrc_t         pcsrc
+    input   logic           stall_d,
+    input   logic           pred_taken_d,
+    input   logic [31:0]    pc_pred_d,
+    input   logic [31:0]    pc_jump,
+    output  logic           cflow_valid,
+    output  logic           cflow_taken,
+    output  logic           mispredict
 );
 
     logic lt, ltu, eq;
     always_comb begin
-      lt  = $signed(in_a) < $signed(in_b);
-      ltu = in_a < in_b;
-      eq  = (in_a == in_b);
+        lt  = $signed(in_a) < $signed(in_b);
+        ltu = in_a < in_b;
+        eq  = (in_a == in_b);
     end
     
     logic branch_taken;
@@ -28,13 +33,33 @@ module branch_unit (
         (branch_mode == BRANCH_BGEU && !ltu);
         
     always_comb begin
-        if (redirflag) pcsrc = PC_REDIR;
-        else unique case (nextpc_mode)
-            NEXTPC_PLUS4:   pcsrc   = PC_PLUS4;
-            NEXTPC_BRANCH:  pcsrc   = (branch_taken ? PC_JUMP : PC_PLUS4);
-            NEXTPC_JAL:     pcsrc   = PC_JUMP;
-            NEXTPC_JALR:    pcsrc   = PC_JUMP;
-            default: pcsrc          = PC_PLUS4;
-        endcase
+        if (stall_d) begin
+            cflow_valid         = 0;
+            cflow_taken         = 0;
+        end
+        else begin
+            unique case (cflow_mode)
+                CFLOW_BRANCH: begin
+                    cflow_valid = 1;
+                    cflow_taken = branch_taken;
+                end
+                CFLOW_JAL, CFLOW_JALR: begin
+                    cflow_valid = 1;
+                    cflow_taken = 1;
+                end
+                default: begin
+                    cflow_valid = 0;
+                    cflow_taken = 0;
+                end
+            endcase
+        end
     end
+
+    logic miss_1, miss_2;
+    always_comb begin
+        miss_1      = cflow_taken != pred_taken_d;
+        miss_2      = cflow_taken && (pc_pred_d != pc_jump);
+        mispredict  = cflow_valid && (miss_1 || miss_2);
+    end
+    
 endmodule

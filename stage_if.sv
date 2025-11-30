@@ -6,8 +6,12 @@ import riscv_defines::*;
 module stage_if (
     input   logic                   start, clk,
 
-    input   pcsrc_t                 pcsrc,
+    input   logic [31:0]            pc_pred,
     input   logic [31:0]            pc_jump,
+    input   logic [31:0]            pc_return,
+    input   logic                   mispredict,
+    input   logic                   cflow_taken,
+    input   logic                   pred_taken,
 
     output  logic [31:0]            pc_f,
     output  logic [31:0]            pcplus4_f,
@@ -23,15 +27,20 @@ module stage_if (
     // Program Counter
     logic [31:0] pc_next;
     assign pcplus4_f = pc_f + 4;
-
-    always_comb begin
-        unique case(pcsrc)
-            PC_REDIR:               pc_next = trap_res.rediraddr;
-            PC_PLUS4:               pc_next = pcplus4_f;
-            PC_JUMP:                pc_next = pc_jump;
-            default:                pc_next = pcplus4_f;
-        endcase
-    end
+    
+    (* DONT_TOUCH = "true" *)
+    pcnext_selector pcnext_selector (
+        .pcplus4_f                  (pcplus4_f),
+        .pc_jump                    (pc_jump),
+        .pc_return                  (pc_return),
+        .pc_pred                    (pc_pred),
+        .trap_redir                 (trap_res.redirflag),
+        .trap_addr                  (trap_res.rediraddr),
+        .mispredict                 (mispredict),
+        .cflow_taken                (cflow_taken),
+        .pred_taken                 (pred_taken),
+        .pc_next                    (pc_next)
+    );
 
     (* DONT_TOUCH = "true" *)
     program_counter program_counter (
@@ -61,11 +70,6 @@ module stage_if (
         .imemfault                  (trap_flag.imemfault),
         .inst                       (inst_f)
     );
-    
-    // Hazard Packet
-    always_comb begin
-        hazard_bus.req.pcsrc = pcsrc;
-    end
     
     // Trap Packet
     always_comb begin

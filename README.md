@@ -15,9 +15,10 @@ A 5-stage pipelined RISC-V processor core implementation in SystemVerilog, desig
 ![CPU Architecture Diagram](architecture.png)
 
 - **Pipeline**: 5-stage (Fetch, Decode, Execute, Memory, Writeback)
-- **Branch Resolution**: Early branch resolution in ID stage
-  - Dedicated PCJump generator in ID stage (supports JAL, JALR, Branch)
-  - PCSrc MUX in IF stage selects between PC+4, Jump target, and Trap redirect
+- **Branch Prediction**:
+  - **Predictor**: BHT & BTB in IF stage for zero-penalty branching
+  - **Branch Unit**: Early resolution & validation in ID stage
+  - **Recovery**: 1-cycle penalty on misprediction (Flush IF, redirect PC)
 - **Hazard Handling**:
   - Data forwarding for RAW hazards from EX, MEM, and WB stages to ID and EX
   - Store-data forwarding to resolve memory data hazards (MEM/WB)
@@ -75,11 +76,11 @@ A 5-stage pipelined RISC-V processor core implementation in SystemVerilog, desig
 | Hazard Type | Penalty (Cycles) | Detection Stage | Notes |
 |-------------|------------------|-----------------|-------|
 | **Data Hazard (RAW)** | 0 | ID/EX | Resolved by forwarding from EX/MEM/WB stages |
+| **Store-Data Hazard** | 0 | MEM | Resolved by forwarding from WB stage |
 | **Load-Use Hazard (Basic)** | 1 | ID | Detect on ID → use in EX (next cycle) |
 | **Load-Use Hazard (Branch)** | 2 | ID | Detect on ID → use in ID (same cycle) |
-| **Store-Data Hazard** | 0 | MEM | Resolved by forwarding from WB stage |
-| **Branch Misprediction** | 1 | ID | Flush IF stage, redirect PC |
-| **Jump (JAL/JALR)** | 1 | ID | Unconditional redirect, flush IF stage |
+| **Branch Prediction Hit** | 0 | IF | Zero penalty (Seamless execution) |
+| **Branch Prediction Miss** | 1 | ID | Flush IF stage, redirect PC |
 
 ### Trap/Exception Penalties
 | Trap/Flush Type | Penalty (Cycles) | Processing Stage | Notes |

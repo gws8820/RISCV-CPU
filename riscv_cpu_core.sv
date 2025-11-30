@@ -13,9 +13,6 @@ module riscv_cpu_core (
     end
 
     // Backward Signals
-    pcsrc_t                 pcsrc;
-    logic [31:0]            pc_jump;
-    
     logic [31:0]            result_e;
     
     trap_req_t              trap_req_m;
@@ -27,7 +24,8 @@ module riscv_cpu_core (
     logic [4:0]             rd_w;
     logic [31:0]            result_w;
     
-    // Hazard Unit
+    // ---------- Hazard Unit ------------
+    
     (* DONT_TOUCH = "true" *)
     hazard_interface        hazard_bus();
 
@@ -50,7 +48,8 @@ module riscv_cpu_core (
         csr_bus.trap        = trap_req_m;
     end
 
-    // Trap Unit
+    // ----------- Trap Unit -------------
+    
     (* DONT_TOUCH = "true" *)
     trap_unit trap_unit (
         .trap_bus           (trap_bus),
@@ -58,7 +57,8 @@ module riscv_cpu_core (
         .mepc_i             (mepc)
     );
     
-    // CSR Unit
+    // ----------- CSR Unit --------------
+    
     (* DONT_TOUCH = "true" *)
     csr_unit csr_unit (
         .start              (start),
@@ -67,10 +67,34 @@ module riscv_cpu_core (
         .mtvec_o            (mtvec),
         .mepc_o             (mepc)
     );
+    
+    // -------- Branch Predictor ---------
+    
+    logic [31:0]            pc_f, pc_d, pc_e;
+    logic [31:0]            pcplus4_d;  // PC_RETURN
+    
+    logic [31:0]            pc_pred;
+    logic [31:0]            pc_jump;
+    
+    logic                   pred_taken;
+    logic                   cflow_valid, cflow_taken;
+    logic                   mispredict;
+    
+    branch_predictor branch_predictor (
+        .clk                (clk),
+        
+        .pc_f               (pc_f),
+        .pred_taken         (pred_taken),
+        .pred_target        (pc_pred),
+        
+        .pc_d               (pc_d),
+        .cflow_valid        (cflow_valid),
+        .cflow_taken        (cflow_taken),
+        .cflow_target       (pc_jump)
+    );
 
-    //--------------IF-----------------
+    // ------------ IF Stage -------------
 
-    logic [31:0]            pc_f;
     logic [31:0]            pcplus4_f;
     inst_t                  inst_f;
 
@@ -80,9 +104,13 @@ module riscv_cpu_core (
         .start              (start),
         .clk                (clk),
 
-        .pcsrc              (pcsrc),
+        .pc_pred            (pc_pred),
         .pc_jump            (pc_jump),
-
+        .pc_return          (pcplus4_d),
+        .mispredict         (mispredict),
+        .cflow_taken        (cflow_taken),
+        .pred_taken         (pred_taken),
+        
         .pc_f               (pc_f),
         .pcplus4_f          (pcplus4_f),
         .inst_f             (inst_f),
@@ -92,10 +120,9 @@ module riscv_cpu_core (
         .hazard_bus         (hazard_bus)
     );
 
-    //--------------ID-----------------
+    // ------------ ID Stage -------------
 
     control_signal_t        control_signal_d;
-    logic [31:0]            pc_d, pcplus4_d;
     inst_t                  inst_d;
 
     logic [4:0]             rs1_d, rs2_d, rd_d;
@@ -110,6 +137,8 @@ module riscv_cpu_core (
 
         .pc_f               (pc_f),
         .pcplus4_f          (pcplus4_f),
+        .pc_pred_f          (pc_pred),
+        .pred_taken_f       (pred_taken),
         .inst_f             (inst_f),
 
         .result_e           (result_e),
@@ -131,19 +160,19 @@ module riscv_cpu_core (
         .rdata2_d           (rdata2_d),
         .immext_d           (immext_d),
         
-        .pcsrc              (pcsrc),
         .pc_jump            (pc_jump),
+        .cflow_valid        (cflow_valid),
+        .cflow_taken        (cflow_taken),
+        .mispredict         (mispredict),
 
-        .trap_res           (trap_bus.res),
         .trap_req_f         (trap_req_f),
         .trap_req_d         (trap_req_d),
         .hazard_bus         (hazard_bus)
     );
 
-    //--------------EX-----------------
+    // ------------ EX Stage -------------
 
     control_signal_t        control_signal_e;
-    logic [31:0]            pc_e;
     logic [31:0]            pcplus4_e;
     logic [31:0]            immext_e;
     logic [4:0]             rs1_e, rs2_e, rd_e;
@@ -193,7 +222,7 @@ module riscv_cpu_core (
         .hazard_bus         (hazard_bus)
     );
 
-    //--------------MEM-----------------
+    // ------------ MEM Stage ------------
     
     control_signal_t        control_signal_m;
     logic [31:0]            pc_m;
@@ -234,7 +263,7 @@ module riscv_cpu_core (
         .hazard_bus         (hazard_bus)
     );
     
-    //--------------WB-----------------
+    // ------------ WB Stage -------------
     
     stage_wb stage_wb (
         .start              (start),
