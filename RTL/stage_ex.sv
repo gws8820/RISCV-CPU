@@ -117,7 +117,6 @@ module stage_ex (
     end
 
     // ALU
-    (* DONT_TOUCH = "true" *)
     alu alu (
         .in_a                               (in_a),
         .in_b                               (in_b),
@@ -126,7 +125,6 @@ module stage_ex (
     );
     
     // LSU Misalign Checker
-    (* DONT_TOUCH = "true" *)
     lsu_misalign_checker lsu_misalign_checker (
         .aluresult                          (aluresult_e),
         .memaccess                          (control_signal_e.memaccess),
@@ -145,6 +143,11 @@ module stage_ex (
     
     // Trap Packet
     always_comb begin
+        trap_flag.instillegal               = 0;
+        trap_flag.instmisalign              = 0;
+        trap_flag.imemfault                 = 0;
+        trap_flag.dmemfault                 = 0;
+        
         if (trap_req_prev.valid) begin
             trap_req_e                      = trap_req_prev;
         end
@@ -167,6 +170,7 @@ module stage_ex (
                 SYSOP_MRET: begin
                     trap_req_e.valid        = 1;
                     trap_req_e.mode         = TRAP_RETURN;
+                    trap_req_e.cause        = CAUSE_INST_MISALIGNED;    // Default
                     trap_req_e.pc           = pc_e;
                     trap_req_e.tval         = 32'b0;
                 end

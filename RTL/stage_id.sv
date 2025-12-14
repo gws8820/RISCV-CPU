@@ -44,33 +44,37 @@ module stage_id (
 
     always_ff@(posedge clk) begin
         if (!start) begin
-            trap_req_prev           <= '0;
             pc_d                    <= 32'b0;
             pcplus4_d               <= 32'b0;
             pc_pred_d               <= 32'b0;
             pred_taken_d            <= 0;
+
+            trap_req_prev           <= '0;
         end
         else begin
             priority if (hazard_bus.res.flush_d) begin
-                trap_req_prev       <= '0;
                 pc_d                <= 32'b0;
                 pcplus4_d           <= 32'b0;
                 pc_pred_d           <= 32'b0;
                 pred_taken_d        <= 0;
+
+                trap_req_prev       <= '0;
             end
             else if (hazard_bus.res.stall_d) begin
-                trap_req_prev       <= trap_req_prev;
                 pc_d                <= pc_d;
                 pcplus4_d           <= pcplus4_d;
                 pc_pred_d           <= pc_pred_d;
                 pred_taken_d        <= pred_taken_d;
+
+                trap_req_prev       <= trap_req_prev;
             end
             else begin
-                trap_req_prev       <= trap_req_f;
                 pc_d                <= pc_f;
                 pcplus4_d           <= pcplus4_f;
                 pc_pred_d           <= pc_pred_f;
                 pred_taken_d        <= pred_taken_f;
+                
+                trap_req_prev       <= trap_req_f;
             end
         end
     end
@@ -79,7 +83,6 @@ module stage_id (
         inst_d = inst_f;
     end
     
-    (* DONT_TOUCH = "true" *)
     control_unit control_unit (    
         .inst                       (inst_d),
         .cflow_mode                 (control_signal_d.cflow_mode),
@@ -104,7 +107,6 @@ module stage_id (
         rd_d  = inst_d.r.rd;
     end
     
-    (* DONT_TOUCH = "true" *)
     regfile regfile (
         .clk                        (clk),
         .regwrite                   (control_signal_w.regwrite && !kill_w),
@@ -117,7 +119,6 @@ module stage_id (
     );
 
     // Immediate Extender
-    (* DONT_TOUCH = "true" *)
     imm_extender imm_extender (
         .inst                       (inst_d),
         .immsrc                     (control_signal_d.immsrc),
@@ -156,7 +157,6 @@ module stage_id (
     end
 
     // Branch Unit
-    (* DONT_TOUCH = "true" *)
     branch_unit branch_unit (
         .cflow_mode                 (control_signal_d.cflow_mode),
         .branch_mode                (control_signal_d.funct3.branch_mode),
@@ -181,6 +181,11 @@ module stage_id (
     
     // Trap Packet
     always_comb begin
+        trap_flag.instmisalign      = 0;
+        trap_flag.imemfault         = 0;
+        trap_flag.datamisalign      = 0;
+        trap_flag.dmemfault         = 0;
+
         if (trap_req_prev.valid) begin
             trap_req_d              = trap_req_prev;
         end

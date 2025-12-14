@@ -17,7 +17,7 @@ module branch_history_table (
     
 );
 
-    bht_state_t bht_mem [TABLE_ENTRIES-1:0];
+    (* ram_style="distributed" *) bht_state_t bht_mem [TABLE_ENTRIES-1:0];
     
     initial begin
         foreach (bht_mem[i]) begin

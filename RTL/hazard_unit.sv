@@ -4,20 +4,14 @@ timeprecision 1ps;
 import riscv_defines::*;
 
 module hazard_unit (
-    input   logic                   start,
     hazard_interface.completer      hazard_bus
 );
     logic flush_d_sd, flush_e_lu;
     
     always_comb begin
-        if (!start) begin
-            hazard_bus.res = '0;
-        end
-        else begin
-            hazard_bus.res.flush_d  = hazard_bus.req.flushflag || flush_d_sd;
-            hazard_bus.res.flush_e  = hazard_bus.req.flushflag || flush_e_lu;
-            hazard_bus.res.flush_m  = hazard_bus.req.flushflag;
-        end
+        hazard_bus.res.flush_d  = hazard_bus.req.flushflag || flush_d_sd;
+        hazard_bus.res.flush_e  = hazard_bus.req.flushflag || flush_e_lu;
+        hazard_bus.res.flush_m  = hazard_bus.req.flushflag;
     end
     
     raw_data_forwarder raw_data_forwarder(

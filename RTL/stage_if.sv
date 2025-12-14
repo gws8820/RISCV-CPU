@@ -19,7 +19,11 @@ module stage_if (
     
     input   trap_res_t              trap_res,
     output  trap_req_t              trap_req_f,
-    hazard_interface.requester      hazard_bus
+    hazard_interface.requester      hazard_bus,
+    
+    input   logic                   prog_en,
+    input   logic [31:0]            prog_addr,
+    input   logic [31:0]            prog_data
 );
 
     trap_flag_t                     trap_flag;
@@ -28,7 +32,6 @@ module stage_if (
     logic [31:0] pc_next;
     assign pcplus4_f = pc_f + 4;
     
-    (* DONT_TOUCH = "true" *)
     pcnext_selector pcnext_selector (
         .pcplus4_f                  (pcplus4_f),
         .pc_jump                    (pc_jump),
@@ -42,7 +45,6 @@ module stage_if (
         .pc_next                    (pc_next)
     );
 
-    (* DONT_TOUCH = "true" *)
     program_counter program_counter (
         .start                      (start), // Starts PC from Zero
         .clk                        (clk),
@@ -52,14 +54,12 @@ module stage_if (
     );
     
     // Inst Misalign Checker
-    (* DONT_TOUCH = "true" *)
     inst_misalign_checker inst_misalign_checker (
         .pc                         (pc_f),
         .instmisalign               (trap_flag.instmisalign)
     );
 
     // Instruction Memory
-    (* DONT_TOUCH = "true" *)
     instruction_memory instruction_memory (
         .start                      (start),
         .clk                        (clk),
@@ -68,11 +68,19 @@ module stage_if (
         .flush_d                    (hazard_bus.res.flush_d),
         .stall_d                    (hazard_bus.res.stall_d),
         .imemfault                  (trap_flag.imemfault),
-        .inst                       (inst_f)
+        .inst                       (inst_f),
+        
+        .prog_en                    (prog_en),
+        .prog_addr                  (prog_addr),
+        .prog_data                  (prog_data)
     );
     
     // Trap Packet
     always_comb begin
+        trap_flag.instillegal       = 0;
+        trap_flag.datamisalign      = 0;
+        trap_flag.dmemfault         = 0;
+
         if (!start) begin
             trap_req_f              = '0;
         end

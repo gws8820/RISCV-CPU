@@ -96,7 +96,6 @@ module csr_unit (
             csr.mhartid  <= CSR_VALUE_MHARTID;
             csr.mscratch <= 32'b0;
         end
-        
         else begin
             if (csr_bus.trap.mode != TRAP_NONE) begin // Trap Handling
                 unique case (csr_bus.trap.mode)
@@ -115,7 +114,6 @@ module csr_unit (
                     default: ;
                 endcase
             end
-            
             else if (csr_bus.req.valid) begin // CSR
                 unique case (csr_bus.req.csr_target)
                     CSR_ADDR_MSTATUS:   csr.mstatus  <= eff_data;

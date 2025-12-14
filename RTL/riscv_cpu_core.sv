@@ -4,15 +4,19 @@ timeprecision 1ps;
 import riscv_defines::*;
 
 module riscv_cpu_core (
-    input logic rstn, clk
+    input   logic           start,
+    input   logic           clk,
+    
+    input   logic           prog_en,
+    input   logic [31:0]    prog_addr,
+    input   logic [31:0]    prog_data,
+
+    output  logic           print_en,
+    output  logic [31:0]    print_data
 );
     
-    logic start;
-    always_ff @(posedge clk) begin
-        start <= rstn;
-    end
-
-    // Backward Signals
+    // --------- Backward Signals --------
+    
     logic [31:0]            result_e;
     
     trap_req_t              trap_req_m;
@@ -26,11 +30,9 @@ module riscv_cpu_core (
     
     // ---------- Hazard Unit ------------
     
-    (* DONT_TOUCH = "true" *)
     hazard_interface        hazard_bus();
-
+    
     hazard_unit hazard_unit (
-        .start              (start),
         .hazard_bus         (hazard_bus)
     );
 
@@ -50,7 +52,6 @@ module riscv_cpu_core (
 
     // ----------- Trap Unit -------------
     
-    (* DONT_TOUCH = "true" *)
     trap_unit trap_unit (
         .trap_bus           (trap_bus),
         .mtvec_i            (mtvec),
@@ -59,7 +60,6 @@ module riscv_cpu_core (
     
     // ----------- CSR Unit --------------
     
-    (* DONT_TOUCH = "true" *)
     csr_unit csr_unit (
         .start              (start),
         .clk                (clk),
@@ -81,6 +81,7 @@ module riscv_cpu_core (
     logic                   mispredict;
     
     branch_predictor branch_predictor (
+        .start              (start),
         .clk                (clk),
         
         .pc_f               (pc_f),
@@ -117,7 +118,11 @@ module riscv_cpu_core (
 
         .trap_res           (trap_bus.res),
         .trap_req_f         (trap_req_f),
-        .hazard_bus         (hazard_bus)
+        .hazard_bus         (hazard_bus),
+        
+        .prog_en            (prog_en),
+        .prog_addr          (prog_addr),
+        .prog_data          (prog_data)
     );
 
     // ------------ ID Stage -------------
@@ -260,7 +265,10 @@ module riscv_cpu_core (
         
         .csr_result         (csr_bus.rdata),
 
-        .hazard_bus         (hazard_bus)
+        .hazard_bus         (hazard_bus),
+        
+        .print_en           (print_en),
+        .print_data         (print_data)
     );
     
     // ------------ WB Stage -------------

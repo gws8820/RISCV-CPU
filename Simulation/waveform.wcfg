@@ -1,0 +1,504 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="cpu_testbench_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="\$unit_riscv_defines_sv_1655521278 " />
+            <top_module name="cpu_testbench" />
+            <top_module name="glbl" />
+            <top_module name="riscv_defines" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="0.000 ns"></ZoomStartTime>
+      <ZoomEndTime time="650.001 ns"></ZoomEndTime>
+      <Cursor1Time time="650.000 ns"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="303"></NameColumnWidth>
+      <ValueColumnWidth column_width="329"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="49" />
+   <wvobject fp_name="/cpu_testbench/dut/start" type="logic">
+      <obj_property name="ElementShortName">start</obj_property>
+      <obj_property name="ObjectShortName">start</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="group615" type="group">
+      <obj_property name="label">inst_mem</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[0]" type="array">
+         <obj_property name="ElementShortName">[0][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[0][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[1]" type="array">
+         <obj_property name="ElementShortName">[1][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[1][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[2]" type="array">
+         <obj_property name="ElementShortName">[2][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[2][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[3]" type="array">
+         <obj_property name="ElementShortName">[3][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[3][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[4]" type="array">
+         <obj_property name="ElementShortName">[4][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[4][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[5]" type="array">
+         <obj_property name="ElementShortName">[5][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[5][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[6]" type="array">
+         <obj_property name="ElementShortName">[6][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[6][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[7]" type="array">
+         <obj_property name="ElementShortName">[7][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[7][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[8]" type="array">
+         <obj_property name="ElementShortName">[8][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[8][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[9]" type="array">
+         <obj_property name="ElementShortName">[9][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[9][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[10]" type="array">
+         <obj_property name="ElementShortName">[10][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[10][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[11]" type="array">
+         <obj_property name="ElementShortName">[11][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[11][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[12]" type="array">
+         <obj_property name="ElementShortName">[12][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[12][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[13]" type="array">
+         <obj_property name="ElementShortName">[13][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[13][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[14]" type="array">
+         <obj_property name="ElementShortName">[14][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[14][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[15]" type="array">
+         <obj_property name="ElementShortName">[15][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[15][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[16]" type="array">
+         <obj_property name="ElementShortName">[16][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[16][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[17]" type="array">
+         <obj_property name="ElementShortName">[17][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[17][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[18]" type="array">
+         <obj_property name="ElementShortName">[18][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[18][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[19]" type="array">
+         <obj_property name="ElementShortName">[19][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[19][31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/instruction_memory/inst_mem[20]" type="array">
+         <obj_property name="ElementShortName">[20][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[20][31:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/stage_id/regfile/registers" type="array">
+      <obj_property name="ElementShortName">registers[0:31][31:0]</obj_property>
+      <obj_property name="ObjectShortName">registers[0:31][31:0]</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider765">
+      <obj_property name="label">LOG</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="BkColor">#D2691E</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/stage_mem/load_store_unit/data_mem/print_en" type="logic">
+      <obj_property name="ElementShortName">print_en</obj_property>
+      <obj_property name="ObjectShortName">print_en</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/stage_mem/load_store_unit/data_mem/print_data" type="array">
+      <obj_property name="ElementShortName">print_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">print_data[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider765">
+      <obj_property name="label">Hazard</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="BkColor">#F0E68C</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/hazard_bus/req" type="array">
+      <obj_property name="ElementShortName">req</obj_property>
+      <obj_property name="ObjectShortName">req</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/hazard_bus/res" type="array">
+      <obj_property name="ElementShortName">res</obj_property>
+      <obj_property name="ObjectShortName">res</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider691">
+      <obj_property name="label">Trap</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="BkColor">#F0E68C</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/trap_bus/req" type="array">
+      <obj_property name="ElementShortName">req</obj_property>
+      <obj_property name="ObjectShortName">req</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/trap_bus/res" type="array">
+      <obj_property name="ElementShortName">res</obj_property>
+      <obj_property name="ObjectShortName">res</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider691">
+      <obj_property name="label">CSR</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="BkColor">#F0E68C</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/csr_unit/csr" type="array">
+      <obj_property name="ElementShortName">csr</obj_property>
+      <obj_property name="ObjectShortName">csr</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider691">
+      <obj_property name="label">Branch</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="BkColor">#F0E68C</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/branch_predictor/pred_taken" type="logic">
+      <obj_property name="ElementShortName">pred_taken</obj_property>
+      <obj_property name="ObjectShortName">pred_taken</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/branch_predictor/bht/bht_taken" type="logic">
+      <obj_property name="ElementShortName">bht_taken</obj_property>
+      <obj_property name="ObjectShortName">bht_taken</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/branch_predictor/btb/btb_hit" type="logic">
+      <obj_property name="ElementShortName">btb_hit</obj_property>
+      <obj_property name="ObjectShortName">btb_hit</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/stage_id/branch_unit/mispredict" type="logic">
+      <obj_property name="ElementShortName">mispredict</obj_property>
+      <obj_property name="ObjectShortName">mispredict</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider798">
+      <obj_property name="label">IF</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/hazard_bus/res.stall_f" type="logic">
+      <obj_property name="ElementShortName">.stall_f</obj_property>
+      <obj_property name="ObjectShortName">.stall_f</obj_property>
+   </wvobject>
+   <wvobject fp_name="group732" type="group">
+      <obj_property name="label">PCNext Selector</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/pcnext_selector/pcplus4_f" type="array">
+         <obj_property name="ElementShortName">pcplus4_f[31:0]</obj_property>
+         <obj_property name="ObjectShortName">pcplus4_f[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/pcnext_selector/pc_pred" type="array">
+         <obj_property name="ElementShortName">pc_pred[31:0]</obj_property>
+         <obj_property name="ObjectShortName">pc_pred[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/pcnext_selector/pc_jump" type="array">
+         <obj_property name="ElementShortName">pc_jump[31:0]</obj_property>
+         <obj_property name="ObjectShortName">pc_jump[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/pcnext_selector/pc_return" type="array">
+         <obj_property name="ElementShortName">pc_return[31:0]</obj_property>
+         <obj_property name="ObjectShortName">pc_return[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/pcnext_selector/trap_addr" type="array">
+         <obj_property name="ElementShortName">trap_addr[31:0]</obj_property>
+         <obj_property name="ObjectShortName">trap_addr[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/pcnext_selector/pcsrc" type="array">
+         <obj_property name="ElementShortName">pcsrc[2:0]</obj_property>
+         <obj_property name="ObjectShortName">pcsrc[2:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_if/pcnext_selector/pc_next" type="array">
+         <obj_property name="ElementShortName">pc_next[31:0]</obj_property>
+         <obj_property name="ObjectShortName">pc_next[31:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/stage_if/pc_f" type="array">
+      <obj_property name="ElementShortName">pc_f[31:0]</obj_property>
+      <obj_property name="ObjectShortName">pc_f[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider798">
+      <obj_property name="label">ID</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/hazard_bus/res.stall_d" type="logic">
+      <obj_property name="ElementShortName">.stall_d</obj_property>
+      <obj_property name="ObjectShortName">.stall_d</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/hazard_bus/res.flush_d" type="logic">
+      <obj_property name="ElementShortName">.flush_d</obj_property>
+      <obj_property name="ObjectShortName">.flush_d</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/pc_d" type="array">
+      <obj_property name="ElementShortName">pc_d[31:0]</obj_property>
+      <obj_property name="ObjectShortName">pc_d[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/stage_id/control_unit/inst" type="array">
+      <obj_property name="ElementShortName">inst</obj_property>
+      <obj_property name="ObjectShortName">inst</obj_property>
+   </wvobject>
+   <wvobject fp_name="group435" type="group">
+      <obj_property name="label">Register File</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/regfile/raddr1" type="array">
+         <obj_property name="ElementShortName">raddr1[4:0]</obj_property>
+         <obj_property name="ObjectShortName">raddr1[4:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/regfile/raddr2" type="array">
+         <obj_property name="ElementShortName">raddr2[4:0]</obj_property>
+         <obj_property name="ObjectShortName">raddr2[4:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/regfile/rdata1" type="array">
+         <obj_property name="ElementShortName">rdata1[31:0]</obj_property>
+         <obj_property name="ObjectShortName">rdata1[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/regfile/rdata2" type="array">
+         <obj_property name="ElementShortName">rdata2[31:0]</obj_property>
+         <obj_property name="ObjectShortName">rdata2[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/control_signal_w.regwrite" type="logic">
+         <obj_property name="ElementShortName">.regwrite</obj_property>
+         <obj_property name="ObjectShortName">.regwrite</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/rd_w" type="array">
+         <obj_property name="ElementShortName">rd_w[4:0]</obj_property>
+         <obj_property name="ObjectShortName">rd_w[4:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/result_w" type="array">
+         <obj_property name="ElementShortName">result_w[31:0]</obj_property>
+         <obj_property name="ObjectShortName">result_w[31:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/stage_id/imm_extender/immext" type="array">
+      <obj_property name="ElementShortName">immext[31:0]</obj_property>
+      <obj_property name="ObjectShortName">immext[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="group437" type="group">
+      <obj_property name="label">Control Unit</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/control_unit/cflow_mode" type="array">
+         <obj_property name="ElementShortName">cflow_mode[1:0]</obj_property>
+         <obj_property name="ObjectShortName">cflow_mode[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/control_unit/sysop_mode" type="array">
+         <obj_property name="ElementShortName">sysop_mode[1:0]</obj_property>
+         <obj_property name="ObjectShortName">sysop_mode[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/control_unit/funct3" type="array">
+         <obj_property name="ElementShortName">funct3</obj_property>
+         <obj_property name="ObjectShortName">funct3</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/control_unit/csr_req" type="array">
+         <obj_property name="ElementShortName">csr_req</obj_property>
+         <obj_property name="ObjectShortName">csr_req</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/control_unit/fencei" type="logic">
+         <obj_property name="ElementShortName">fencei</obj_property>
+         <obj_property name="ObjectShortName">fencei</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/control_unit/immsrc" type="array">
+         <obj_property name="ElementShortName">immsrc[2:0]</obj_property>
+         <obj_property name="ObjectShortName">immsrc[2:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/control_unit/alusrc_a" type="array">
+         <obj_property name="ElementShortName">alusrc_a[1:0]</obj_property>
+         <obj_property name="ObjectShortName">alusrc_a[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/control_unit/alusrc_b" type="array">
+         <obj_property name="ElementShortName">alusrc_b[0:0]</obj_property>
+         <obj_property name="ObjectShortName">alusrc_b[0:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/control_unit/alucontrol" type="array">
+         <obj_property name="ElementShortName">alucontrol[4:0]</obj_property>
+         <obj_property name="ObjectShortName">alucontrol[4:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/control_unit/memaccess" type="array">
+         <obj_property name="ElementShortName">memaccess[1:0]</obj_property>
+         <obj_property name="ObjectShortName">memaccess[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/control_unit/resultsrc" type="array">
+         <obj_property name="ElementShortName">resultsrc[1:0]</obj_property>
+         <obj_property name="ObjectShortName">resultsrc[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/control_unit/regwrite" type="logic">
+         <obj_property name="ElementShortName">regwrite</obj_property>
+         <obj_property name="ObjectShortName">regwrite</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group174" type="group">
+      <obj_property name="label">Branch Unit</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/branch_unit/cflow_mode" type="array">
+         <obj_property name="ElementShortName">cflow_mode[1:0]</obj_property>
+         <obj_property name="ObjectShortName">cflow_mode[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/branch_unit/branch_mode" type="array">
+         <obj_property name="ElementShortName">branch_mode[2:0]</obj_property>
+         <obj_property name="ObjectShortName">branch_mode[2:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/branch_unit/in_a" type="array">
+         <obj_property name="ElementShortName">in_a[31:0]</obj_property>
+         <obj_property name="ObjectShortName">in_a[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/branch_unit/in_b" type="array">
+         <obj_property name="ElementShortName">in_b[31:0]</obj_property>
+         <obj_property name="ObjectShortName">in_b[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/branch_unit/miss_1" type="logic">
+         <obj_property name="ElementShortName">miss_1</obj_property>
+         <obj_property name="ObjectShortName">miss_1</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/branch_unit/miss_2" type="logic">
+         <obj_property name="ElementShortName">miss_2</obj_property>
+         <obj_property name="ObjectShortName">miss_2</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/branch_unit/mispredict" type="logic">
+         <obj_property name="ElementShortName">mispredict</obj_property>
+         <obj_property name="ObjectShortName">mispredict</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider438">
+      <obj_property name="label">EX</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/hazard_bus/res.flush_e" type="logic">
+      <obj_property name="ElementShortName">.flush_e</obj_property>
+      <obj_property name="ObjectShortName">.flush_e</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/pc_e" type="array">
+      <obj_property name="ElementShortName">pc_e[31:0]</obj_property>
+      <obj_property name="ObjectShortName">pc_e[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/csr_wdata_e" type="array">
+      <obj_property name="ElementShortName">csr_wdata_e[31:0]</obj_property>
+      <obj_property name="ObjectShortName">csr_wdata_e[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="group439" type="group">
+      <obj_property name="label">ALU</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/stage_ex/fwd_a" type="array">
+         <obj_property name="ElementShortName">fwd_a[31:0]</obj_property>
+         <obj_property name="ObjectShortName">fwd_a[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_ex/fwd_b" type="array">
+         <obj_property name="ElementShortName">fwd_b[31:0]</obj_property>
+         <obj_property name="ObjectShortName">fwd_b[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/control_signal_e.alusrc_a" type="array">
+         <obj_property name="ElementShortName">.alusrc_a[1:0]</obj_property>
+         <obj_property name="ObjectShortName">.alusrc_a[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/control_signal_e.alusrc_b" type="array">
+         <obj_property name="ElementShortName">.alusrc_b[0:0]</obj_property>
+         <obj_property name="ObjectShortName">.alusrc_b[0:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_ex/alu/in_a" type="array">
+         <obj_property name="ElementShortName">in_a[31:0]</obj_property>
+         <obj_property name="ObjectShortName">in_a[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_ex/alu/in_b" type="array">
+         <obj_property name="ElementShortName">in_b[31:0]</obj_property>
+         <obj_property name="ObjectShortName">in_b[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_ex/alu/alucontrol" type="array">
+         <obj_property name="ElementShortName">alucontrol[4:0]</obj_property>
+         <obj_property name="ObjectShortName">alucontrol[4:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_ex/alu/aluresult" type="array">
+         <obj_property name="ElementShortName">aluresult[31:0]</obj_property>
+         <obj_property name="ObjectShortName">aluresult[31:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider475">
+      <obj_property name="label">MEM</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/hazard_bus/res.flush_m" type="logic">
+      <obj_property name="ElementShortName">.flush_m</obj_property>
+      <obj_property name="ObjectShortName">.flush_m</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/stage_mem/kill_m" type="logic">
+      <obj_property name="ElementShortName">kill_m</obj_property>
+      <obj_property name="ObjectShortName">kill_m</obj_property>
+   </wvobject>
+   <wvobject fp_name="group442" type="group">
+      <obj_property name="label">Load-Store Unit</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/pc_m" type="array">
+         <obj_property name="ElementShortName">pc_m[31:0]</obj_property>
+         <obj_property name="ObjectShortName">pc_m[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_mem/load_store_unit/memaccess" type="array">
+         <obj_property name="ElementShortName">memaccess[1:0]</obj_property>
+         <obj_property name="ObjectShortName">memaccess[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_mem/load_store_unit/mask_mode" type="array">
+         <obj_property name="ElementShortName">mask_mode[2:0]</obj_property>
+         <obj_property name="ObjectShortName">mask_mode[2:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_mem/load_store_unit/addr" type="array">
+         <obj_property name="ElementShortName">addr[31:0]</obj_property>
+         <obj_property name="ObjectShortName">addr[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_mem/load_store_unit/data" type="array">
+         <obj_property name="ElementShortName">data[31:0]</obj_property>
+         <obj_property name="ObjectShortName">data[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_mem/load_store_unit/rdata_ext" type="array">
+         <obj_property name="ElementShortName">rdata_ext[31:0]</obj_property>
+         <obj_property name="ObjectShortName">rdata_ext[31:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/stage_mem/csr_result" type="array">
+      <obj_property name="ElementShortName">csr_result[31:0]</obj_property>
+      <obj_property name="ObjectShortName">csr_result[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider748">
+      <obj_property name="label">WB</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/stage_wb/kill_w" type="logic">
+      <obj_property name="ElementShortName">kill_w</obj_property>
+      <obj_property name="ObjectShortName">kill_w</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/control_signal_w.resultsrc" type="array">
+      <obj_property name="ElementShortName">.resultsrc[1:0]</obj_property>
+      <obj_property name="ObjectShortName">.resultsrc[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/result_w" type="array">
+      <obj_property name="ElementShortName">result_w[31:0]</obj_property>
+      <obj_property name="ObjectShortName">result_w[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/cpu_testbench/dut/rd_w" type="array">
+      <obj_property name="ElementShortName">rd_w[4:0]</obj_property>
+      <obj_property name="ObjectShortName">rd_w[4:0]</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider321">
+      <obj_property name="label">DEBUG</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="BkColor">#A52A2A</obj_property>
+   </wvobject>
+</wave_config>

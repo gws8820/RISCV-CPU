@@ -4,22 +4,40 @@ timeprecision 1ps;
 import riscv_defines::*;
 
 module instruction_memory(
-    input   logic   start, clk,
-    input   logic   [31:0] pc,
-    input   logic   instmisalign,
-    input   logic   flush_d,
-    input   logic   stall_d,
-    output  logic   imemfault,
-    output  inst_t  inst
+    input   logic           start, clk,
+    input   logic [31:0]    pc,
+    input   logic           instmisalign,
+    input   logic           flush_d,
+    input   logic           stall_d,
+    output  logic           imemfault,
+    output  inst_t          inst,
+
+    input   logic           prog_en,
+    input   logic [31:0]    prog_addr,
+    input   logic [31:0]    prog_data
 );
 
     logic [29:0] pc_word;
     assign pc_word = pc[31:2];
 
+    logic [29:0] prog_word;
+    assign prog_word = prog_addr[31:2];
+
     (* ram_style="block" *) logic [31:0] inst_mem [0:IMEM_WORD-1];
 
-    initial begin
-        $readmemh("./program.hex", inst_mem);
+    `ifndef SYNTHESIS
+        // Simulation only
+        initial begin
+            $readmemh("program.hex", inst_mem);
+        end
+    `else
+        // FPGA & Synthesis
+    `endif
+    
+    always_ff@(posedge clk) begin
+        if (prog_en && (prog_word < IMEM_WORD)) begin
+            inst_mem[prog_word] <= prog_data;
+        end
     end
     
     always_ff@(posedge clk) begin

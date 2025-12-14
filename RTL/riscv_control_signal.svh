@@ -4,8 +4,16 @@ localparam FUNCT7_STD       = 7'b0000000;
 localparam FUNCT7_MUL       = 7'b0000001;
 localparam FUNCT7_ALT       = 7'b0100000;
 
+typedef enum logic [2:0] {
+    PC_PCPLUS4,
+    PC_PRED,
+    PC_JUMP,        // Mispredict as NOT TAKEN
+    PC_RETURN,      // Mispredict as TAKEN
+    PC_TRAP
+} pcsrc_t;
+
 typedef enum logic [1:0] {
-    CFLOW_PLUS4,
+    CFLOW_PCPLUS4,
     CFLOW_BRANCH,
     CFLOW_JAL,
     CFLOW_JALR

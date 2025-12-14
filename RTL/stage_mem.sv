@@ -29,7 +29,10 @@ module stage_mem (
 
     input   logic [31:0]            csr_result,
 
-    hazard_interface.requester      hazard_bus
+    hazard_interface.requester      hazard_bus,
+    
+    output  logic                   print_en,
+    output  logic [31:0]            print_data
 );
 
     trap_flag_t                     trap_flag;
@@ -93,7 +96,6 @@ module stage_mem (
     // Load Store Unit
     logic kill_m;
     
-    (* DONT_TOUCH = "true" *)
     load_store_unit load_store_unit (
         .start                      (start),
         .clk                        (clk),
@@ -102,7 +104,10 @@ module stage_mem (
         .memaccess                  (kill_m ? MEM_DISABLED : control_signal_m.memaccess), // PREVENT MEMORY ACCESS IF TRAP OCCURRED
         .mask_mode                  (control_signal_m.funct3.mask_mode),
         .rdata_ext                  (memresult_m),
-        .dmemfault                  (trap_flag.dmemfault)
+        .dmemfault                  (trap_flag.dmemfault),
+        
+        .print_en                   (print_en),
+        .print_data                 (print_data)
     );
     
     // Hazard Packet
@@ -117,6 +122,11 @@ module stage_mem (
     
     // Trap Packet
     always_comb begin
+        trap_flag.instillegal       = 0;
+        trap_flag.instmisalign      = 0;
+        trap_flag.imemfault         = 0;
+        trap_flag.datamisalign      = 0;
+
         if (trap_req_prev.valid) begin
             kill_m                  = 1;
             trap_req_m              = trap_req_prev;

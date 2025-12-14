@@ -27,7 +27,7 @@ module main_decoder(
     assign csr_mode = csr_mode_t'(funct3);
     
     always_comb begin
-        cflow_mode          = CFLOW_PLUS4;
+        cflow_mode          = CFLOW_PCPLUS4;
         sysop_mode          = SYSOP_NORMAL;
         fencei              = 0;
         immsrc              = IMM_I;
@@ -59,7 +59,7 @@ module main_decoder(
                     default:    illegal_op = 1;
                 endcase
                 
-                cflow_mode  = CFLOW_PLUS4;
+                cflow_mode  = CFLOW_PCPLUS4;
                 sysop_mode  = SYSOP_NORMAL;
                 immsrc      = IMM_I;
                 alusrc_a    = SRCA_REG;
@@ -76,7 +76,7 @@ module main_decoder(
                     default:    is_alt = 0;
                 endcase
                 
-                cflow_mode  = CFLOW_PLUS4;
+                cflow_mode  = CFLOW_PCPLUS4;
                 sysop_mode  = SYSOP_NORMAL;
                 immsrc      = IMM_I;
                 alusrc_a    = SRCA_REG;
@@ -87,7 +87,7 @@ module main_decoder(
                 regwrite    = 1;
             end
             OP_LOAD: begin
-                cflow_mode  = CFLOW_PLUS4;
+                cflow_mode  = CFLOW_PCPLUS4;
                 sysop_mode  = SYSOP_NORMAL;
                 immsrc      = IMM_I;
                 alusrc_a    = SRCA_REG;
@@ -98,7 +98,7 @@ module main_decoder(
                 regwrite    = 1;
             end
             OP_STORE: begin
-                cflow_mode  = CFLOW_PLUS4;
+                cflow_mode  = CFLOW_PCPLUS4;
                 sysop_mode  = SYSOP_NORMAL;
                 immsrc      = IMM_S;
                 alusrc_a    = SRCA_REG;
@@ -109,7 +109,7 @@ module main_decoder(
                 regwrite    = 0;
             end
             OP_LUI: begin
-                cflow_mode  = CFLOW_PLUS4;
+                cflow_mode  = CFLOW_PCPLUS4;
                 sysop_mode  = SYSOP_NORMAL;
                 immsrc      = IMM_U;
                 alusrc_a    = SRCA_ZERO;
@@ -120,7 +120,7 @@ module main_decoder(
                 regwrite    = 1;
             end
             OP_AUIPC: begin
-                cflow_mode  = CFLOW_PLUS4;
+                cflow_mode  = CFLOW_PCPLUS4;
                 sysop_mode  = SYSOP_NORMAL;
                 immsrc      = IMM_U;
                 alusrc_a    = SRCA_PC;
@@ -177,7 +177,7 @@ module main_decoder(
                     endcase
                 end
                 else begin // Zicsr Extension
-                    cflow_mode  = CFLOW_PLUS4;
+                    cflow_mode  = CFLOW_PCPLUS4;
                     sysop_mode  = SYSOP_NORMAL;
                     immsrc      = IMM_Z;
                     alusrc_a    = SRCA_REG;
