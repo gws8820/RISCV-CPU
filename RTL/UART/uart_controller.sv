@@ -43,7 +43,9 @@ module uart_controller(
         .rstn               (rstn),
         .clk                (clk),
         .sample_tick        (sample_tick),
+
         .rx                 (rx),
+
         .rx_data            (rx_data),
         .rx_valid           (rx_valid)
     );
@@ -55,12 +57,15 @@ module uart_controller(
     uart_rx_ctrl rx_ctrl (
         .rstn               (rstn),
         .clk                (clk),
+
         .rx_data            (rx_data),
         .rx_valid           (rx_valid),
+
         .start              (start),
         .prog_en            (prog_en),
         .prog_addr          (prog_addr),
         .prog_data          (prog_data),
+
         .res                (res)
     );
 
@@ -74,9 +79,11 @@ module uart_controller(
         .rstn               (rstn),
         .clk                (clk),
         .baud_tick          (baud_tick),
+
         .tx_data            (tx_data_byte),
         .tx_valid           (tx_data_valid),
         .tx_ready           (tx_ready),
+
         .tx                 (tx)
     );
 
@@ -85,10 +92,13 @@ module uart_controller(
     uart_tx_ctrl tx_ctrl (
         .rstn               (rstn),
         .clk                (clk),
+
         .res                (res),
         .print_en           (print_en),
         .print_data         (print_data),
+
         .tx_ready           (tx_ready),
+        
         .tx_data            (tx_data_byte),
         .tx_valid           (tx_data_valid)
     );

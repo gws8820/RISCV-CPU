@@ -16,7 +16,7 @@ module pcnext_selector (
     output  logic [31:0]    pc_next
 );
 
-    (* mark_debug = "true", keep = "true" *) pcsrc_t pcsrc;
+    pcsrc_t pcsrc;
 
     always_comb begin
         priority if (trap_redir) begin

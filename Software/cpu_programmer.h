@@ -6,8 +6,10 @@
 #include <stdint.h>
 
 // Parameter
-#define BASE_ADDR   0x00
-#define START_FLAG  0xA5
+#define BASE_ADDR       0x00
+#define START_FLAG      0xA5
+#define MAX_PROG_SIZE   4096    // 16KB IMEM
+#define CHUNK_SIZE      62      // Max words per packet
 
 // CMD
 typedef enum {
@@ -17,13 +19,8 @@ typedef enum {
     CMD_EXIT        = 0x04
 } cmd_t;
 
-typedef struct {
-    uint8_t         len;
-    uint32_t        data [64];
-} program_data_t;
-
-int     read_program (program_data_t *prog);
-int     send_program (program_data_t *program);
+int     read_program (uint32_t *data, uint32_t *len);
+int     send_chunk (uint32_t addr, uint32_t *data, uint8_t len);
 int     send_command (cmd_t cmd);
 
 #endif // CPU_PROGRAMMER_H

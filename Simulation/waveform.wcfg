@@ -5,7 +5,7 @@
    <db_ref_list>
       <db_ref path="cpu_testbench_behav.wdb" id="1">
          <top_modules>
-            <top_module name="\$unit_riscv_defines_sv_1655521278 " />
+            <top_module name="\$unit_riscv_defines_sv_3223210346 " />
             <top_module name="cpu_testbench" />
             <top_module name="glbl" />
             <top_module name="riscv_defines" />
@@ -14,12 +14,12 @@
    </db_ref_list>
    <zoom_setting>
       <ZoomStartTime time="0.000 ns"></ZoomStartTime>
-      <ZoomEndTime time="650.001 ns"></ZoomEndTime>
+      <ZoomEndTime time="986.638 ns"></ZoomEndTime>
       <Cursor1Time time="650.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="303"></NameColumnWidth>
-      <ValueColumnWidth column_width="329"></ValueColumnWidth>
+      <NameColumnWidth column_width="429"></NameColumnWidth>
+      <ValueColumnWidth column_width="231"></ValueColumnWidth>
    </column_width_setting>
    <WVObjectSize size="49" />
    <wvobject fp_name="/cpu_testbench/dut/start" type="logic">
@@ -187,10 +187,6 @@
       <obj_property name="ElementShortName">btb_hit</obj_property>
       <obj_property name="ObjectShortName">btb_hit</obj_property>
    </wvobject>
-   <wvobject fp_name="/cpu_testbench/dut/stage_id/branch_unit/mispredict" type="logic">
-      <obj_property name="ElementShortName">mispredict</obj_property>
-      <obj_property name="ObjectShortName">mispredict</obj_property>
-   </wvobject>
    <wvobject type="divider" fp_name="divider798">
       <obj_property name="label">IF</obj_property>
       <obj_property name="DisplayName">label</obj_property>
@@ -256,43 +252,6 @@
       <obj_property name="ElementShortName">inst</obj_property>
       <obj_property name="ObjectShortName">inst</obj_property>
    </wvobject>
-   <wvobject fp_name="group435" type="group">
-      <obj_property name="label">Register File</obj_property>
-      <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
-      <wvobject fp_name="/cpu_testbench/dut/stage_id/regfile/raddr1" type="array">
-         <obj_property name="ElementShortName">raddr1[4:0]</obj_property>
-         <obj_property name="ObjectShortName">raddr1[4:0]</obj_property>
-      </wvobject>
-      <wvobject fp_name="/cpu_testbench/dut/stage_id/regfile/raddr2" type="array">
-         <obj_property name="ElementShortName">raddr2[4:0]</obj_property>
-         <obj_property name="ObjectShortName">raddr2[4:0]</obj_property>
-      </wvobject>
-      <wvobject fp_name="/cpu_testbench/dut/stage_id/regfile/rdata1" type="array">
-         <obj_property name="ElementShortName">rdata1[31:0]</obj_property>
-         <obj_property name="ObjectShortName">rdata1[31:0]</obj_property>
-      </wvobject>
-      <wvobject fp_name="/cpu_testbench/dut/stage_id/regfile/rdata2" type="array">
-         <obj_property name="ElementShortName">rdata2[31:0]</obj_property>
-         <obj_property name="ObjectShortName">rdata2[31:0]</obj_property>
-      </wvobject>
-      <wvobject fp_name="/cpu_testbench/dut/control_signal_w.regwrite" type="logic">
-         <obj_property name="ElementShortName">.regwrite</obj_property>
-         <obj_property name="ObjectShortName">.regwrite</obj_property>
-      </wvobject>
-      <wvobject fp_name="/cpu_testbench/dut/rd_w" type="array">
-         <obj_property name="ElementShortName">rd_w[4:0]</obj_property>
-         <obj_property name="ObjectShortName">rd_w[4:0]</obj_property>
-      </wvobject>
-      <wvobject fp_name="/cpu_testbench/dut/result_w" type="array">
-         <obj_property name="ElementShortName">result_w[31:0]</obj_property>
-         <obj_property name="ObjectShortName">result_w[31:0]</obj_property>
-      </wvobject>
-   </wvobject>
-   <wvobject fp_name="/cpu_testbench/dut/stage_id/imm_extender/immext" type="array">
-      <obj_property name="ElementShortName">immext[31:0]</obj_property>
-      <obj_property name="ObjectShortName">immext[31:0]</obj_property>
-   </wvobject>
    <wvobject fp_name="group437" type="group">
       <obj_property name="label">Control Unit</obj_property>
       <obj_property name="DisplayName">label</obj_property>
@@ -345,37 +304,50 @@
          <obj_property name="ObjectShortName">regwrite</obj_property>
       </wvobject>
    </wvobject>
-   <wvobject fp_name="group174" type="group">
-      <obj_property name="label">Branch Unit</obj_property>
+   <wvobject fp_name="group435" type="group">
+      <obj_property name="label">Register File</obj_property>
       <obj_property name="DisplayName">label</obj_property>
       <obj_property name="isExpanded"></obj_property>
-      <wvobject fp_name="/cpu_testbench/dut/stage_id/branch_unit/cflow_mode" type="array">
-         <obj_property name="ElementShortName">cflow_mode[1:0]</obj_property>
-         <obj_property name="ObjectShortName">cflow_mode[1:0]</obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/regfile/raddr1" type="array">
+         <obj_property name="ElementShortName">raddr1[4:0]</obj_property>
+         <obj_property name="ObjectShortName">raddr1[4:0]</obj_property>
       </wvobject>
-      <wvobject fp_name="/cpu_testbench/dut/stage_id/branch_unit/branch_mode" type="array">
-         <obj_property name="ElementShortName">branch_mode[2:0]</obj_property>
-         <obj_property name="ObjectShortName">branch_mode[2:0]</obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/regfile/raddr2" type="array">
+         <obj_property name="ElementShortName">raddr2[4:0]</obj_property>
+         <obj_property name="ObjectShortName">raddr2[4:0]</obj_property>
       </wvobject>
-      <wvobject fp_name="/cpu_testbench/dut/stage_id/branch_unit/in_a" type="array">
-         <obj_property name="ElementShortName">in_a[31:0]</obj_property>
-         <obj_property name="ObjectShortName">in_a[31:0]</obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/regfile/rdata1" type="array">
+         <obj_property name="ElementShortName">rdata1[31:0]</obj_property>
+         <obj_property name="ObjectShortName">rdata1[31:0]</obj_property>
       </wvobject>
-      <wvobject fp_name="/cpu_testbench/dut/stage_id/branch_unit/in_b" type="array">
-         <obj_property name="ElementShortName">in_b[31:0]</obj_property>
-         <obj_property name="ObjectShortName">in_b[31:0]</obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/regfile/rdata2" type="array">
+         <obj_property name="ElementShortName">rdata2[31:0]</obj_property>
+         <obj_property name="ObjectShortName">rdata2[31:0]</obj_property>
       </wvobject>
-      <wvobject fp_name="/cpu_testbench/dut/stage_id/branch_unit/miss_1" type="logic">
-         <obj_property name="ElementShortName">miss_1</obj_property>
-         <obj_property name="ObjectShortName">miss_1</obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/control_signal_w.regwrite" type="logic">
+         <obj_property name="ElementShortName">.regwrite</obj_property>
+         <obj_property name="ObjectShortName">.regwrite</obj_property>
       </wvobject>
-      <wvobject fp_name="/cpu_testbench/dut/stage_id/branch_unit/miss_2" type="logic">
-         <obj_property name="ElementShortName">miss_2</obj_property>
-         <obj_property name="ObjectShortName">miss_2</obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/rd_w" type="array">
+         <obj_property name="ElementShortName">rd_w[4:0]</obj_property>
+         <obj_property name="ObjectShortName">rd_w[4:0]</obj_property>
       </wvobject>
-      <wvobject fp_name="/cpu_testbench/dut/stage_id/branch_unit/mispredict" type="logic">
-         <obj_property name="ElementShortName">mispredict</obj_property>
-         <obj_property name="ObjectShortName">mispredict</obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/result_w" type="array">
+         <obj_property name="ElementShortName">result_w[31:0]</obj_property>
+         <obj_property name="ObjectShortName">result_w[31:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group207" type="group">
+      <obj_property name="label">IMM Extender</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/imm_extender/immsrc" type="array">
+         <obj_property name="ElementShortName">immsrc[2:0]</obj_property>
+         <obj_property name="ObjectShortName">immsrc[2:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_id/imm_extender/immext" type="array">
+         <obj_property name="ElementShortName">immext[31:0]</obj_property>
+         <obj_property name="ObjectShortName">immext[31:0]</obj_property>
       </wvobject>
    </wvobject>
    <wvobject type="divider" fp_name="divider438">
@@ -394,18 +366,31 @@
       <obj_property name="ElementShortName">csr_wdata_e[31:0]</obj_property>
       <obj_property name="ObjectShortName">csr_wdata_e[31:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="group439" type="group">
-      <obj_property name="label">ALU</obj_property>
+   <wvobject fp_name="group210" type="group">
+      <obj_property name="label">ALU Forwarder</obj_property>
       <obj_property name="DisplayName">label</obj_property>
       <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/stage_ex/hazard_bus/res.forwarda_e" type="array">
+         <obj_property name="ElementShortName">.forwarda_e[1:0]</obj_property>
+         <obj_property name="ObjectShortName">.forwarda_e[1:0]</obj_property>
+      </wvobject>
       <wvobject fp_name="/cpu_testbench/dut/stage_ex/fwd_a" type="array">
          <obj_property name="ElementShortName">fwd_a[31:0]</obj_property>
          <obj_property name="ObjectShortName">fwd_a[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_ex/hazard_bus/res.forwardb_e" type="array">
+         <obj_property name="ElementShortName">.forwardb_e[1:0]</obj_property>
+         <obj_property name="ObjectShortName">.forwardb_e[1:0]</obj_property>
       </wvobject>
       <wvobject fp_name="/cpu_testbench/dut/stage_ex/fwd_b" type="array">
          <obj_property name="ElementShortName">fwd_b[31:0]</obj_property>
          <obj_property name="ObjectShortName">fwd_b[31:0]</obj_property>
       </wvobject>
+   </wvobject>
+   <wvobject fp_name="group439" type="group">
+      <obj_property name="label">ALU</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/cpu_testbench/dut/control_signal_e.alusrc_a" type="array">
          <obj_property name="ElementShortName">.alusrc_a[1:0]</obj_property>
          <obj_property name="ObjectShortName">.alusrc_a[1:0]</obj_property>
@@ -431,6 +416,51 @@
          <obj_property name="ObjectShortName">aluresult[31:0]</obj_property>
       </wvobject>
    </wvobject>
+   <wvobject fp_name="group174" type="group">
+      <obj_property name="label">Branch Unit</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/stage_ex/branch_unit/cflow_mode" type="array">
+         <obj_property name="ElementShortName">cflow_mode[1:0]</obj_property>
+         <obj_property name="ObjectShortName">cflow_mode[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_ex/branch_unit/branch_mode" type="array">
+         <obj_property name="ElementShortName">branch_mode[2:0]</obj_property>
+         <obj_property name="ObjectShortName">branch_mode[2:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_ex/branch_unit/in_a" type="array">
+         <obj_property name="ElementShortName">in_a[31:0]</obj_property>
+         <obj_property name="ObjectShortName">in_a[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_ex/branch_unit/in_b" type="array">
+         <obj_property name="ElementShortName">in_b[31:0]</obj_property>
+         <obj_property name="ObjectShortName">in_b[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_ex/branch_unit/cflow_valid" type="logic">
+         <obj_property name="ElementShortName">cflow_valid</obj_property>
+         <obj_property name="ObjectShortName">cflow_valid</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_ex/branch_unit/cflow_taken" type="logic">
+         <obj_property name="ElementShortName">cflow_taken</obj_property>
+         <obj_property name="ObjectShortName">cflow_taken</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_ex/branch_unit/pred_taken" type="logic">
+         <obj_property name="ElementShortName">pred_taken</obj_property>
+         <obj_property name="ObjectShortName">pred_taken</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_ex/branch_unit/miss_1" type="logic">
+         <obj_property name="ElementShortName">miss_1</obj_property>
+         <obj_property name="ObjectShortName">miss_1</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_ex/branch_unit/miss_2" type="logic">
+         <obj_property name="ElementShortName">miss_2</obj_property>
+         <obj_property name="ObjectShortName">miss_2</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_ex/branch_unit/mispredict" type="logic">
+         <obj_property name="ElementShortName">mispredict</obj_property>
+         <obj_property name="ObjectShortName">mispredict</obj_property>
+      </wvobject>
+   </wvobject>
    <wvobject type="divider" fp_name="divider475">
       <obj_property name="label">MEM</obj_property>
       <obj_property name="DisplayName">label</obj_property>
@@ -442,6 +472,23 @@
    <wvobject fp_name="/cpu_testbench/dut/stage_mem/kill_m" type="logic">
       <obj_property name="ElementShortName">kill_m</obj_property>
       <obj_property name="ObjectShortName">kill_m</obj_property>
+   </wvobject>
+   <wvobject fp_name="group281" type="group">
+      <obj_property name="label">LSU Forwarder</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/stage_mem/hazard_bus/completer/res.forward_m" type="logic">
+         <obj_property name="ElementShortName">.forward_m</obj_property>
+         <obj_property name="ObjectShortName">.forward_m</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_mem/result_w" type="array">
+         <obj_property name="ElementShortName">result_w[31:0]</obj_property>
+         <obj_property name="ObjectShortName">result_w[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_mem/storedata_m" type="array">
+         <obj_property name="ElementShortName">storedata_m[31:0]</obj_property>
+         <obj_property name="ObjectShortName">storedata_m[31:0]</obj_property>
+      </wvobject>
    </wvobject>
    <wvobject fp_name="group442" type="group">
       <obj_property name="label">Load-Store Unit</obj_property>
@@ -472,9 +519,26 @@
          <obj_property name="ObjectShortName">rdata_ext[31:0]</obj_property>
       </wvobject>
    </wvobject>
-   <wvobject fp_name="/cpu_testbench/dut/stage_mem/csr_result" type="array">
-      <obj_property name="ElementShortName">csr_result[31:0]</obj_property>
-      <obj_property name="ObjectShortName">csr_result[31:0]</obj_property>
+   <wvobject fp_name="group317" type="group">
+      <obj_property name="label">Pre-Result Selector</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/stage_mem/control_signal_m.resultsrc" type="array">
+         <obj_property name="ElementShortName">.resultsrc[1:0]</obj_property>
+         <obj_property name="ObjectShortName">.resultsrc[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_mem/aluresult_m" type="array">
+         <obj_property name="ElementShortName">aluresult_m[31:0]</obj_property>
+         <obj_property name="ObjectShortName">aluresult_m[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_mem/pcplus4_m" type="array">
+         <obj_property name="ElementShortName">pcplus4_m[31:0]</obj_property>
+         <obj_property name="ObjectShortName">pcplus4_m[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_mem/csr_result" type="array">
+         <obj_property name="ElementShortName">csr_result[31:0]</obj_property>
+         <obj_property name="ObjectShortName">csr_result[31:0]</obj_property>
+      </wvobject>
    </wvobject>
    <wvobject type="divider" fp_name="divider748">
       <obj_property name="label">WB</obj_property>
@@ -484,17 +548,30 @@
       <obj_property name="ElementShortName">kill_w</obj_property>
       <obj_property name="ObjectShortName">kill_w</obj_property>
    </wvobject>
-   <wvobject fp_name="/cpu_testbench/dut/control_signal_w.resultsrc" type="array">
-      <obj_property name="ElementShortName">.resultsrc[1:0]</obj_property>
-      <obj_property name="ObjectShortName">.resultsrc[1:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/cpu_testbench/dut/result_w" type="array">
-      <obj_property name="ElementShortName">result_w[31:0]</obj_property>
-      <obj_property name="ObjectShortName">result_w[31:0]</obj_property>
-   </wvobject>
    <wvobject fp_name="/cpu_testbench/dut/rd_w" type="array">
       <obj_property name="ElementShortName">rd_w[4:0]</obj_property>
       <obj_property name="ObjectShortName">rd_w[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="group316" type="group">
+      <obj_property name="label">Result Selector</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/cpu_testbench/dut/control_signal_w.resultsrc" type="array">
+         <obj_property name="ElementShortName">.resultsrc[1:0]</obj_property>
+         <obj_property name="ObjectShortName">.resultsrc[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_wb/result_w_prev" type="array">
+         <obj_property name="ElementShortName">result_w_prev[31:0]</obj_property>
+         <obj_property name="ObjectShortName">result_w_prev[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/stage_wb/memresult_w" type="array">
+         <obj_property name="ElementShortName">memresult_w[31:0]</obj_property>
+         <obj_property name="ObjectShortName">memresult_w[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/cpu_testbench/dut/result_w" type="array">
+         <obj_property name="ElementShortName">result_w[31:0]</obj_property>
+         <obj_property name="ObjectShortName">result_w[31:0]</obj_property>
+      </wvobject>
    </wvobject>
    <wvobject type="divider" fp_name="divider321">
       <obj_property name="label">DEBUG</obj_property>

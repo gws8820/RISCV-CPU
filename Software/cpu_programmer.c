@@ -8,10 +8,10 @@ static int send_byte(uint8_t data, int current_checksum) {
     return (current_checksum + data) & 0xFF;
 }
 
-int read_program (program_data_t *prog) {
+int read_program (uint32_t *data, uint32_t *len) {
     FILE *fp = fopen("../program.hex", "r");
 
-    uint8_t     index   = 0;
+    uint32_t    index   = 0;
     uint32_t    line    = 0;
 
     if (fp == NULL) {
@@ -19,68 +19,86 @@ int read_program (program_data_t *prog) {
         return -1;
     }
     else {
-        while (index < 64 && (fscanf(fp, "%x", &line) == 1)) {
-            prog->data[index] = line;
+        while (index < MAX_PROG_SIZE && (fscanf(fp, "%x", &line) == 1)) {
+            data[index] = line;
             index++;
         }
 
-        prog->len     = 4 + index * 4;
+        *len = index;
         fclose(fp);
     }
 
     return 0;
 }
 
-int send_program (program_data_t *program) {
-    int             checksum = 0;
-    uint8_t         index = 0;
-
-    checksum = send_byte(program->len, checksum);           // LEN
-    
-    uint32_t addr   = BASE_ADDR;
-    uint8_t *addr_p = (uint8_t *) &addr;
-    for (int i=0; i<4; i++) {
-        checksum = send_byte(addr_p[i], checksum);          // ADDR
-    }
-
-    while (index < (program->len - 4)/4) {
-        uint8_t *data_p = (uint8_t *)&program->data[index];
-        for (int i=0; i<4; i++) {
-            checksum = send_byte(data_p[i], checksum);      // DATA
-        }
-        index++;
-    }
-
-    return checksum;
-}
-
-int send_command (cmd_t cmd) {
+int send_chunk (uint32_t addr, uint32_t *data, uint8_t len) {
     int checksum = 0;
 
-    checksum = send_byte(START_FLAG, checksum);             // START
+    // Header
+    checksum = send_byte(START_FLAG, checksum);         // START
+    checksum = send_byte((uint8_t)CMD_WRITE, checksum); // CMD
     
-    checksum = send_byte((uint8_t)cmd, checksum);           // CMD
-
-    if (cmd == CMD_WRITE) {
-        program_data_t      prog = {0};
-        if (read_program(&prog) == -1)  return -1;
-        
-        int prog_checksum   = send_program(&prog);
-        if (prog_checksum == -1)        return -1;
-        checksum            = (checksum + prog_checksum) & 0xFF;
+    // LEN (Address + Data_Len * 4)
+    uint8_t packet_len = 4 + len * 4;
+    checksum = send_byte(packet_len, checksum);
+    
+    // ADDR
+    uint8_t *addr_p = (uint8_t *) &addr;
+    for (int i=0; i<4; i++) {
+        checksum = send_byte(addr_p[i], checksum);
     }
-    else {  // CMD_RESET or CMD_RUN
-        checksum = send_byte(0, checksum);                  // LEN
+
+    // DATA
+    for (int i=0; i<len; i++) {
+        uint8_t *data_p = (uint8_t *)&data[i];
+        for (int j=0; j<4; j++) {
+            checksum = send_byte(data_p[j], checksum);
+        }
     }
 
     if (checksum == -1)                             return -1;
     if (serial_write_byte((uint8_t)checksum) != 0)  return -1;
 
-    if (check_ack() == -1) {
-        printf("Command Send FAIL.\n");
+    return check_ack();
+}
+
+int send_command (cmd_t cmd) {
+    if (cmd == CMD_WRITE) {
+        uint32_t program_data[MAX_PROG_SIZE];
+        uint32_t total_len = 0;
+        
+        if (read_program(program_data, &total_len) == -1) return -1;
+        
+        uint32_t sent_len = 0;
+        while (sent_len < total_len) {
+            uint32_t chunk_len      = min(CHUNK_SIZE, total_len - sent_len);
+            uint32_t current_addr   = BASE_ADDR + (sent_len * 4);
+            
+            if (send_chunk(current_addr, &program_data[sent_len], (uint8_t)chunk_len) == -1) {
+                printf("Write Failed at 0x%08X.\n", current_addr);
+                return -1;
+            }
+            
+            sent_len += chunk_len;
+            printf("Writing Program.. %d/%d.\r", sent_len, total_len);
+        }
+        printf("\nProgram Write Complete.\n");
     }
     else {
-        printf("Command Send OK.\n");
+        int checksum = 0;
+        checksum = send_byte(START_FLAG, checksum);     // START
+        checksum = send_byte((uint8_t)cmd, checksum);   // CMD
+        checksum = send_byte(0, checksum);              // LEN
+
+        if (checksum == -1)                             return -1;
+        if (serial_write_byte((uint8_t)checksum) != 0)  return -1;
+
+        if (check_ack() == -1) {
+            printf("Command Send FAIL.\n");
+        }
+        else {
+            printf("Command Send OK.\n");
+        }
     }
     
     if (cmd == CMD_RUN) {

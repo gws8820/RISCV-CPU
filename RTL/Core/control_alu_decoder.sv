@@ -3,7 +3,7 @@ timeprecision 1ps;
 
 import riscv_defines::*;
 
-module alu_decoder(
+module control_alu_decoder(
     input   aluop_t         aluop,
     input   logic           is_rtype,
     input   logic           is_alt,

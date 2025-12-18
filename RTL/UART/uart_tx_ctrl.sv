@@ -4,30 +4,30 @@ timeprecision 1ps;
 import uart_defines::*;
 
 module uart_tx_ctrl(
-    input   logic           rstn,
-    input   logic           clk,
+    input   logic               rstn,
+    input   logic               clk,
 
-    input   uart_res_t      res,
-    input   logic           print_en,
-    input   logic  [31:0]   print_data,
+    input   uart_res_t          res,
+    input   logic               print_en,
+    input   logic  [31:0]       print_data,
 
-    input   logic           tx_ready,
+    input   logic               tx_ready,
     
-    output  logic  [7:0]    tx_data,
-    output  logic           tx_valid
+    output  logic  [7:0]        tx_data,
+    output  logic               tx_valid
 );
 
     // --------- TX FIFO (Ring Buffer) ---------
 
-    uart_tx_entry_t         tx_fifo[0:FIFO_SIZE-1];
+    uart_tx_entry_t             tx_fifo[0:CTRL_FIFO_SIZE-1];
 
-    logic [FIFO_BITS:0]     rd_ptr, wr_ptr; // MSB Indicates Wrap Bit
-    logic                   fifo_empty, fifo_full;
+    logic [CTRL_FIFO_BITS:0]    rd_ptr, wr_ptr; // MSB Indicates Wrap Bit
+    logic                       fifo_empty, fifo_full;
 
     always_comb begin
-        fifo_empty  = (rd_ptr == wr_ptr);
-        fifo_full   = (wr_ptr[FIFO_BITS]      != rd_ptr[FIFO_BITS]) &&
-                      (wr_ptr[FIFO_BITS-1:0]  == rd_ptr[FIFO_BITS-1:0]);
+        fifo_empty              = (rd_ptr == wr_ptr);
+        fifo_full               = (wr_ptr[CTRL_FIFO_BITS]      != rd_ptr[CTRL_FIFO_BITS]) &&
+                                  (wr_ptr[CTRL_FIFO_BITS-1:0]  == rd_ptr[CTRL_FIFO_BITS-1:0]);
     end
 
     always_ff @(posedge clk) begin
@@ -37,19 +37,19 @@ module uart_tx_ctrl(
         else if (!fifo_full) begin
             unique case (res)
                 RES_ACK, RES_NAK: begin
-                    tx_fifo[wr_ptr[FIFO_BITS-1:0]].res      <= res;
-                    tx_fifo[wr_ptr[FIFO_BITS-1:0]].len      <= '0;
-                    tx_fifo[wr_ptr[FIFO_BITS-1:0]].data     <= '0;
+                    tx_fifo[wr_ptr[CTRL_FIFO_BITS-1:0]].res         <= res;
+                    tx_fifo[wr_ptr[CTRL_FIFO_BITS-1:0]].len         <= '0;
+                    tx_fifo[wr_ptr[CTRL_FIFO_BITS-1:0]].data        <= '0;
 
-                    wr_ptr                                  <= wr_ptr + 1;
+                    wr_ptr                                          <= wr_ptr + 1;
                 end
                 default: begin
                     if (print_en) begin
-                        tx_fifo[wr_ptr[FIFO_BITS-1:0]].res  <= RES_PRINT;
-                        tx_fifo[wr_ptr[FIFO_BITS-1:0]].len  <= 3'd4;
-                        tx_fifo[wr_ptr[FIFO_BITS-1:0]].data <= print_data;
+                        tx_fifo[wr_ptr[CTRL_FIFO_BITS-1:0]].res     <= RES_PRINT;
+                        tx_fifo[wr_ptr[CTRL_FIFO_BITS-1:0]].len     <= 3'd4;
+                        tx_fifo[wr_ptr[CTRL_FIFO_BITS-1:0]].data    <= print_data;
 
-                        wr_ptr                              <= wr_ptr + 1;
+                        wr_ptr                                      <= wr_ptr + 1;
                     end
                 end
             endcase
@@ -88,7 +88,7 @@ module uart_tx_ctrl(
                     data_counter        <= '0;
 
                     if (!fifo_empty && tx_ready) begin
-                        active_entry    <= tx_fifo[rd_ptr[FIFO_BITS-1:0]];
+                        active_entry    <= tx_fifo[rd_ptr[CTRL_FIFO_BITS-1:0]];
                         rd_ptr          <= rd_ptr + 1;
 
                         tx_data         <= START_FLAG;

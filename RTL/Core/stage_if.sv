@@ -65,8 +65,6 @@ module stage_if (
         .clk                        (clk),
         .pc                         (pc_f),
         .instmisalign               (trap_flag.instmisalign),
-        .flush_d                    (hazard_bus.res.flush_d),
-        .stall_d                    (hazard_bus.res.stall_d),
         .imemfault                  (trap_flag.imemfault),
         .inst                       (inst_f),
         

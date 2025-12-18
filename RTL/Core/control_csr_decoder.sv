@@ -11,7 +11,7 @@ function automatic logic check_csr_write(input csr_mode_t mode, input logic [4:0
     endcase
 endfunction
 
-module csr_decoder (
+module control_csr_decoder (
     input   opcode_t        opcode,
     input   logic [4:0]     wtarget,
     input   csr_mode_t      csr_mode,

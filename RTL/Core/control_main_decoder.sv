@@ -3,7 +3,7 @@ timeprecision 1ps;
 
 import riscv_defines::*;
 
-module main_decoder(
+module control_main_decoder(
     input   opcode_t        opcode,
     input   logic [2:0]     funct3,
     input   logic [6:0]     funct7,
@@ -52,10 +52,13 @@ module main_decoder(
                         aluop   = ALUOP_ARITH;
                         is_alt  = 1;
                     end
-                    FUNCT7_MUL: begin
-                        aluop   = ALUOP_MUL;
-                        is_alt  = 0;
-                    end
+                    // M EXTENSION DISABLED
+                    /*
+                        FUNCT7_MUL: begin
+                            aluop   = ALUOP_MUL;
+                            is_alt  = 0;
+                        end
+                    */
                     default:    illegal_op = 1;
                 endcase
                 
@@ -134,9 +137,9 @@ module main_decoder(
                 cflow_mode  = CFLOW_BRANCH;
                 sysop_mode  = SYSOP_NORMAL;
                 immsrc      = IMM_B;
-                alusrc_a    = SRCA_REG;
-                alusrc_b    = SRCB_REG;
-                aluop       = ALUOP_ARITH;
+                alusrc_a    = SRCA_PC;
+                alusrc_b    = SRCB_IMM;
+                aluop       = ALUOP_ADD;
                 memaccess   = MEM_DISABLED;
                 resultsrc   = RESULT_ALU;
                 regwrite    = 0;
@@ -156,7 +159,7 @@ module main_decoder(
                 cflow_mode  = CFLOW_JAL;
                 sysop_mode  = SYSOP_NORMAL;
                 immsrc      = IMM_J;
-                alusrc_a    = SRCA_REG;
+                alusrc_a    = SRCA_PC;
                 alusrc_b    = SRCB_IMM;
                 aluop       = ALUOP_ADD;
                 memaccess   = MEM_DISABLED;

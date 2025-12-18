@@ -7,8 +7,6 @@ module instruction_memory(
     input   logic           start, clk,
     input   logic [31:0]    pc,
     input   logic           instmisalign,
-    input   logic           flush_d,
-    input   logic           stall_d,
     output  logic           imemfault,
     output  inst_t          inst,
 
@@ -46,13 +44,9 @@ module instruction_memory(
             inst <= INST_NOP;
         end
         else begin
-            if (instmisalign || flush_d) begin
+            if (instmisalign) begin
                 imemfault <= 0;
                 inst <= INST_NOP;
-            end
-            else if (stall_d) begin
-                imemfault <= 0;
-                inst <= inst;
             end
             else begin
                 if (pc_word >= IMEM_WORD) begin // Word Aligned

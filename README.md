@@ -7,7 +7,6 @@ A 5-stage pipelined RISC-V processor core implementation in SystemVerilog, desig
 ### ISA Support
 - **Base ISA**: RV32I (RISC-V 32-bit Integer Base Instruction Set)
 - **Extensions**:
-  - **M**: Integer Multiplication and Division
   - **Zicsr**: Control and Status Register (CSR) Instructions
   - **Zifencei**: Instruction-Fetch Fence (FENCE.I)
 
@@ -17,12 +16,12 @@ A 5-stage pipelined RISC-V processor core implementation in SystemVerilog, desig
 - **Pipeline**: 5-stage (Fetch, Decode, Execute, Memory, Writeback)
 - **Branch Prediction**:
   - **Predictor**: BHT & BTB in IF stage for zero-penalty branching
-  - **Branch Unit**: Early resolution & validation in ID stage
-  - **Recovery**: 1-cycle penalty on misprediction (Flush IF, redirect PC)
+  - **Branch Unit**: Resolution & validation in EX stage
+  - **Recovery**: 2-cycle penalty on misprediction (Flush IF/ID, redirect PC)
 - **Hazard Handling**:
-  - Data forwarding for RAW hazards from EX, MEM, and WB stages to ID and EX
+  - Data forwarding for RAW hazards from MEM and WB stages to EX
   - Store-data forwarding to resolve memory data hazards (MEM/WB)
-  - Load-use hazard detection with 1 to 2 cycle pipeline stall
+  - Load-use hazard detection with 1 cycle pipeline stall
   - Branch misprediction recovery with pipeline flush
 - **Trap/Exception Support**:
   - ECALL, EBREAK, MRET
@@ -35,7 +34,7 @@ A 5-stage pipelined RISC-V processor core implementation in SystemVerilog, desig
 ### Clock and Reset Signals
 | Signal | Type | Description |
 |--------|------|-------------|
-| `clk`  | Input | System clock (tested at 100 MHz) |
+| `clk`  | Input | System clock (tested at 50 MHz) |
 | `rstn` | Input | Active-low asynchronous reset |
 | `start`| Internal | Synchronous start signal (derived from `rstn`) |
 
@@ -75,12 +74,11 @@ A 5-stage pipelined RISC-V processor core implementation in SystemVerilog, desig
 ### Hazard Penalties
 | Hazard Type | Penalty (Cycles) | Detection Stage | Notes |
 |-------------|------------------|-----------------|-------|
-| **Data Hazard (RAW)** | 0 | ID/EX | Resolved by forwarding from EX/MEM/WB stages |
+| **Data Hazard (RAW)** | 0 | EX | Resolved by forwarding from MEM/WB stages |
 | **Store-Data Hazard** | 0 | MEM | Resolved by forwarding from WB stage |
-| **Load-Use Hazard (Basic)** | 1 | ID | Detect on ID → use in EX (next cycle) |
-| **Load-Use Hazard (Branch)** | 2 | ID | Detect on ID → use in ID (same cycle) |
+| **Load-Use Hazard** | 1 | ID | Detect on ID → use in EX (next cycle) |
 | **Branch Prediction Hit** | 0 | IF | Zero penalty (Seamless execution) |
-| **Branch Prediction Miss** | 1 | ID | Flush IF stage, redirect PC |
+| **Branch Prediction Miss** | 2 | EX | Flush IF/ID stages, redirect PC |
 
 ### Trap/Exception Penalties
 | Trap/Flush Type | Penalty (Cycles) | Processing Stage | Notes |
@@ -100,10 +98,6 @@ A 5-stage pipelined RISC-V processor core implementation in SystemVerilog, desig
 - **Jump**: JAL, JALR
 - **Upper Immediate**: LUI, AUIPC
 - **System**: ECALL, EBREAK, MRET
-
-### M Extension (Multiply/Divide)
-- **Multiply**: MUL, MULH, MULHSU, MULHU
-- **Divide**: DIV, DIVU, REM, REMU
 
 ### Zicsr Extension
 - CSRRW, CSRRS, CSRRC

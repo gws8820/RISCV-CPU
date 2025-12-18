@@ -7,9 +7,8 @@ module branch_unit (
     input   cflow_mode_t    cflow_mode,
     input   branch_mode_t   branch_mode,
     input   logic [31:0]    in_a, in_b,
-    input   logic           stall_d,
-    input   logic           pred_taken_d,
-    input   logic [31:0]    pc_pred_d,
+    input   logic           pred_taken,
+    input   logic [31:0]    pc_pred,
     input   logic [31:0]    pc_jump,
     output  logic           cflow_valid,
     output  logic           cflow_taken,
@@ -33,32 +32,26 @@ module branch_unit (
         (branch_mode == BRANCH_BGEU && !ltu);
         
     always_comb begin
-        if (stall_d) begin
-            cflow_valid         = 0;
-            cflow_taken         = 0;
-        end
-        else begin
-            unique case (cflow_mode)
-                CFLOW_BRANCH: begin
-                    cflow_valid = 1;
-                    cflow_taken = branch_taken;
-                end
-                CFLOW_JAL, CFLOW_JALR: begin
-                    cflow_valid = 1;
-                    cflow_taken = 1;
-                end
-                default: begin
-                    cflow_valid = 0;
-                    cflow_taken = 0;
-                end
-            endcase
-        end
+        unique case (cflow_mode)
+            CFLOW_BRANCH: begin
+                cflow_valid = 1;
+                cflow_taken = branch_taken;
+            end
+            CFLOW_JAL, CFLOW_JALR: begin
+                cflow_valid = 1;
+                cflow_taken = 1;
+            end
+            default: begin
+                cflow_valid = 0;
+                cflow_taken = 0;
+            end
+        endcase
     end
 
     logic miss_1, miss_2;
     always_comb begin
-        miss_1      = cflow_taken != pred_taken_d;
-        miss_2      = cflow_taken && (pc_pred_d != pc_jump);
+        miss_1      = cflow_taken != pred_taken;
+        miss_2      = cflow_taken && (pc_pred != pc_jump);
         mispredict  = cflow_valid && (miss_1 || miss_2);
     end
     

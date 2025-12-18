@@ -8,6 +8,8 @@ module stage_ex (
 
     input   logic [31:0]                    pc_d,
     input   logic [31:0]                    pcplus4_d,
+    input   logic [31:0]                    pc_pred_d,
+    input   logic                           pred_taken_d,
     input   inst_t                          inst_d,
 
     input   control_signal_t                control_signal_d,
@@ -28,6 +30,11 @@ module stage_ex (
     output  logic [31:0]                    storedata_e,
     output  logic [31:0]                    csr_wdata_e,
     
+    output  logic [31:0]                    pc_jump,
+    output  logic                           cflow_valid,
+    output  logic                           cflow_taken,
+    output  logic                           mispredict,
+
     input   trap_req_t                      trap_req_d,
     output  trap_req_t                      trap_req_e,
     hazard_interface.requester              hazard_bus
@@ -36,11 +43,16 @@ module stage_ex (
     trap_flag_t                             trap_flag;
     trap_req_t                              trap_req_prev;
 
+    logic [31:0]                            pc_pred_e;
+    logic                                   pred_taken_e;
+
     always_ff@(posedge clk) begin
         if (!start) begin
             control_signal_e                <= '0;
             pc_e                            <= 32'b0;
             pcplus4_e                       <= 32'b0;
+            pc_pred_e                       <= 32'b0;
+            pred_taken_e                    <= 1'b0;
             rs1_e                           <= 5'b0;
             rs2_e                           <= 5'b0;
             rd_e                            <= 5'b0;
@@ -55,6 +67,8 @@ module stage_ex (
                 control_signal_e            <= '0;
                 pc_e                        <= 32'b0;
                 pcplus4_e                   <= 32'b0;
+                pc_pred_e                   <= 32'b0;
+                pred_taken_e                <= 1'b0;
                 rs1_e                       <= 5'b0;
                 rs2_e                       <= 5'b0;
                 rd_e                        <= 5'b0;
@@ -68,6 +82,8 @@ module stage_ex (
                 control_signal_e            <= control_signal_d;
                 pc_e                        <= pc_d;
                 pcplus4_e                   <= pcplus4_d;
+                pc_pred_e                   <= pc_pred_d;
+                pred_taken_e                <= pred_taken_d;
                 rs1_e                       <= rs1_d;
                 rs2_e                       <= rs2_d;
                 rd_e                        <= rd_d;
@@ -132,13 +148,29 @@ module stage_ex (
         .datamisalign                       (trap_flag.datamisalign)
     );
     
+    // Branch Unit
+    assign pc_jump = aluresult_e & ~32'd1;
+
+    branch_unit branch_unit (
+        .cflow_mode                         (control_signal_e.cflow_mode),
+        .branch_mode                        (control_signal_e.funct3.branch_mode),
+        .in_a                               (fwd_a),
+        .in_b                               (fwd_b),
+        .pred_taken                         (pred_taken_e),
+        .pc_pred                            (pc_pred_e),
+        .pc_jump                            (pc_jump),
+        .cflow_valid                        (cflow_valid),
+        .cflow_taken                        (cflow_taken),
+        .mispredict                         (mispredict)
+    );
+
     // Hazard Packet
     always_comb begin
+        hazard_bus.req.mispredict           = mispredict;
         hazard_bus.req.rs1_e                = rs1_e;
         hazard_bus.req.rs2_e                = rs2_e;
         hazard_bus.req.rd_e                 = rd_e;
         hazard_bus.req.memaccess_e          = control_signal_e.memaccess;
-        hazard_bus.req.regwrite_e           = control_signal_e.regwrite;
     end
     
     // Trap Packet

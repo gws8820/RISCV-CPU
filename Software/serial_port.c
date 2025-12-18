@@ -143,7 +143,13 @@ int print_log () {
                 }
                 buf[len] = '\0';
 
-                printf("%s\n", buf);
+                uint32_t word =
+                    ((uint32_t)data[0]) |
+                    ((uint32_t)data[1] << 8) |
+                    ((uint32_t)data[2] << 16) |
+                    ((uint32_t)data[3] << 24);
+
+                printf("0x%08X  '%s'\n", word, buf);
             }
         }
         else {

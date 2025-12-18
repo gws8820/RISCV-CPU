@@ -7,6 +7,7 @@ module uart_rx_phy(
     input   logic       rstn,
     input   logic       clk,
     input   logic       sample_tick,
+    
     input   logic       rx,
 
     output  logic [7:0] rx_data,

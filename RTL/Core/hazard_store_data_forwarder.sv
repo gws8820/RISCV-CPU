@@ -3,13 +3,13 @@ timeprecision 1ps;
 
 import riscv_defines::*;
 
-module store_data_forwarder (
+module hazard_store_data_forwarder (
     input   memaccess_t memaccess_m,
     input   logic       regwrite_w,
     input   logic [4:0] rd_w,
     input   logic [4:0] rs2_m,
     output  logic       flag,
-    output  logic       forward_mem
+    output  logic       forward_m
 );
 
     always_comb begin
@@ -20,11 +20,11 @@ module store_data_forwarder (
             rd_w == rs2_m
         ) begin
             flag        = 1;
-            forward_mem = 1;
+            forward_m   = 1;
         end
         else begin
             flag        = 0;
-            forward_mem = 0;
+            forward_m   = 0;
         end
     end
 

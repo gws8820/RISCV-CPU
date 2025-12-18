@@ -12,24 +12,20 @@ module stage_id (
     input   logic                   pred_taken_f,
     input   inst_t                  inst_f,
 
-    input   logic [31:0]            result_e, result_m, result_w,
-    
     input   control_signal_t        control_signal_w,
     input   logic                   kill_w,
     input   logic [4:0]             rd_w,
+    input   logic [31:0]            result_w,
 
     output  control_signal_t        control_signal_d,
     output  logic [31:0]            pc_d,
     output  logic [31:0]            pcplus4_d,
+    output  logic [31:0]            pc_pred_d,
+    output  logic                   pred_taken_d,
     output  inst_t                  inst_d,
     output  logic [4:0]             rs1_d, rs2_d, rd_d,
     output  logic [31:0]            rdata1_d, rdata2_d,
     output  logic [31:0]            immext_d,
-    
-    output  logic [31:0]            pc_jump,
-    output  logic                   cflow_valid,
-    output  logic                   cflow_taken,
-    output  logic                   mispredict,
 
     input   trap_req_t              trap_req_f,
     output  trap_req_t              trap_req_d,
@@ -38,9 +34,6 @@ module stage_id (
 
     trap_flag_t                     trap_flag;
     trap_req_t                      trap_req_prev;
-
-    logic [31:0]                    pc_pred_d;
-    logic                           pred_taken_d;
 
     always_ff@(posedge clk) begin
         if (!start) begin
@@ -80,7 +73,12 @@ module stage_id (
     end
     
     always_comb begin
-        inst_d = inst_f;
+        unique if (hazard_bus.res.flush_d) begin
+            inst_d = 32'b0;
+        end
+        else begin
+            inst_d = inst_f;
+        end
     end
     
     control_unit control_unit (    
@@ -125,56 +123,8 @@ module stage_id (
         .immext                     (immext_d)
     );
     
-    // Branch Forwarder
-    logic [31:0] fwd_a, fwd_b;
-    
-    always_comb begin
-        unique case(hazard_bus.res.forwarda_d)
-            FWD_ID:                 fwd_a = rdata1_d;
-            FWD_EX:                 fwd_a = result_e;
-            FWD_MEM:                fwd_a = result_m;
-            FWD_WB:                 fwd_a = result_w;
-            default:                fwd_a = rdata1_d;
-        endcase
-
-        unique case(hazard_bus.res.forwardb_d)
-            FWD_ID:                 fwd_b = rdata2_d;
-            FWD_EX:                 fwd_b = result_e;
-            FWD_MEM:                fwd_b = result_m;
-            FWD_WB:                 fwd_b = result_w;
-            default:                fwd_b = rdata2_d;
-        endcase
-    end
-    
-    // PCJump Generator
-    always_comb begin
-        if (control_signal_d.cflow_mode == CFLOW_JALR) begin
-            pc_jump = (immext_d + fwd_a) & ~32'd1;
-        end
-        else begin
-            pc_jump = immext_d + pc_d;
-        end
-    end
-
-    // Branch Unit
-    branch_unit branch_unit (
-        .cflow_mode                 (control_signal_d.cflow_mode),
-        .branch_mode                (control_signal_d.funct3.branch_mode),
-        .in_a                       (fwd_a),
-        .in_b                       (fwd_b),
-        .stall_d                    (hazard_bus.res.stall_d),
-        .pred_taken_d               (pred_taken_d),
-        .pc_pred_d                  (pc_pred_d),
-        .pc_jump                    (pc_jump),
-        .cflow_valid                (cflow_valid),
-        .cflow_taken                (cflow_taken),
-        .mispredict                 (mispredict)
-    );
-    
     // Hazard Packet
     always_comb begin
-        hazard_bus.req.cflow_mode   = control_signal_d.cflow_mode;
-        hazard_bus.req.mispredict   = mispredict;
         hazard_bus.req.rs1_d        = rs1_d;
         hazard_bus.req.rs2_d        = rs2_d;
     end

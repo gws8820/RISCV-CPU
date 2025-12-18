@@ -86,7 +86,7 @@ module stage_mem (
     logic [31:0] store_data;
 
     always_comb begin
-        unique case(hazard_bus.res.forward_mem)
+        unique case(hazard_bus.res.forward_m)
             0:                      store_data = storedata_m;
             1:                      store_data = result_w;
             default:                store_data = storedata_m;
