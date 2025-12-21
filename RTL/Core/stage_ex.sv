@@ -149,15 +149,16 @@ module stage_ex (
     );
     
     // Branch Unit
-    assign pc_jump = aluresult_e & ~32'd1;
-
     branch_unit branch_unit (
-        .cflow_mode                         (control_signal_e.cflow_mode),
-        .branch_mode                        (control_signal_e.funct3.branch_mode),
-        .in_a                               (fwd_a),
-        .in_b                               (fwd_b),
-        .pred_taken                         (pred_taken_e),
-        .pc_pred                            (pc_pred_e),
+        .start                              (start),
+        .clk                                (clk),
+        .cflow_mode_reg                     (control_signal_e.cflow_mode),
+        .branch_mode_reg                    (control_signal_e.funct3.branch_mode),
+        .in_a_reg                           (fwd_a),
+        .in_b_reg                           (fwd_b),
+        .pred_taken_reg                     (pred_taken_e),
+        .pc_pred_reg                        (pc_pred_e),
+        .aluresult_reg                      (aluresult_e),
         .pc_jump                            (pc_jump),
         .cflow_valid                        (cflow_valid),
         .cflow_taken                        (cflow_taken),

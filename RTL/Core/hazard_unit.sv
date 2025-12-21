@@ -6,12 +6,12 @@ import riscv_defines::*;
 module hazard_unit (
     hazard_interface.completer      hazard_bus
 );
-    logic flush_d_sd, flush_e_lu, flush_e_sd;
+    logic flush_mispredict, flush_loaduse;
     
     always_comb begin
-        hazard_bus.res.flush_d  = hazard_bus.req.flushflag || flush_d_sd;
-        hazard_bus.res.flush_e  = hazard_bus.req.flushflag || flush_e_lu || flush_e_sd;
-        hazard_bus.res.flush_m  = hazard_bus.req.flushflag;
+        hazard_bus.res.flush_d  = hazard_bus.req.flushflag || flush_mispredict;
+        hazard_bus.res.flush_e  = hazard_bus.req.flushflag || flush_mispredict || flush_loaduse;
+        hazard_bus.res.flush_m  = hazard_bus.req.flushflag || flush_mispredict;
     end
     
     hazard_raw_data_forwarder           hazard_raw_data_forwarder(
@@ -34,7 +34,7 @@ module hazard_unit (
         .flag                               (hazard_bus.res.hazard_cause.load_use),
         .stall_f                            (hazard_bus.res.stall_f),
         .stall_d                            (hazard_bus.res.stall_d),
-        .flush_e                            (flush_e_lu)
+        .flush_e                            (flush_loaduse)
     );
     
     hazard_store_data_forwarder         hazard_store_data_forwarder(
@@ -49,8 +49,7 @@ module hazard_unit (
     hazard_branch_mispredict_resolver   hazard_branch_mispredict_resolver(
         .mispredict                         (hazard_bus.req.mispredict),
         .flag                               (hazard_bus.res.hazard_cause.branch_mispredict),
-        .flush_d                            (flush_d_sd),
-        .flush_e                            (flush_e_sd)
+        .flush                              (flush_mispredict)
     );
     
 endmodule

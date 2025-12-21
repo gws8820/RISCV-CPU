@@ -46,7 +46,7 @@ module stage_if (
     );
 
     program_counter program_counter (
-        .start                      (start), // Starts PC from Zero
+        .start                      (start), // Starts PC from Zero (reset phase)
         .clk                        (clk),
         .stall_f                    (hazard_bus.res.stall_f),
         .pc_next                    (pc_next),

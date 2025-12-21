@@ -6,13 +6,13 @@ import riscv_defines::*;
 module branch_target_buffer (
     input   logic                   clk,
 
-    // Predict (IF)
+    // Predict
     input   logic [31:0]            pc_f,
     output  logic                   btb_hit,
     output  logic [31:0]            pred_target,
     
-    // Update (EX)
-    input   logic [31:0]            pc_e,
+    // Update
+    input   logic [31:0]            pc_m,
     input   logic                   cflow_valid,
     input   logic                   cflow_taken,
     input   logic [31:0]            cflow_target
@@ -43,12 +43,12 @@ module branch_target_buffer (
     
     // Update Logic
     logic [INDEX_WIDTH-1:0]         update_index;
-    assign                          update_index    = pc_e[2 +: INDEX_WIDTH];
+    assign                          update_index    = pc_m[2 +: INDEX_WIDTH];
     
     btb_entry_t                     update_entry;
     always_comb begin
         update_entry.valid  = 1'b1;
-        update_entry.tag    = pc_e[31 -: TAG_WIDTH];
+        update_entry.tag    = pc_m[31 -: TAG_WIDTH];
         update_entry.target = cflow_target;
     end
     

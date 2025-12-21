@@ -68,8 +68,8 @@ module riscv_cpu_core (
     
     // -------- Branch Predictor ---------
     
-    logic [31:0]            pc_f, pc_e;
-    logic [31:0]            pcplus4_e;  // PC_RETURN
+    logic [31:0]            pc_f, pc_m;
+    logic [31:0]            pcplus4_m;  // PC_RETURN
     
     logic [31:0]            pc_pred;
     logic [31:0]            pc_jump;
@@ -87,7 +87,7 @@ module riscv_cpu_core (
         .pred_taken         (pred_taken),
         .pred_target        (pc_pred),
         
-        .pc_e               (pc_e),
+        .pc_m               (pc_m),
         .cflow_valid        (cflow_valid),
         .cflow_taken        (cflow_taken),
         .cflow_target       (pc_jump)
@@ -106,7 +106,7 @@ module riscv_cpu_core (
 
         .pc_pred            (pc_pred),
         .pc_jump            (pc_jump),
-        .pc_return          (pcplus4_e),
+        .pc_return          (pcplus4_m),
         .mispredict         (mispredict),
         .cflow_taken        (cflow_taken),
         .pred_taken         (pred_taken),
@@ -175,6 +175,8 @@ module riscv_cpu_core (
     // ------------ EX Stage -------------
 
     control_signal_t        control_signal_e;
+    logic [31:0]            pc_e;
+    logic [31:0]            pcplus4_e;
     logic [31:0]            immext_e;
     logic [4:0]             rs1_e, rs2_e, rd_e;
     logic [31:0]            rdata1_e, rdata2_e;
@@ -234,8 +236,6 @@ module riscv_cpu_core (
     // ------------ MEM Stage ------------
     
     control_signal_t        control_signal_m;
-    logic [31:0]            pc_m;
-    logic [31:0]            pcplus4_m;
     logic [4:0]             rs2_m, rd_m;
     logic [31:0]            memresult_m;
     

@@ -13,42 +13,90 @@ module riscv_cpu_fpga (
     output  logic                   uart_tx
 );
 
-    logic                           rstn;
+    logic                           rstn50;
     logic                           start;
 
-    // ----------- Clock Buffer -----------
-    logic                           clk_ibuf;
-    logic                           clk_buf;
+    // ------------- Clocking -------------
+    logic                           clk50_ibuf;
+    logic                           clk50_buf;
 
+    logic                           mmcm_locked;
+    logic                           mmcm_reset;
+    logic                           clk100_mmcm;
+    logic                           clk100_buf;
+
+    logic                           clkfb_mmcm;
+    logic                           clkfb_buf;
+
+    // Input Clock Buffer (50MHz)
     IBUF ibuf_sys_clk (
         .I  (clk),
-        .O  (clk_ibuf)
+        .O  (clk50_ibuf)
     );
-    BUFG bufg_sys_clk (
-        .I  (clk_ibuf),
-        .O  (clk_buf)
+
+    // Global Clock Buffer
+    BUFG bufg_clk50 (
+        .I  (clk50_ibuf),
+        .O  (clk50_buf)
+    );
+
+    // Feedback Buffer for MMCM
+    BUFG bufg_mmcm_fb (
+        .I  (clkfb_mmcm),
+        .O  (clkfb_buf)
+    );
+
+    // Output Clock Buffer (100MHz)
+    BUFG bufg_clk100 (
+        .I  (clk100_mmcm),
+        .O  (clk100_buf)
+    );
+
+    // MMCM: 50MHz -> 100MHz
+    // VCO = 50 * 12 / 1 = 600MHz (within 7-series MMCM VCO range)
+    // CLKOUT0 = 600 / 6 = 100MHz
+    
+    assign mmcm_reset = ~rstn50;
+
+    MMCME2_BASE #(
+        .BANDWIDTH                  ("OPTIMIZED"),
+        .CLKFBOUT_MULT_F            (12.0),
+        .CLKFBOUT_PHASE             (0.0),
+        .CLKIN1_PERIOD              (20.0),
+        .DIVCLK_DIVIDE              (1),
+        .CLKOUT0_DIVIDE_F           (6.0),
+        .CLKOUT0_PHASE              (0.0),
+        .CLKOUT0_DUTY_CYCLE         (0.5)
+    ) mmcm_sys_clk (
+        .CLKIN1                     (clk50_buf),
+        .CLKFBIN                    (clkfb_buf),
+        .RST                        (mmcm_reset),
+        .PWRDWN                     (0),
+        .LOCKED                     (mmcm_locked),
+        .CLKFBOUT                   (clkfb_mmcm),
+        .CLKOUT0                    (clk100_mmcm)
     );
     
     // ----------- FPGA Signals -----------
 
     logic                           rstn_push_reg, rstn_push_sync;
     logic [DEBOUNCE_BITS-1:0]       rstn_debounce_cnt;
-    
+
     initial begin
-        rstn                        = 0;
+        rstn50                      = 0;
         rstn_debounce_cnt           = 0;
     end
      
     // 2-FF Synchronizer
-    always_ff@(posedge clk_buf) begin
+    always_ff@(posedge clk50_buf) begin
         rstn_push_reg               <= rstn_push;
         rstn_push_sync              <= rstn_push_reg;
     end
 
-    always_ff@(posedge clk_buf) begin
-        if (rstn_push_sync != rstn) begin  // Active Low
+    always_ff@(posedge clk50_buf) begin
+        if (rstn_push_sync != rstn50) begin  // Active Low
             if (rstn_debounce_cnt == DEBOUNCE_LIMIT - 1) begin
-                rstn                <= rstn_push_sync;
+                rstn50              <= rstn_push_sync;
                 rstn_debounce_cnt   <= 0;
             end
             else begin
@@ -59,9 +107,18 @@ module riscv_cpu_fpga (
             rstn_debounce_cnt       <= 0;
         end
     end
+
+    logic                           rstn100_reg, rstn100_sync;
     
+    // 2-FF Synchronizer
+    always_ff @(posedge clk100_buf) begin
+        rstn100_reg                 <= rstn50;
+        rstn100_sync                <= rstn100_reg & mmcm_locked;
+    end
+    
+    // LED (Active Low)
     always_comb begin
-        rstn_led                    = !rstn;
+        rstn_led                    = !rstn100_sync;
         start_led                   = !start;
     end
     
@@ -75,8 +132,8 @@ module riscv_cpu_fpga (
     logic [31:0]        print_data;
     
     uart_controller uart_controller (
-        .rstn           (rstn),
-        .clk            (clk_buf),
+        .rstn           (rstn100_sync),
+        .clk            (clk100_buf),
         .rx             (uart_rx),
         .tx             (uart_tx),
         
@@ -94,7 +151,7 @@ module riscv_cpu_fpga (
     
     riscv_cpu_core  cpu_core (
         .start          (start),
-        .clk            (clk_buf),
+        .clk            (clk100_buf),
         
         .prog_en        (prog_en),
         .prog_addr      (prog_addr),
