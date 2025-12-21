@@ -171,7 +171,7 @@ Integrated UART controller for communication and system control.
 
 > **Note**: The programmer tool is **Windows-specific** due to COM port handling.
 
-### Compilation (Windows)
+### Compilation
 The programmer tool requires MinGW or similar GCC environment:
 ```bash
 cd Software
@@ -207,7 +207,7 @@ This project relies on **Vivado Simulator (XSim)** for functional verification.
   - `Core/`: SystemVerilog source code for the RISC-V CPU Core
   - `UART/`: Source code for the UART controller and PHY
   - `Testbench/`: Simulation testbench files
-- `Simulation/`: Waveform configuration files for SystemVerilog simulation
+- `Simulation/`: Waveform configuration files for Vivado Simulator
 - `Software/`: C-based host programmer tool and libraries (Windows)
 - `Constraints/`: FPGA constraint files (.xdc)
 
