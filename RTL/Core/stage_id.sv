@@ -13,7 +13,6 @@ module stage_id (
     input   inst_t                  inst_f,
 
     input   control_signal_t        control_signal_w,
-    input   logic                   kill_w,
     input   logic [4:0]             rd_w,
     input   logic [31:0]            result_w,
 
@@ -32,11 +31,14 @@ module stage_id (
     hazard_interface.requester      hazard_bus
 );
 
+    logic                           id_valid;
+    
     trap_flag_t                     trap_flag;
     trap_req_t                      trap_req_prev;
 
     always_ff@(posedge clk) begin
         if (!start) begin
+            id_valid                <= 0;
             pc_d                    <= 32'b0;
             pcplus4_d               <= 32'b0;
             pc_pred_d               <= 32'b0;
@@ -46,14 +48,12 @@ module stage_id (
         end
         else begin
             priority if (hazard_bus.res.flush_d) begin
-                pc_d                <= 32'b0;
-                pcplus4_d           <= 32'b0;
-                pc_pred_d           <= 32'b0;
-                pred_taken_d        <= 0;
+                id_valid            <= 0;
 
                 trap_req_prev       <= '0;
             end
             else if (hazard_bus.res.stall_d) begin
+                id_valid            <= id_valid;
                 pc_d                <= pc_d;
                 pcplus4_d           <= pcplus4_d;
                 pc_pred_d           <= pc_pred_d;
@@ -62,6 +62,7 @@ module stage_id (
                 trap_req_prev       <= trap_req_prev;
             end
             else begin
+                id_valid            <= 1;
                 pc_d                <= pc_f;
                 pcplus4_d           <= pcplus4_f;
                 pc_pred_d           <= pc_pred_f;
@@ -74,7 +75,7 @@ module stage_id (
     
     always_comb begin
         unique if (hazard_bus.res.flush_d) begin
-            inst_d = 32'b0;
+            inst_d = INST_NOP;
         end
         else begin
             inst_d = inst_f;
@@ -107,7 +108,7 @@ module stage_id (
     
     regfile regfile (
         .clk                        (clk),
-        .regwrite                   (control_signal_w.regwrite && !kill_w),
+        .regwrite                   (control_signal_w.regwrite),
         .waddr                      (rd_w),
         .wdata                      (result_w),
         .raddr1                     (rs1_d),

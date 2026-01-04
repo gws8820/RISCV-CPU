@@ -35,6 +35,8 @@ module stage_mem (
     output  logic [31:0]            print_data
 );
 
+    logic                           mem_valid;
+    
     trap_flag_t                     trap_flag;
     trap_req_t                      trap_req_prev;
 
@@ -43,6 +45,7 @@ module stage_mem (
     
     always_ff@(posedge clk) begin
         if (!start) begin
+            mem_valid               <= 0;
             control_signal_m        <= '0;
             pc_m                    <= 32'b0;
             pcplus4_m               <= 32'b0;
@@ -56,18 +59,14 @@ module stage_mem (
         end
         else begin
             priority if (hazard_bus.res.flush_m) begin
+                mem_valid           <= 0;
                 control_signal_m    <= '0;
-                pc_m                <= 32'b0;
-                pcplus4_m           <= 32'b0;
-                aluresult_m         <= 32'b0;
-                storedata_m         <= 32'b0;
-                csr_wdata_m         <= 32'b0;
-                rs2_m               <= 5'b0;
                 rd_m                <= 5'b0;
 
                 trap_req_prev       <= '0;
             end
             else begin
+                mem_valid           <= 1;
                 control_signal_m    <= control_signal_e;
                 pc_m                <= pc_e;
                 pcplus4_m           <= pcplus4_e;

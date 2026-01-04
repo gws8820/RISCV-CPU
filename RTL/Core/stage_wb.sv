@@ -6,45 +6,38 @@ import riscv_defines::*;
 module stage_wb (
     input   logic                   start, clk,
 
-    input   control_signal_t        control_signal_m,
-    input   logic [4:0]             rd_m,
-    input   logic [31:0]            memresult_m,
-    input   logic [31:0]            result_m,
-
+    input   control_signal_t        control_signal_m2,
+    input   logic [4:0]             rd_m2,
+    input   logic [31:0]            memresult_m2,
+    input   logic [31:0]            result_m2,
 
     output  control_signal_t        control_signal_w,
-    output  logic                   kill_w,
     output  logic [4:0]             rd_w,
     output  logic [31:0]            result_w,
 
-    input   trap_req_t              trap_req_m,
     hazard_interface.requester      hazard_bus
 );
 
-    logic [31:0]                    result_w_prev;
+    logic                           wb_valid;
+    
     logic [31:0]                    memresult_w;
-
-    trap_req_t                      trap_req_w;
+    logic [31:0]                    result_w_prev;
 
     always_ff@(posedge clk) begin
         if (!start) begin
+            wb_valid                <= 0;
             control_signal_w        <= '0;
             rd_w                    <= 5'b0;
+            memresult_w             <= 32'b0;
             result_w_prev           <= 32'b0;
-
-            trap_req_w              <= '0;
         end
         else begin
-            control_signal_w        <= control_signal_m;
-            rd_w                    <= rd_m;
-            result_w_prev           <= result_m;
-            
-            trap_req_w              <= trap_req_m;
+            wb_valid                <= 1;
+            control_signal_w        <= control_signal_m2;
+            rd_w                    <= rd_m2;
+            memresult_w             <= memresult_m2;
+            result_w_prev           <= result_m2;
         end
-    end
-    
-    always_comb begin
-        memresult_w                 = memresult_m;
     end
     
     // Result Selector
@@ -59,11 +52,6 @@ module stage_wb (
     always_comb begin
         hazard_bus.req.rd_w         = rd_w;
         hazard_bus.req.regwrite_w   = control_signal_w.regwrite;
-    end
-    
-    // Trap Packet
-    always_comb begin
-        kill_w                      = trap_req_w.valid;
     end
 
 endmodule

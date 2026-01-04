@@ -4,7 +4,6 @@ timeprecision 1ps;
 import riscv_defines::*;
 
 module branch_predictor (
-    input   logic               start,
     input   logic               clk,
     
     // Predict
@@ -13,7 +12,7 @@ module branch_predictor (
     output  logic [31:0]        pred_target,
     
     // Update
-    input   logic [31:0]        pc_m,
+    input   logic [31:0]        pc_e,
     input   logic               cflow_valid,
     input   logic               cflow_taken,
     input   logic [31:0]        cflow_target
@@ -26,7 +25,7 @@ module branch_predictor (
         .clk                    (clk),
         .pc_f                   (pc_f),
         .bht_taken              (bht_taken),
-        .pc_m                   (pc_m),
+        .pc_e                   (pc_e),
         .cflow_valid            (cflow_valid),
         .cflow_taken            (cflow_taken)
     );
@@ -36,7 +35,7 @@ module branch_predictor (
         .pc_f                   (pc_f),
         .btb_hit                (btb_hit),
         .pred_target            (pred_target),
-        .pc_m                   (pc_m),
+        .pc_e                   (pc_e),
         .cflow_valid            (cflow_valid),
         .cflow_taken            (cflow_taken),
         .cflow_target           (cflow_target)

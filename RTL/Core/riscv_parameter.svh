@@ -1,5 +1,5 @@
-localparam CLK_PERIOD           = 10;
-localparam CLK_FREQ             = 1000000000 / CLK_PERIOD;      // 100MHz
+localparam int  CLK_FREQ        = 120_000_000;
+localparam real CLK_PERIOD      = 1_000_000_000.0 / CLK_FREQ;   // ns
 
 localparam DEBOUNCE_LIMIT       = 500000;                       // 10ms
 localparam DEBOUNCE_BITS        = $clog2(DEBOUNCE_LIMIT);

@@ -17,7 +17,7 @@ module stage_ex (
     input   logic [31:0]                    rdata1_d, rdata2_d,
     input   logic [31:0]                    immext_d,
 
-    input   logic [31:0]                    result_m, result_w,
+    input   logic [31:0]                    result_m1, result_m2, result_w,
 
     output  control_signal_t                control_signal_e,
     output  logic [31:0]                    pc_e,
@@ -40,6 +40,8 @@ module stage_ex (
     hazard_interface.requester              hazard_bus
 );
 
+    logic                                   ex_valid;
+    
     trap_flag_t                             trap_flag;
     trap_req_t                              trap_req_prev;
 
@@ -48,6 +50,7 @@ module stage_ex (
 
     always_ff@(posedge clk) begin
         if (!start) begin
+            ex_valid                        <= 0;
             control_signal_e                <= '0;
             pc_e                            <= 32'b0;
             pcplus4_e                       <= 32'b0;
@@ -64,21 +67,14 @@ module stage_ex (
         end
         else begin
             priority if (hazard_bus.res.flush_e) begin
+                ex_valid                    <= 0;
                 control_signal_e            <= '0;
-                pc_e                        <= 32'b0;
-                pcplus4_e                   <= 32'b0;
-                pc_pred_e                   <= 32'b0;
-                pred_taken_e                <= 1'b0;
-                rs1_e                       <= 5'b0;
-                rs2_e                       <= 5'b0;
                 rd_e                        <= 5'b0;
-                rdata1_e                    <= 32'b0;
-                rdata2_e                    <= 32'b0;
-                immext_e                    <= 32'b0;
                 
                 trap_req_prev               <= '0;
             end
             else begin
+                ex_valid                    <= 1;
                 control_signal_e            <= control_signal_d;
                 pc_e                        <= pc_d;
                 pcplus4_e                   <= pcplus4_d;
@@ -103,14 +99,16 @@ module stage_ex (
     always_comb begin
         unique case(hazard_bus.res.forwarda_e)
             FWD_EX:                         fwd_a = rdata1_e;
-            FWD_MEM:                        fwd_a = result_m;
+            FWD_MEM1:                       fwd_a = result_m1;
+            FWD_MEM2:                       fwd_a = result_m2;
             FWD_WB:                         fwd_a = result_w;
             default:                        fwd_a = rdata1_e;
         endcase
 
         unique case(hazard_bus.res.forwardb_e)
             FWD_EX:                         fwd_b = rdata2_e;
-            FWD_MEM:                        fwd_b = result_m;
+            FWD_MEM1:                       fwd_b = result_m1;
+            FWD_MEM2:                       fwd_b = result_m2;
             FWD_WB:                         fwd_b = result_w;
             default:                        fwd_b = rdata2_e;
         endcase
@@ -140,18 +138,11 @@ module stage_ex (
         .aluresult                          (aluresult_e)
     );
     
-    // LSU Misalign Checker
-    lsu_misalign_checker lsu_misalign_checker (
-        .aluresult                          (aluresult_e),
-        .memaccess                          (control_signal_e.memaccess),
-        .mask_mode                          (control_signal_e.funct3.mask_mode),
-        .datamisalign                       (trap_flag.datamisalign)
-    );
-    
     // Branch Unit
     branch_unit branch_unit (
         .start                              (start),
         .clk                                (clk),
+        .flush                              (hazard_bus.res.flush_e),
         .cflow_mode_reg                     (control_signal_e.cflow_mode),
         .branch_mode_reg                    (control_signal_e.funct3.branch_mode),
         .in_a_reg                           (fwd_a),
@@ -179,6 +170,7 @@ module stage_ex (
         trap_flag.instillegal               = 0;
         trap_flag.instmisalign              = 0;
         trap_flag.imemfault                 = 0;
+        trap_flag.datamisalign              = 0;
         trap_flag.dmemfault                 = 0;
         
         if (trap_req_prev.valid) begin
@@ -208,14 +200,7 @@ module stage_ex (
                     trap_req_e.tval         = 32'b0;
                 end
                 default: begin
-                    if (trap_flag.datamisalign) begin
-                        trap_req_e.valid    = 1;
-                        trap_req_e.mode     = TRAP_ENTER;
-                        trap_req_e.cause    = (control_signal_e.memaccess == MEM_WRITE) ? CAUSE_STORE_ADDR_MISALIGN : CAUSE_LOAD_ADDR_MISALIGN;
-                        trap_req_e.pc       = pc_e;
-                        trap_req_e.tval     = aluresult_e;
-                    end
-                    else trap_req_e         = '0;
+                    trap_req_e              = '0;
                 end
             endcase
         end

@@ -22,8 +22,8 @@ module riscv_cpu_fpga (
 
     logic                           mmcm_locked;
     logic                           mmcm_reset;
-    logic                           clk100_mmcm;
-    logic                           clk100_buf;
+    logic                           clk120_mmcm;
+    logic                           clk120_buf;
 
     logic                           clkfb_mmcm;
     logic                           clkfb_buf;
@@ -46,15 +46,15 @@ module riscv_cpu_fpga (
         .O  (clkfb_buf)
     );
 
-    // Output Clock Buffer (100MHz)
-    BUFG bufg_clk100 (
-        .I  (clk100_mmcm),
-        .O  (clk100_buf)
+    // Output Clock Buffer (120MHz)
+    BUFG bufg_clk120 (
+        .I  (clk120_mmcm),
+        .O  (clk120_buf)
     );
 
-    // MMCM: 50MHz -> 100MHz
+    // MMCM: 50MHz -> 120MHz
     // VCO = 50 * 12 / 1 = 600MHz (within 7-series MMCM VCO range)
-    // CLKOUT0 = 600 / 6 = 100MHz
+    // CLKOUT0 = 600 / 5 = 120MHz
     
     assign mmcm_reset = ~rstn50;
 
@@ -64,7 +64,7 @@ module riscv_cpu_fpga (
         .CLKFBOUT_PHASE             (0.0),
         .CLKIN1_PERIOD              (20.0),
         .DIVCLK_DIVIDE              (1),
-        .CLKOUT0_DIVIDE_F           (6.0),
+        .CLKOUT0_DIVIDE_F           (5.0),
         .CLKOUT0_PHASE              (0.0),
         .CLKOUT0_DUTY_CYCLE         (0.5)
     ) mmcm_sys_clk (
@@ -74,12 +74,13 @@ module riscv_cpu_fpga (
         .PWRDWN                     (0),
         .LOCKED                     (mmcm_locked),
         .CLKFBOUT                   (clkfb_mmcm),
-        .CLKOUT0                    (clk100_mmcm)
+        .CLKOUT0                    (clk120_mmcm)
     );
     
     // ----------- FPGA Signals -----------
 
-    logic                           rstn_push_reg, rstn_push_sync;
+    // CDC synchronizers (mark as async regs for better placement/handling)
+    (* ASYNC_REG = "TRUE" *) logic  rstn_push_reg, rstn_push_sync;
     logic [DEBOUNCE_BITS-1:0]       rstn_debounce_cnt;
 
     initial begin
@@ -108,10 +109,10 @@ module riscv_cpu_fpga (
         end
     end
 
-    logic                           rstn100_reg, rstn100_sync;
+    (* ASYNC_REG = "TRUE" *) logic  rstn100_reg, rstn100_sync;
     
     // 2-FF Synchronizer
-    always_ff @(posedge clk100_buf) begin
+    always_ff @(posedge clk120_buf) begin
         rstn100_reg                 <= rstn50;
         rstn100_sync                <= rstn100_reg & mmcm_locked;
     end
@@ -133,7 +134,7 @@ module riscv_cpu_fpga (
     
     uart_controller uart_controller (
         .rstn           (rstn100_sync),
-        .clk            (clk100_buf),
+        .clk            (clk120_buf),
         .rx             (uart_rx),
         .tx             (uart_tx),
         
@@ -151,7 +152,7 @@ module riscv_cpu_fpga (
     
     riscv_cpu_core  cpu_core (
         .start          (start),
-        .clk            (clk100_buf),
+        .clk            (clk120_buf),
         
         .prog_en        (prog_en),
         .prog_addr      (prog_addr),

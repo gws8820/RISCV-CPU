@@ -28,7 +28,7 @@ module stage_if (
 
     trap_flag_t                     trap_flag;
 
-    // Program Counter
+    // PCNext Selector
     logic [31:0] pc_next;
     assign pcplus4_f = pc_f + 4;
     
@@ -45,10 +45,11 @@ module stage_if (
         .pc_next                    (pc_next)
     );
 
+    // Program Counter
     program_counter program_counter (
-        .start                      (start), // Starts PC from Zero (reset phase)
+        .start                      (start), // Starts PC from Zero
         .clk                        (clk),
-        .stall_f                    (hazard_bus.res.stall_f),
+        .stall                      (hazard_bus.res.stall_f),
         .pc_next                    (pc_next),
         .pc                         (pc_f)
     );

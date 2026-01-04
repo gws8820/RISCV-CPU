@@ -21,7 +21,7 @@ module load_store_unit (
     store_align_unit store_align (
         .memaccess          (memaccess),
         .data               (data),
-        .addr_offset        (addr[1:0]),
+        .byte_offset        (addr[1:0]),
         .mask_mode          (mask_mode),
         .wstrb              (wstrb),
         .wdata              (wdata)
@@ -41,18 +41,18 @@ module load_store_unit (
         .print_data         (print_data)
     );
     
-    logic [1:0]             addr_offset_reg;
+    logic [1:0]             byte_offset_reg;
     memaccess_t             memaccess_reg;
     mask_mode_t             mask_mode_reg;
     
     always_ff @(posedge clk) begin
         if (!start) begin
-            addr_offset_reg <= '0;
+            byte_offset_reg <= '0;
             memaccess_reg   <= MEM_DISABLED;
             mask_mode_reg   <= MASK_WORD;
         end
         else begin
-            addr_offset_reg <= addr[1:0];
+            byte_offset_reg <= addr[1:0];
             memaccess_reg   <= memaccess;
             mask_mode_reg   <= mask_mode;
         end
@@ -61,7 +61,7 @@ module load_store_unit (
     load_extend_unit load_extend (
         .memaccess          (memaccess_reg),
         .rdata              (rdata),
-        .addr_offset        (addr_offset_reg),
+        .byte_offset        (byte_offset_reg),
         .mask_mode          (mask_mode_reg),
         .rdata_ext          (rdata_ext)
     );

@@ -1,6 +1,6 @@
 # RISC-V CPU
 
-A 5-stage pipelined RISC-V processor core designed for FPGA deployment, featuring an integrated UART controller for system programming and debugging.
+A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featuring an integrated UART controller for system programming and debugging.
 
 ## Features
 
@@ -13,15 +13,17 @@ A 5-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 ### Microarchitecture
 ![CPU Architecture Diagram](architecture.png)
 
-- **Pipeline**: 5-stage (Fetch, Decode, Execute, Memory, Writeback)
+- **Pipeline**: 6-stage (Fetch, Decode, Execute, Memory 1, Memory 2, Writeback)
+  - **MEM1**: Memory Access & Store Align
+  - **MEM2**: Data Ready (FPGA BRAM Latency) & Load Data Extend
 - **Branch Prediction**:
   - **Predictor**: BHT & BTB in IF stage for zero-penalty branching
   - **Branch Unit**: Resolution & validation in EX stage. Registers inputs for timing optimization (1-cycle latency).
   - **Recovery**: 3-cycle penalty on misprediction (Flush ID/EX/MEM, redirect PC)
 - **Hazard Handling**:
-  - Data forwarding for RAW hazards from MEM and WB stages to EX
-  - Store-data forwarding to resolve memory data hazards (MEM/WB)
-  - Load-use hazard detection with 1 cycle pipeline stall
+  - Data forwarding for RAW hazards from MEM1, MEM2, and WB stages to EX
+  - Store-data forwarding to resolve memory data hazards (MEM1/WB)
+  - Load-use hazard detection with pipeline stall
   - Branch misprediction recovery with pipeline flush
 - **Trap/Exception Support**:
   - ECALL, EBREAK, MRET
@@ -34,7 +36,7 @@ A 5-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 ### Target FPGA
 - **Board**: ALINX AX7Z020B (Zynq-7020)
 - **Input Clock**: 50 MHz (onboard oscillator)
-- **Internal Clock**: 100 MHz (via MMCM)
+- **Internal Clock**: 120 MHz (via MMCM)
 
 ### Clock and Reset Signals
 | Signal | Type | Description |
@@ -74,18 +76,18 @@ A 5-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 ### Hazard Penalties
 | Hazard Type | Penalty (Cycles) | Detection Stage | Notes |
 |-------------|------------------|-----------------|-------|
-| **Data Hazard (RAW)** | 0 | EX | Resolved by forwarding from MEM/WB stages |
-| **Store-Data Hazard** | 0 | MEM | Resolved by forwarding from WB stage |
-| **Load-Use Hazard** | 1 | ID | Detect on ID → use in EX (next cycle) |
+| **Data Hazard (RAW)** | 0 | EX | Resolved by forwarding from MEM1/MEM2/WB stages |
+| **Store-Data Hazard** | 0 | MEM1 | Resolved by forwarding from WB stage |
+| **Load-Use Hazard** | 2 | ID | Detect on ID → use in EX (Forward from WB) |
 | **Branch Prediction Hit** | 0 | IF | Zero penalty (Seamless execution) |
-| **Branch Prediction Miss** | 3 | EX | Flush ID/EX/MEM stages, redirect PC |
+| **Branch Prediction Miss** | 3 | EX | Flush ID, EX, MEM1 stages, redirect PC |
 
 ### Trap/Exception Penalties
 | Trap/Flush Type | Penalty (Cycles) | Processing Stage | Notes |
 |-----------------|------------------|------------------|-------|
-| **All Traps** | 3 | MEM | Flush IF, ID, EX stages, redirect to mtvec |
-| **MRET** | 3 | MEM | Flush IF, ID, EX stages, restore PC from mepc |
-| **FENCE.I** | 3 | MEM | Flush IF, ID, EX stages, instruction memory sync |
+| **All Traps** | 3 | MEM1 | Flush all stages, redirect to mtvec |
+| **MRET** | 3 | MEM1 | Flush all stages, restore PC from mepc |
+| **FENCE.I** | 3 | MEM1 | Flush all stages, instruction memory sync |
 
 ## Supported Instructions
 

@@ -6,13 +6,13 @@ import riscv_defines::*;
 module load_extend_unit (
     input   memaccess_t     memaccess,
     input   logic [31:0]    rdata,
-    input   logic [1:0]     addr_offset,
+    input   logic [1:0]     byte_offset,
     input   mask_mode_t     mask_mode,
     output  logic [31:0]    rdata_ext
 );
 
     logic [31:0] rdata_shifted;
-    assign rdata_shifted = rdata >> (8 * addr_offset);
+    assign rdata_shifted = rdata >> (8 * byte_offset);
 
     always_comb begin
         if (memaccess == MEM_READ) begin

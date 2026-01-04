@@ -11,7 +11,7 @@ module branch_history_table (
     output  logic           bht_taken,
     
     // Update
-    input   logic [31:0]    pc_m,
+    input   logic [31:0]    pc_e,
     input   logic           cflow_valid,
     input   logic           cflow_taken
     
@@ -32,7 +32,7 @@ module branch_history_table (
     
     // Update Logic
     logic [INDEX_WIDTH-1:0] update_index;
-    assign update_index = pc_m[2 +: INDEX_WIDTH];
+    assign update_index = pc_e[2 +: INDEX_WIDTH];
     
     always_ff@(posedge clk) begin
         if (cflow_valid) begin
