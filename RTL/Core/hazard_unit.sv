@@ -51,6 +51,9 @@ module hazard_unit (
     
     hazard_store_data_forwarder         hazard_store_data_forwarder(
         .memaccess_m1                       (hazard_bus.req.memaccess_m1),
+        .regwrite_m2                        (hazard_bus.req.regwrite_m2),
+        .memaccess_m2                       (hazard_bus.req.memaccess_m2),
+        .rd_m2                              (hazard_bus.req.rd_m2),
         .regwrite_w                         (hazard_bus.req.regwrite_w),
         .rd_w                               (hazard_bus.req.rd_w),
         .rs2_m1                             (hazard_bus.req.rs2_m1),
