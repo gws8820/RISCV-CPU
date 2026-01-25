@@ -18,7 +18,10 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
   - **MEM1**: Memory Access & Store Align
   - **MEM2**: Data Ready (FPGA BRAM Latency) & Load Data Extend
 - **Branch Prediction**:
-  - **Predictor**: BHT & BTB in IF stage for zero-penalty branching
+  - **BHT (Branch History Table)**: Uses a 2-bit Saturating Counter to predict branch direction.
+  - **BTB (Branch Target Buffer)**: Caches target addresses for immediate fetching in the IF stage.
+  - **Performance**: Enables zero-penalty branching for predicted hits.
+- **Branch Resolution**:
   - **Branch Unit**: Resolution & validation in EX stage. Registers inputs for timing optimization (1-cycle latency).
   - **Recovery**: 3-cycle penalty on misprediction (Flush ID/EX/MEM, redirect PC)
 - **Hazard Handling**:
@@ -60,13 +63,13 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 ## Memory Specifications
 
 ### Instruction Memory (IMEM)
-- **Size**: 16 KB (4096 words)
+- **Size**: 128KB (32768 words)
 - **Width**: 32-bit
 - **Access**: Runtime programmable via UART
 - **Description**: Stores program code. Can be updated without FPGA reconfiguration.
 
 ### Data Memory (DMEM)
-- **Size**: 64 KB (16384 words)
+- **Size**: 256KB (65536 words)
 - **Width**: 32-bit
 - **Access**: Read/Write
 - **IO Mapping**: Writes to `0xFFFF_0000` (PRINT_ADDR) are redirected to UART TX for debug output.
