@@ -5,6 +5,7 @@ import riscv_defines::*;
 
 module instruction_memory(
     input   logic           start, clk,
+    input   logic           stall,
     input   logic [31:0]    pc,
     input   logic           instmisalign,
     output  logic           imemfault,
@@ -40,22 +41,26 @@ module instruction_memory(
     
     always_ff@(posedge clk) begin
         if (!start) begin
-            imemfault <= 0;
-            inst <= INST_NOP;
+            imemfault           <= 0;
+            inst                <= INST_NOP;
+        end
+        else if (stall) begin
+            imemfault           <= imemfault;
+            inst                <= inst;
         end
         else begin
             if (instmisalign) begin
-                imemfault <= 0;
-                inst <= INST_NOP;
+                imemfault       <= 0;
+                inst            <= INST_NOP;
             end
             else begin
                 if (pc_word >= IMEM_WORD) begin // Word Aligned
-                    imemfault <= 1;
-                    inst <= INST_NOP;
+                    imemfault   <= 1;
+                    inst        <= INST_NOP;
                 end
                 else begin
-                    imemfault <= 0;
-                    inst <= inst_mem[pc_word];
+                    imemfault   <= 0;
+                    inst        <= inst_mem[pc_word];
                 end
             end
         end

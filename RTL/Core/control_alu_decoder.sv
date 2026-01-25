@@ -26,7 +26,7 @@ module control_alu_decoder(
                     default:    alucontrol = ALU_ADD;
                 endcase
             end
-            ALUOP_MUL: begin
+            ALUOP_MUL, ALUOP_DIV: begin
                 unique case(funct3)
                     3'b000:     alucontrol = ALU_MUL;
                     3'b001:     alucontrol = ALU_MULH;

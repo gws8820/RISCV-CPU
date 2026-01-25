@@ -14,13 +14,13 @@ module control_unit (
     output  alusrca_t       alusrc_a,
     output  alusrcb_t       alusrc_b,
     output  alucontrol_t    alucontrol,
+    output  aluop_t         aluop,
     output  memaccess_t     memaccess,
     output  resultsrc_t     resultsrc,
     output  logic           regwrite,
     output  logic           instillegal
 );
     
-    aluop_t aluop;
     logic is_rtype, is_alt;
     
     logic [6:0] funct7;

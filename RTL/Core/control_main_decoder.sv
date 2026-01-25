@@ -45,20 +45,23 @@ module control_main_decoder(
             OP_OP: begin
                 unique case (funct7)
                     FUNCT7_STD: begin
-                        aluop   = ALUOP_ARITH;
-                        is_alt  = 0;
+                        aluop       = ALUOP_ARITH;
+                        is_alt      = 0;
                     end
                     FUNCT7_ALT: begin
-                        aluop   = ALUOP_ARITH;
-                        is_alt  = 1;
+                        aluop       = ALUOP_ARITH;
+                        is_alt      = 1;
                     end
-                    // M EXTENSION DISABLED
-                    /*
-                        FUNCT7_MUL: begin
+                    FUNCT7_MUL: begin
+                        if (funct3[2] == 0) begin   // MUL
                             aluop   = ALUOP_MUL;
                             is_alt  = 0;
                         end
-                    */
+                        else begin                  // DIV, REM
+                            aluop   = ALUOP_DIV;
+                            is_alt  = 0;
+                        end
+                    end
                     default:    illegal_op = 1;
                 endcase
                 

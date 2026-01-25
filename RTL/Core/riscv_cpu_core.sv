@@ -32,6 +32,8 @@ module riscv_cpu_core (
     hazard_interface        hazard_bus();
     
     hazard_unit hazard_unit (
+        .start              (start),
+        .clk                (clk),
         .hazard_bus         (hazard_bus)
     );
 
@@ -190,7 +192,8 @@ module riscv_cpu_core (
     logic [4:0]             rs1_e, rs2_e, rd_e;
     logic [31:0]            rdata1_e, rdata2_e;
     logic [31:0]            in_a, in_b;
-    logic [31:0]            aluresult_e;
+    logic                   alu_valid, mul_valid, div_valid;
+    logic [31:0]            aluresult_e, mulresult_e, divresult_e;
     logic [31:0]            storedata_e;
     logic [31:0]            csr_wdata_e;
 
@@ -229,7 +232,14 @@ module riscv_cpu_core (
         .rdata2_e           (rdata2_e),
         .in_a               (in_a),
         .in_b               (in_b),
+
+        .alu_valid          (alu_valid),
+        .mul_valid          (mul_valid),
+        .div_valid          (div_valid),
         .aluresult_e        (aluresult_e),
+        .mulresult_e        (mulresult_e),
+        .divresult_e        (divresult_e),
+
         .storedata_e        (storedata_e),
         .csr_wdata_e        (csr_wdata_e),
 
@@ -261,7 +271,14 @@ module riscv_cpu_core (
         .pcplus4_e          (pcplus4_e),
         .rs2_e              (rs2_e),
         .rd_e               (rd_e),
+
+        .alu_valid          (alu_valid),
+        .mul_valid          (mul_valid),
+        .div_valid          (div_valid),
         .aluresult_e        (aluresult_e),
+        .mulresult_e        (mulresult_e),
+        .divresult_e        (divresult_e),
+        
         .storedata_e        (storedata_e),
         .csr_wdata_e        (csr_wdata_e),
 

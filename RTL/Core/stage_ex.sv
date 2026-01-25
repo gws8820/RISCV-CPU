@@ -26,7 +26,10 @@ module stage_ex (
     output  logic [4:0]                     rs1_e, rs2_e, rd_e,
     output  logic [31:0]                    rdata1_e, rdata2_e,
     output  logic [31:0]                    in_a, in_b,
-    output  logic [31:0]                    aluresult_e,
+
+    output  logic                           alu_valid, mul_valid, div_valid,
+    output  logic [31:0]                    aluresult_e, mulresult_e, divresult_e,
+    
     output  logic [31:0]                    storedata_e,
     output  logic [31:0]                    csr_wdata_e,
     
@@ -40,7 +43,7 @@ module stage_ex (
     hazard_interface.requester              hazard_bus
 );
 
-    logic                                   ex_valid;
+    logic                                   ex_valid, ex_fire;
     
     trap_flag_t                             trap_flag;
     trap_req_t                              trap_req_prev;
@@ -51,6 +54,7 @@ module stage_ex (
     always_ff@(posedge clk) begin
         if (!start) begin
             ex_valid                        <= 0;
+            ex_fire                         <= 0;
             control_signal_e                <= '0;
             pc_e                            <= 32'b0;
             pcplus4_e                       <= 32'b0;
@@ -68,13 +72,32 @@ module stage_ex (
         else begin
             priority if (hazard_bus.res.flush_e) begin
                 ex_valid                    <= 0;
+                ex_fire                     <= 0;
                 control_signal_e            <= '0;
                 rd_e                        <= 5'b0;
                 
                 trap_req_prev               <= '0;
             end
+            else if (hazard_bus.res.stall_e) begin
+                ex_valid                    <= ex_valid;
+                ex_fire                     <= 0;
+                control_signal_e            <= control_signal_e;
+                pc_e                        <= pc_e;
+                pcplus4_e                   <= pcplus4_e;
+                pc_pred_e                   <= pc_pred_e;
+                pred_taken_e                <= pred_taken_e;
+                rs1_e                       <= rs1_e;
+                rs2_e                       <= rs2_e;
+                rd_e                        <= rd_e;
+                rdata1_e                    <= rdata1_e;
+                rdata2_e                    <= rdata2_e;
+                immext_e                    <= immext_e;
+                
+                trap_req_prev               <= trap_req_prev;  
+            end
             else begin
                 ex_valid                    <= 1;
+                ex_fire                     <= 1;
                 control_signal_e            <= control_signal_d;
                 pc_e                        <= pc_d;
                 pcplus4_e                   <= pcplus4_d;
@@ -131,11 +154,40 @@ module stage_ex (
     end
 
     // ALU
-    alu alu (
+    exec_alu alu (
         .in_a                               (in_a),
         .in_b                               (in_b),
         .alucontrol                         (control_signal_e.alucontrol),
+        .alu_valid                          (alu_valid),
         .aluresult                          (aluresult_e)
+    );
+
+    // Multiplier
+    exec_multiplier multiplier (
+        .start                              (start),
+        .clk                                (clk),
+        .flush                              (hazard_bus.res.flush_e),
+        .ex_fire                            (ex_fire),
+        .aluop                              (control_signal_e.aluop),
+        .alucontrol                         (control_signal_e.alucontrol),
+        .in_a                               (in_a),
+        .in_b                               (in_b),
+        .mul_valid                          (mul_valid),
+        .mulresult                          (mulresult_e)
+    );
+
+    // Divisor
+    exec_divisor divisor (
+        .start                              (start),
+        .clk                                (clk),
+        .flush                              (hazard_bus.res.flush_e),
+        .ex_fire                            (ex_fire),
+        .aluop                              (control_signal_e.aluop),
+        .alucontrol                         (control_signal_e.alucontrol),
+        .in_a                               (in_a),
+        .in_b                               (in_b),
+        .div_valid                          (div_valid),
+        .divresult                          (divresult_e)
     );
     
     // Branch Unit
@@ -159,6 +211,8 @@ module stage_ex (
     // Hazard Packet
     always_comb begin
         hazard_bus.req.mispredict           = mispredict;
+        hazard_bus.req.ex_fire              = ex_fire;
+        hazard_bus.req.aluop_e              = control_signal_e.aluop;
         hazard_bus.req.rs1_e                = rs1_e;
         hazard_bus.req.rs2_e                = rs2_e;
         hazard_bus.req.rd_e                 = rd_e;

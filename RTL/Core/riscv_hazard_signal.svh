@@ -9,12 +9,15 @@ typedef struct packed {
     logic           raw_data;
     logic           store_data;
     logic           load_use;
+    logic           muldiv_stall;
     logic           branch_mispredict;
 } hazard_cause_t;
 
 typedef struct packed {
     logic           flushflag;
     logic           mispredict;
+    logic           ex_fire;
+    aluop_t         aluop_e;
     logic [4:0]     rs1_d, rs1_e;
     logic [4:0]     rs2_d, rs2_e, rs2_m1;
     logic [4:0]     rd_e, rd_m1, rd_m2, rd_w;
@@ -24,7 +27,7 @@ typedef struct packed {
 
 typedef struct packed {
     hazard_cause_t  hazard_cause;
-    logic           stall_f, stall_d;
+    logic           stall_f, stall_d, stall_e, stall_m1;
     logic           flush_d, flush_e, flush_m1, flush_m2;
     forward_e_t     forwarda_e, forwardb_e;
     logic           forward_m1;

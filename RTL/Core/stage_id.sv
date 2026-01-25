@@ -93,6 +93,7 @@ module stage_id (
         .alusrc_a                   (control_signal_d.alusrc_a),
         .alusrc_b                   (control_signal_d.alusrc_b),
         .alucontrol                 (control_signal_d.alucontrol),
+        .aluop                      (control_signal_d.aluop),
         .memaccess                  (control_signal_d.memaccess),
         .resultsrc                  (control_signal_d.resultsrc),
         .regwrite                   (control_signal_d.regwrite),

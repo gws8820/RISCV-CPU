@@ -8,9 +8,8 @@ module hazard_load_use_resolver (
     input   logic [4:0]     rd_e, rd_m1,
     input   logic [4:0]     rs1_d, rs2_d,
     output  logic           flag,
-    output  logic           stall_f,
-    output  logic           stall_d,
-    output  logic           flush_e
+    output  logic           stall,
+    output  logic           flush
 );
 
     logic id_ex, id_mem1;
@@ -22,15 +21,13 @@ module hazard_load_use_resolver (
     always_comb begin
         if (id_ex || id_mem1) begin
             flag    = 1;
-            stall_f = 1;
-            stall_d = 1;
-            flush_e = 1;
+            stall   = 1;
+            flush   = 1;
         end
         else begin
             flag    = 0;
-            stall_f = 0;
-            stall_d = 0;
-            flush_e = 0;
+            stall   = 0;
+            flush   = 0;
         end
     end
 

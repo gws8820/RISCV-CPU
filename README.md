@@ -7,6 +7,7 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 ### ISA Support
 - **Base ISA**: RV32I (RISC-V 32-bit Integer Base Instruction Set)
 - **Extensions**:
+  - **M**: Integer Multiplication and Division
   - **Zicsr**: Control and Status Register (CSR) Instructions
   - **Zifencei**: Instruction-Fetch Fence (FENCE.I)
 
@@ -30,6 +31,9 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
   - Illegal Instruction
   - Instruction/Data Address Misalign
   - Instruction/Data Access Fault
+- **Hardware Multiplier & Divisor**:
+  - **Multiplier**: Implemented using inferred DSP blocks (via synthesis attributes).
+  - **Divisor**: Implemented using a custom iterative shift-subtract logic.
 
 ## Clock Domain and Reset
 
@@ -81,6 +85,8 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 | **Load-Use Hazard** | 2 | ID | Detect on ID → use in EX (Forward from WB) |
 | **Branch Prediction Hit** | 0 | IF | Zero penalty (Seamless execution) |
 | **Branch Prediction Miss** | 3 | EX | Flush ID, EX, MEM1 stages, redirect PC |
+| **Multiplication Stall** | 2 | EX | Pipeline stall during multiplication |
+| **Division Stall** | 33 | EX | Pipeline stall during division |
 
 ### Trap/Exception Penalties
 | Trap/Flush Type | Penalty (Cycles) | Processing Stage | Notes |
@@ -100,6 +106,10 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 - **Jump**: JAL, JALR
 - **Upper Immediate**: LUI, AUIPC
 - **System**: ECALL, EBREAK, MRET, WFI (Hint, NOP)
+
+### RV32M Standard Extension
+- **Multiplication**: MUL, MULH, MULHSU, MULHU
+- **Division**: DIV, DIVU, REM, REMU
 
 ### Extensions
 - **Zicsr**: CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI

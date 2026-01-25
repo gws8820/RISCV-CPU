@@ -64,6 +64,7 @@ module stage_if (
     instruction_memory instruction_memory (
         .start                      (start),
         .clk                        (clk),
+        .stall                      (hazard_bus.res.stall_f), // Although stall_d is the precise signal, stall_f is used here because both stages stall in tandem.
         .pc                         (pc_f),
         .instmisalign               (trap_flag.instmisalign),
         .imemfault                  (trap_flag.imemfault),

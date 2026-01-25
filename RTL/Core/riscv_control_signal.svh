@@ -86,10 +86,10 @@ typedef enum logic [0:0] {
     SRCB_IMM
 } alusrcb_t;
 
-// Internal Signal of Control Unit
 typedef enum logic [1:0] {
     ALUOP_ADD,
     ALUOP_MUL,
+    ALUOP_DIV,
     ALUOP_ARITH
 } aluop_t;
 
@@ -137,6 +137,7 @@ typedef struct packed {
     alusrca_t       alusrc_a;
     alusrcb_t       alusrc_b;
     alucontrol_t    alucontrol;
+    aluop_t         aluop;
     memaccess_t     memaccess;
     resultsrc_t     resultsrc;
     logic           regwrite;
