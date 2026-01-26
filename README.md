@@ -20,15 +20,15 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 - **Branch Prediction**:
   - **BHT (Branch History Table)**: Uses a 2-bit Saturating Counter to predict branch direction.
   - **BTB (Branch Target Buffer)**: Caches target addresses for immediate fetching in the IF stage.
-  - **Performance**: Enables zero-penalty branching for predicted hits.
+  - **Performance**: No pipeline stalls or flushes on predicted branch hits.
 - **Branch Resolution**:
   - **Branch Unit**: Resolution & validation in EX stage. Registers inputs for timing optimization (1-cycle latency).
   - **Recovery**: 3-cycle penalty on misprediction (Flush ID/EX/MEM, redirect PC)
 - **Hazard Handling**:
-  - Data forwarding for RAW hazards from MEM1, MEM2, and WB stages to EX
-  - Store-data forwarding to resolve memory data hazards (MEM1/WB)
-  - Load-use hazard detection with pipeline stall
-  - Branch misprediction recovery with pipeline flush
+  - RAW hazards resolved by forwarding from MEM1/MEM2/WB to EX
+  - Store-Data hazards resolved by forwarding from WB to MEM1
+  - Load-Use hazards resolved by pipeline stall
+  - Branch Misprediction resolved by pipeline flush
 - **Trap/Exception Support**:
   - ECALL, EBREAK, MRET
   - Illegal Instruction
@@ -114,7 +114,7 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 - **Multiplication**: MUL, MULH, MULHSU, MULHU
 - **Division**: DIV, DIVU, REM, REMU
 
-### Extensions
+### Other Extensions
 - **Zicsr**: CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI
 - **Zifencei**: FENCE.I (Instruction cache/pipeline flush)
 
