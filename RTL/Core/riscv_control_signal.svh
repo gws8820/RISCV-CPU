@@ -20,6 +20,12 @@ typedef enum logic [1:0] {
 } cflow_mode_t;
 
 typedef enum logic [1:0] {
+    CFHINT_NONE,
+    CFHINT_CALL,
+    CFHINT_RET
+} cflow_hint_t;
+
+typedef enum logic [1:0] {
     SYSOP_NORMAL,
     SYSOP_ECALL,
     SYSOP_EBREAK,

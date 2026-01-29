@@ -79,7 +79,8 @@ module riscv_cpu_core (
     logic [31:0]            pc_jump;
     
     logic                   pred_taken;
-    logic                   cflow_valid;
+    cflow_mode_t            cflow_mode;
+    cflow_hint_t            cflow_hint;
     logic                   cflow_taken;
     logic                   mispredict;
     
@@ -95,6 +96,7 @@ module riscv_cpu_core (
     end
     
     branch_predictor branch_predictor (
+        .start              (start),
         .clk                (clk),
         
         .pc_f               (pc_f),
@@ -102,7 +104,8 @@ module riscv_cpu_core (
         .pred_target        (pc_pred),
         
         .pc_e               (pc_e_sync),
-        .cflow_valid        (cflow_valid),
+        .cflow_mode         (cflow_mode),
+        .cflow_hint         (cflow_hint),
         .cflow_taken        (cflow_taken),
         .cflow_target       (pc_jump)
     );
@@ -141,11 +144,11 @@ module riscv_cpu_core (
     // ------------ ID Stage -------------
 
     control_signal_t        control_signal_d;
+    cflow_hint_t            cflow_hint_d;
     logic [31:0]            pc_d;
     logic [31:0]            pcplus4_d;
     logic [31:0]            pc_pred_d;
     logic                   pred_taken_d;
-    inst_t                  inst_d;
 
     logic [4:0]             rs1_d, rs2_d, rd_d;
     logic [31:0]            rdata1_d, rdata2_d;
@@ -168,11 +171,11 @@ module riscv_cpu_core (
         .result_w           (result_w),
 
         .control_signal_d   (control_signal_d),
+        .cflow_hint_d       (cflow_hint_d),
         .pc_d               (pc_d),
         .pcplus4_d          (pcplus4_d),
         .pc_pred_d          (pc_pred_d),
         .pred_taken_d       (pred_taken_d),
-        .inst_d             (inst_d),
         .rs1_d              (rs1_d),
         .rs2_d              (rs2_d),
         .rd_d               (rd_d),
@@ -203,13 +206,12 @@ module riscv_cpu_core (
         .start              (start),
         .clk                (clk),
 
+        .control_signal_d   (control_signal_d),
+        .cflow_hint_d       (cflow_hint_d),
         .pc_d               (pc_d),
         .pcplus4_d          (pcplus4_d),
         .pc_pred_d          (pc_pred_d),
         .pred_taken_d       (pred_taken_d),
-        .inst_d             (inst_d),
-
-        .control_signal_d   (control_signal_d),
         .rs1_d              (rs1_d),
         .rs2_d              (rs2_d),
         .rd_d               (rd_d),
@@ -244,7 +246,8 @@ module riscv_cpu_core (
         .csr_wdata_e        (csr_wdata_e),
 
         .pc_jump            (pc_jump),
-        .cflow_valid        (cflow_valid),
+        .cflow_mode         (cflow_mode),
+        .cflow_hint         (cflow_hint),
         .cflow_taken        (cflow_taken),
         .mispredict         (mispredict),
 

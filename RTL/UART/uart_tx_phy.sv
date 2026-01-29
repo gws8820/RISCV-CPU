@@ -4,33 +4,33 @@ timeprecision 1ps;
 import uart_defines::*;
 
 module uart_tx_phy(
-    input   logic       rstn,
-    input   logic       clk,
-    input   logic       baud_tick,
+    input   logic           rstn,
+    input   logic           clk,
+    input   logic           baud_tick,
     
-    input   logic [7:0] tx_data,
-    input   logic       tx_valid,
+    input   logic [7:0]     tx_data,
+    input   logic           tx_valid,
     
-    output  logic       tx_ready,
-    output  logic       tx
+    output  logic           tx_ready,
+    output  logic           tx
 );
 
-    logic [7:0]         tx_fifo[0:PHY_FIFO_SIZE-1];
+    logic [7:0]             tx_fifo[0:PHY_FIFO_SIZE-1];
 
     logic [PHY_FIFO_BITS:0] rd_ptr, wr_ptr; // MSB Indicates Wrap Bit
-    logic               fifo_empty, fifo_full;
+    logic                   fifo_empty, fifo_full;
     always_comb begin
-        fifo_empty      = (rd_ptr == wr_ptr);
-        fifo_full       = (wr_ptr[PHY_FIFO_BITS]      != rd_ptr[PHY_FIFO_BITS]) && 
-                          (wr_ptr[PHY_FIFO_BITS-1:0]  == rd_ptr[PHY_FIFO_BITS-1:0]);
+        fifo_empty          = (rd_ptr == wr_ptr);
+        fifo_full           = (wr_ptr[PHY_FIFO_BITS]      != rd_ptr[PHY_FIFO_BITS]) && 
+                            (wr_ptr[PHY_FIFO_BITS-1:0]  == rd_ptr[PHY_FIFO_BITS-1:0]);
                           
-        tx_ready        = !fifo_full;
+        tx_ready            = !fifo_full;
     end
 
-    uart_tx_sync_t      tx_sync_state;
+    uart_tx_sync_t          tx_sync_state;
 
-    logic [7:0]         active_entry;
-    logic [2:0]         bit_counter;
+    logic [7:0]             active_entry;
+    logic [2:0]             bit_counter;
 
     always_ff@(posedge clk) begin
         if (!rstn) begin

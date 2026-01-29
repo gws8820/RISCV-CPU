@@ -18,8 +18,9 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
   - **MEM1**: Memory Access & Store Align
   - **MEM2**: Data Ready (FPGA BRAM Latency) & Load Data Extend
 - **Branch Prediction**:
-  - **BHT (Branch History Table)**: Uses a 2-bit Saturating Counter to predict branch direction.
-  - **BTB (Branch Target Buffer)**: Caches target addresses for immediate fetching in the IF stage.
+  - **BHT (Branch History Table)**: 128 entries. Uses a 2-bit Saturating Counter (Strongly/Weakly Taken/Not Taken) to predict conditional branches.
+  - **BTB (Branch Target Buffer)**: 128 entries. Stores Valid bit, Entry Type (Branch, Jump, Return), Tag, and Target Address.
+  - **RAS (Return Address Stack)**: 32 entries. Predicts return addresses for `JALR` instructions marked as returns, supporting nested function calls.
   - **Performance**: No pipeline stalls or flushes on predicted branch hits.
 - **Branch Resolution**:
   - **Branch Unit**: Resolution & validation in EX stage. Registers inputs for timing optimization (1-cycle latency).

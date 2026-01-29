@@ -12,12 +12,11 @@ module branch_history_table (
     
     // Update
     input   logic [31:0]    pc_e,
-    input   logic           cflow_valid,
+    input   logic           is_branch,
     input   logic           cflow_taken
-    
 );
 
-    (* ram_style="distributed" *) bht_state_t bht_mem [TABLE_ENTRIES-1:0];
+    (* ram_style="distributed" *) bht_state_t bht_mem [0:TABLE_ENTRIES-1];
     
     initial begin
         foreach (bht_mem[i]) begin
@@ -35,7 +34,7 @@ module branch_history_table (
     assign update_index = pc_e[2 +: INDEX_WIDTH];
     
     always_ff@(posedge clk) begin
-        if (cflow_valid) begin
+        if (is_branch) begin
             case (bht_mem[update_index])
                 STRONGLY_NOT_TAKEN: bht_mem[update_index] <= cflow_taken ? WEAKLY_NOT_TAKEN : STRONGLY_NOT_TAKEN;
                 WEAKLY_NOT_TAKEN:   bht_mem[update_index] <= cflow_taken ? WEAKLY_TAKEN     : STRONGLY_NOT_TAKEN;

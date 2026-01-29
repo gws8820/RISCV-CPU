@@ -17,11 +17,11 @@ module stage_id (
     input   logic [31:0]            result_w,
 
     output  control_signal_t        control_signal_d,
+    output  cflow_hint_t            cflow_hint_d,
     output  logic [31:0]            pc_d,
     output  logic [31:0]            pcplus4_d,
     output  logic [31:0]            pc_pred_d,
     output  logic                   pred_taken_d,
-    output  inst_t                  inst_d,
     output  logic [4:0]             rs1_d, rs2_d, rd_d,
     output  logic [31:0]            rdata1_d, rdata2_d,
     output  logic [31:0]            immext_d,
@@ -32,6 +32,7 @@ module stage_id (
 );
 
     logic                           id_valid;
+    inst_t                          inst_d;
     
     trap_flag_t                     trap_flag;
     trap_req_t                      trap_req_prev;
@@ -79,6 +80,34 @@ module stage_id (
         end
         else begin
             inst_d = inst_f;
+        end
+
+        if (inst_d.i.opcode == OP_JAL) begin
+            logic is_rd_link;
+            is_rd_link  = (inst_d.j.rd == 5'd1) || (inst_d.j.rd == 5'd5);
+            cflow_hint_d = is_rd_link ? CFHINT_CALL : CFHINT_NONE;
+        end
+        else if (inst_d.i.opcode == OP_JALR) begin
+            logic is_rd_link;
+            logic is_rs1_link;
+            logic is_ret;
+
+            is_rd_link  = (inst_d.i.rd  == 5'd1) || (inst_d.i.rd  == 5'd5);
+            is_rs1_link = (inst_d.i.rs1 == 5'd1) || (inst_d.i.rs1 == 5'd5);
+            is_ret      = (inst_d.i.rd == 5'd0) && is_rs1_link && (inst_d.i.imm == 12'd0);
+
+            if (is_rd_link) begin
+                cflow_hint_d = CFHINT_CALL;
+            end
+            else if (is_ret) begin
+                cflow_hint_d = CFHINT_RET;
+            end
+            else begin
+                cflow_hint_d = CFHINT_NONE;
+            end
+        end
+        else begin
+            cflow_hint_d = CFHINT_NONE;
         end
     end
     

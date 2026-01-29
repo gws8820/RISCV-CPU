@@ -6,13 +6,12 @@ import riscv_defines::*;
 module stage_ex (
     input   logic                           start, clk,
 
+    input   control_signal_t                control_signal_d,
+    input   cflow_hint_t                    cflow_hint_d,
     input   logic [31:0]                    pc_d,
     input   logic [31:0]                    pcplus4_d,
     input   logic [31:0]                    pc_pred_d,
     input   logic                           pred_taken_d,
-    input   inst_t                          inst_d,
-
-    input   control_signal_t                control_signal_d,
     input   logic [4:0]                     rs1_d, rs2_d, rd_d,
     input   logic [31:0]                    rdata1_d, rdata2_d,
     input   logic [31:0]                    immext_d,
@@ -34,7 +33,8 @@ module stage_ex (
     output  logic [31:0]                    csr_wdata_e,
     
     output  logic [31:0]                    pc_jump,
-    output  logic                           cflow_valid,
+    output  cflow_mode_t                    cflow_mode,
+    output  cflow_hint_t                    cflow_hint,
     output  logic                           cflow_taken,
     output  logic                           mispredict,
 
@@ -48,6 +48,7 @@ module stage_ex (
     trap_flag_t                             trap_flag;
     trap_req_t                              trap_req_prev;
 
+    cflow_hint_t                            cflow_hint_e;
     logic [31:0]                            pc_pred_e;
     logic                                   pred_taken_e;
 
@@ -56,6 +57,7 @@ module stage_ex (
             ex_valid                        <= 0;
             ex_fire                         <= 0;
             control_signal_e                <= '0;
+            cflow_hint_e                    <= CFHINT_NONE;
             pc_e                            <= 32'b0;
             pcplus4_e                       <= 32'b0;
             pc_pred_e                       <= 32'b0;
@@ -81,6 +83,7 @@ module stage_ex (
             else if (hazard_bus.res.stall_e) begin
                 ex_valid                    <= ex_valid;
                 ex_fire                     <= 0;
+                cflow_hint_e                <= cflow_hint_e;
                 control_signal_e            <= control_signal_e;
                 pc_e                        <= pc_e;
                 pcplus4_e                   <= pcplus4_e;
@@ -99,6 +102,7 @@ module stage_ex (
                 ex_valid                    <= 1;
                 ex_fire                     <= 1;
                 control_signal_e            <= control_signal_d;
+                cflow_hint_e                <= cflow_hint_d;
                 pc_e                        <= pc_d;
                 pcplus4_e                   <= pcplus4_d;
                 pc_pred_e                   <= pc_pred_d;
@@ -195,15 +199,18 @@ module stage_ex (
         .start                              (start),
         .clk                                (clk),
         .flush                              (hazard_bus.res.flush_e),
+        .ex_fire                            (ex_fire),
         .cflow_mode_reg                     (control_signal_e.cflow_mode),
         .branch_mode_reg                    (control_signal_e.funct3.branch_mode),
+        .cflow_hint_reg                     (cflow_hint_e),
         .in_a_reg                           (fwd_a),
         .in_b_reg                           (fwd_b),
         .pred_taken_reg                     (pred_taken_e),
         .pc_pred_reg                        (pc_pred_e),
         .aluresult_reg                      (aluresult_e),
         .pc_jump                            (pc_jump),
-        .cflow_valid                        (cflow_valid),
+        .cflow_mode                         (cflow_mode),
+        .cflow_hint                         (cflow_hint),
         .cflow_taken                        (cflow_taken),
         .mispredict                         (mispredict)
     );
