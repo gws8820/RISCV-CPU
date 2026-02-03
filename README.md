@@ -157,15 +157,18 @@ Integrated UART controller for communication and system control.
 #### 2. Packet Structure
 
 **RX Packet (Host → FPGA)**
-```
-[START: 0xA5] [CMD: 1B] [LEN: 1B] [PAYLOAD: 0~252B] [CHECKSUM: 1B]
-```
+
+| START | CMD | LEN | PAYLOAD | CHECKSUM |
+| :---: | :---: | :---: | :---: | :---: |
+| 0xA5 | 1B | 1B | 0~252B | 1B |
+
 - **Payload**: Address (4B) + Data (nB). All little-endian.
 
 **TX Packet (FPGA → Host)**
-```
-[START: 0xA5] [RES: 1B] [LEN: 1B] [DATA: 0~4B] [CHECKSUM: 1B]
-```
+
+| START | RES | LEN | PAYLOAD | CHECKSUM |
+| :---: | :---: | :---: | :---: | :---: |
+| 0xA5 | 1B | 1B | 0~4B | 1B |
 
 #### 3. Commands (CMD)
 
