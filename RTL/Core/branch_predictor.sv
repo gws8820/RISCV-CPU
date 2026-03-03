@@ -24,22 +24,21 @@ module branch_predictor (
 
 
     logic                       ras_push, ras_pop;
-    logic [31:0]                ras_push_addr, ras_pop_addr;
-    logic                       ras_empty, ras_full;
+    logic [31:0]                ras_ret_addr, ras_tos;
+    logic                       ras_empty;
 
     assign ras_push             = (cflow_hint == CFHINT_CALL) && (cflow_mode inside {CFLOW_JAL, CFLOW_JALR});
     assign ras_pop              = (cflow_hint == CFHINT_RET)  && (cflow_mode == CFLOW_JALR);
-    assign ras_push_addr        = pc_e + 4;
+    assign ras_ret_addr         = pc_e + 4;
 
-    return_address_stack ras (
+    branch_return_address_stack ras (
         .start                  (start),
         .clk                    (clk),
         .empty                  (ras_empty),
-        .full                   (ras_full),
         .push                   (ras_push),
-        .push_addr              (ras_push_addr),
+        .ret_addr               (ras_ret_addr),
         .pop                    (ras_pop),
-        .pop_addr               (ras_pop_addr)
+        .tos                    (ras_tos)
     );
 
     entry_type_t                entry_type;
@@ -54,12 +53,12 @@ module branch_predictor (
         .is_branch              (is_branch),
         .cflow_taken            (cflow_taken)
     );
-    
+
     branch_target_buffer btb (
         .clk                    (clk),
         .pc_f                   (pc_f),
         .ras_empty              (ras_empty),
-        .ras_pop_addr           (ras_pop_addr),
+        .ras_tos                (ras_tos),
         .pred_type              (entry_type),
         .btb_hit                (btb_hit),
         .pred_target            (pred_target),

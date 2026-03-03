@@ -13,9 +13,7 @@ module regfile(
     logic [31:0] registers [0:31];
 
     initial begin
-        foreach (registers[i]) begin
-            registers[i] <= 32'b0;
-        end
+        foreach (registers[i]) registers[i] <= 32'b0;
     end
 
     logic hit1, hit2; // Data PassThrough

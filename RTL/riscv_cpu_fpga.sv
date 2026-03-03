@@ -22,8 +22,8 @@ module riscv_cpu_fpga (
 
     logic                           mmcm_locked;
     logic                           mmcm_reset;
-    logic                           clk120_mmcm;
-    logic                           clk120_buf;
+    logic                           clk125_mmcm;
+    logic                           clk125_buf;
 
     logic                           clkfb_mmcm;
     logic                           clkfb_buf;
@@ -46,21 +46,21 @@ module riscv_cpu_fpga (
         .O  (clkfb_buf)
     );
 
-    // Output Clock Buffer (120MHz)
-    BUFG bufg_clk120 (
-        .I  (clk120_mmcm),
-        .O  (clk120_buf)
+    // Output Clock Buffer (125MHz)
+    BUFG bufg_clk125 (
+        .I  (clk125_mmcm),
+        .O  (clk125_buf)
     );
 
-    // MMCM: 50MHz -> 120MHz
-    // VCO = 50 * 12 / 1 = 600MHz (within 7-series MMCM VCO range)
-    // CLKOUT0 = 600 / 5 = 120MHz
+    // MMCM: 50MHz -> 125MHz
+    // VCO = 50 * 12.5 / 1 = 625MHz (within 7-series MMCM VCO range)
+    // CLKOUT0 = 625 / 5 = 125MHz
     
     assign mmcm_reset = ~rstn50;
 
     MMCME2_BASE #(
         .BANDWIDTH                  ("OPTIMIZED"),
-        .CLKFBOUT_MULT_F            (12.0),
+        .CLKFBOUT_MULT_F            (12.5),
         .CLKFBOUT_PHASE             (0.0),
         .CLKIN1_PERIOD              (20.0),
         .DIVCLK_DIVIDE              (1),
@@ -74,7 +74,7 @@ module riscv_cpu_fpga (
         .PWRDWN                     (0),
         .LOCKED                     (mmcm_locked),
         .CLKFBOUT                   (clkfb_mmcm),
-        .CLKOUT0                    (clk120_mmcm)
+        .CLKOUT0                    (clk125_mmcm)
     );
     
     // ----------- FPGA Signals -----------
@@ -112,7 +112,7 @@ module riscv_cpu_fpga (
     (* ASYNC_REG = "TRUE" *) logic  rstn100_reg, rstn100_sync;
     
     // 2-FF Synchronizer
-    always_ff @(posedge clk120_buf) begin
+    always_ff @(posedge clk125_buf) begin
         rstn100_reg                 <= rstn50;
         rstn100_sync                <= rstn100_reg & mmcm_locked;
     end
@@ -134,7 +134,7 @@ module riscv_cpu_fpga (
     
     uart_controller uart_controller (
         .rstn           (rstn100_sync),
-        .clk            (clk120_buf),
+        .clk            (clk125_buf),
         .rx             (uart_rx),
         .tx             (uart_tx),
         
@@ -152,7 +152,7 @@ module riscv_cpu_fpga (
     
     riscv_cpu_core  cpu_core (
         .start          (start),
-        .clk            (clk120_buf),
+        .clk            (clk125_buf),
         
         .prog_en        (prog_en),
         .prog_addr      (prog_addr),

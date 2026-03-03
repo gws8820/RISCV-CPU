@@ -9,7 +9,7 @@ module branch_target_buffer (
     // Predict
     input   logic [31:0]            pc_f,
     input   logic                   ras_empty,
-    input   logic [31:0]            ras_pop_addr,
+    input   logic [31:0]            ras_tos,
     output  entry_type_t            pred_type,
     output  logic                   btb_hit,
     output  logic [31:0]            pred_target,
@@ -24,12 +24,6 @@ module branch_target_buffer (
 
     (* ram_style="distributed" *) btb_entry_t btb_mem [0:TABLE_ENTRIES-1];
     
-    initial begin
-        foreach (btb_mem[i]) begin
-            btb_mem[i]  <= '0;
-        end
-    end
-    
     logic                           pred_valid;
     logic [TAG_WIDTH-1:0]           pred_tag;
     logic [31:0]                    pred_tgt;
@@ -40,14 +34,9 @@ module branch_target_buffer (
     
     always_comb begin
         {pred_valid, pred_type, pred_tag, pred_tgt} = btb_mem[predict_index];
-        btb_hit = pred_valid && (pred_tag == pc_f[31 -: TAG_WIDTH]);
-        
-        if (pred_type == ENRTY_RET) begin
-            pred_target = ras_empty ? pred_tgt : ras_pop_addr;
-        end
-        else begin
-            pred_target = pred_tgt;
-        end
+
+        btb_hit     = pred_valid && (pred_tag == pc_f[31 -: TAG_WIDTH]);
+        pred_target = (pred_type == ENRTY_RET && !ras_empty) ? ras_tos : pred_tgt;
     end
     
     // Update Logic
@@ -86,9 +75,13 @@ module branch_target_buffer (
         update_entry.target = cflow_target;
     end
     
+    initial begin
+        foreach (btb_mem[i]) btb_mem[i] <= '0;
+    end
+
     always_ff@(posedge clk) begin
         if (cflow_valid && cflow_taken) begin
-            btb_mem[update_index]   <= update_entry;
+            btb_mem[update_index] <= update_entry;
         end
     end
 

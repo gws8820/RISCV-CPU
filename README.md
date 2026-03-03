@@ -37,14 +37,14 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
   - Instruction/Data Access Fault
 - **Hardware Multiplier & Divisor**:
   - **Multiplier**: Implemented using inferred DSP blocks (via synthesis attributes).
-  - **Divisor**: Implemented using a custom iterative shift-subtract logic.
+  - **Divisor**: Implemented using a custom iterative shift-subtract logic (2x loop unrolled, 16 cycles for 32-bit division).
 
 ## Clock Domain and Reset
 
 ### Target FPGA
 - **Board**: ALINX AX7Z020B (Zynq-7020)
 - **Input Clock**: 50 MHz (onboard oscillator)
-- **Internal Clock**: 120 MHz (via MMCM)
+- **Internal Clock**: 125 MHz (via MMCM)
 
 ### Clock and Reset Signals
 | Signal | Type | Description |
@@ -77,6 +77,17 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 
 ## Performance Characteristics
 
+### Hardware Multiplier & Divisor
+
+**Multiplier**
+- Inferred DSP48 blocks via `(* use_dsp = "yes" *)` synthesis attribute.
+- 3-stage pipeline: result available 3 cycles after issue, causing a **3-cycle stall**.
+
+**Divisor**
+- Algorithm: Restoring shift-subtract division.
+- 2x loop unrolled: computes **2 quotient bits per clock cycle** combinatorially.
+- 32-bit division takes **17 cycles** total (1 setup + 16 compute), causing a **17-cycle stall**.
+
 ### Pipeline Performance
 - **Ideal CPI**: 1.0
 - **Actual CPI**: Depends on program characteristics (typically 1.1-1.5 due to hazards)
@@ -89,8 +100,8 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 | **Load-Use Hazard** | 2 | ID | Detect on ID → use in EX (Forward from WB) |
 | **Branch Prediction Hit** | 0 | IF | Zero penalty (Seamless execution) |
 | **Branch Prediction Miss** | 3 | EX | Flush ID, EX, MEM1 stages, redirect PC |
-| **Multiplication Stall** | 2 | EX | Pipeline stall during multiplication |
-| **Division Stall** | 33 | EX | Pipeline stall during division |
+| **Multiplication Stall** | 3 | EX | Pipeline stall during multiplication (DSP Inferred) |
+| **Division Stall** | 17 | EX | Pipeline stall during division (2x Loop unrolled) |
 
 ### Trap/Exception Penalties
 | Trap/Flush Type | Penalty (Cycles) | Processing Stage | Notes |
@@ -121,7 +132,7 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 
 ## CSR Registers
 
-The core implements the following Machine-mode CSRs:
+### Machine-Mode CSRs
 
 | CSR Address | Name | Description |
 |-------------|------|-------------|
@@ -133,7 +144,20 @@ The core implements the following Machine-mode CSRs:
 | 0x342 | **mcause** | Machine trap cause |
 | 0x343 | **mtval** | Machine trap value (bad address or instruction) |
 | 0x344 | **mip** | Machine interrupt-pending register |
-| 0xF14 | **mhartid** | Hardware thread ID (read-only, hart ID = 0) |
+| 0xB00 | **mcycle** | Cycle counter (lower 32 bits), auto-incremented every clock cycle |
+| 0xB80 | **mcycleh** | Cycle counter (upper 32 bits) |
+| 0xB02 | **minstret** | Instructions-retired counter (lower 32 bits), incremented per retired instruction |
+| 0xB82 | **minstreth** | Instructions-retired counter (upper 32 bits) |
+
+### Read-Only CSRs
+
+| CSR Address | Name | Description |
+|-------------|------|-------------|
+| 0xF14 | **mhartid** | Hardware thread ID (hart ID = 0) |
+| 0xC00 | **cycle** | Alias for mcycle (lower 32 bits) |
+| 0xC80 | **cycleh** | Alias for mcycleh (upper 32 bits) |
+| 0xC02 | **instret** | Alias for minstret (lower 32 bits) |
+| 0xC82 | **instreth** | Alias for minstreth (upper 32 bits) |
 
 ## UART Subsystem
 

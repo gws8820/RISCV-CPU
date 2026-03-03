@@ -19,14 +19,14 @@ module stage_if (
     
     input   trap_res_t              trap_res,
     output  trap_req_t              trap_req_f,
-    hazard_interface.requester      hazard_bus,
+    output  logic                   instmisalign,
+    output  logic                   imemfault,
+    input   hazard_res_t            hazard_res,
     
     input   logic                   prog_en,
     input   logic [31:0]            prog_addr,
     input   logic [31:0]            prog_data
 );
-
-    trap_flag_t                     trap_flag;
 
     // PCNext Selector
     logic [31:0] pc_next;
@@ -49,25 +49,25 @@ module stage_if (
     program_counter program_counter (
         .start                      (start), // Starts PC from Zero
         .clk                        (clk),
-        .stall                      (hazard_bus.res.stall_f),
+        .stall                      (hazard_res.stall_f),
         .pc_next                    (pc_next),
         .pc                         (pc_f)
     );
-    
+
     // Inst Misalign Checker
     inst_misalign_checker inst_misalign_checker (
         .pc                         (pc_f),
-        .instmisalign               (trap_flag.instmisalign)
+        .instmisalign               (instmisalign)
     );
 
     // Instruction Memory
     instruction_memory instruction_memory (
         .start                      (start),
         .clk                        (clk),
-        .stall                      (hazard_bus.res.stall_f), // Although stall_d is the precise signal, stall_f is used here because both stages stall in tandem.
+        .stall                      (hazard_res.stall_f), // Although stall_d is the precise signal, stall_f is used here because both stages stall in tandem.
         .pc                         (pc_f),
-        .instmisalign               (trap_flag.instmisalign),
-        .imemfault                  (trap_flag.imemfault),
+        .instmisalign               (instmisalign),
+        .imemfault                  (imemfault),
         .inst                       (inst_f),
         
         .prog_en                    (prog_en),
@@ -77,22 +77,18 @@ module stage_if (
     
     // Trap Packet
     always_comb begin
-        trap_flag.instillegal       = 0;
-        trap_flag.datamisalign      = 0;
-        trap_flag.dmemfault         = 0;
-
         if (!start) begin
             trap_req_f              = '0;
         end
         else begin
-            if (trap_flag.instmisalign) begin
+            if (instmisalign) begin
                 trap_req_f.valid    = 1;
                 trap_req_f.mode     = TRAP_ENTER;
                 trap_req_f.cause    = CAUSE_INST_MISALIGNED;
                 trap_req_f.pc       = pc_f;
                 trap_req_f.tval     = pc_f;
             end
-            else if (trap_flag.imemfault) begin
+            else if (imemfault) begin
                 trap_req_f.valid    = 1;
                 trap_req_f.mode     = TRAP_ENTER;
                 trap_req_f.cause    = CAUSE_INST_ACCESS_FAULT;

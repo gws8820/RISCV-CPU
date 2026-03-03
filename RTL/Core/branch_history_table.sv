@@ -5,11 +5,11 @@ import riscv_defines::*;
 
 module branch_history_table (
     input   logic           clk,
-    
+
     // Predict
     input   logic [31:0]    pc_f,
     output  logic           bht_taken,
-    
+
     // Update
     input   logic [31:0]    pc_e,
     input   logic           is_branch,
@@ -17,22 +17,20 @@ module branch_history_table (
 );
 
     (* ram_style="distributed" *) bht_state_t bht_mem [0:TABLE_ENTRIES-1];
-    
-    initial begin
-        foreach (bht_mem[i]) begin
-            bht_mem[i] <= WEAKLY_NOT_TAKEN;
-        end
-    end
-    
+
     // Predict Logic
     logic [INDEX_WIDTH-1:0] predict_index;
     assign predict_index = pc_f[2 +: INDEX_WIDTH];
     assign bht_taken = bht_mem[predict_index][1];
-    
+
     // Update Logic
     logic [INDEX_WIDTH-1:0] update_index;
     assign update_index = pc_e[2 +: INDEX_WIDTH];
-    
+
+    initial begin
+        foreach (bht_mem[i]) bht_mem[i] <= WEAKLY_NOT_TAKEN;
+    end
+
     always_ff@(posedge clk) begin
         if (is_branch) begin
             case (bht_mem[update_index])

@@ -7,8 +7,7 @@
 
 // Parameter
 #define BASE_ADDR       0x00
-#define START_FLAG      0xA5
-#define MAX_PROG_SIZE   4096    // 16KB IMEM
+#define MAX_PROG_SIZE   32768   // 128KB IMEM
 #define CHUNK_SIZE      62      // Max words per packet
 
 // CMD

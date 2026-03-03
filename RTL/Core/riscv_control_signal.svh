@@ -67,6 +67,7 @@ typedef union packed {
 
 typedef struct packed {
     logic           valid;
+    logic           iswrite;
     logic           use_imm;
     csr_mode_t      csr_mode;
     logic [11:0]    csr_target;
@@ -134,6 +135,7 @@ typedef enum logic [1:0] {
 } resultsrc_t;
 
 typedef struct packed {
+    logic           valid;
     cflow_mode_t    cflow_mode;
     sysop_mode_t    sysop_mode;
     funct3_t        funct3;
@@ -147,4 +149,4 @@ typedef struct packed {
     memaccess_t     memaccess;
     resultsrc_t     resultsrc;
     logic           regwrite;
-} control_signal_t;
+} control_bus_t;

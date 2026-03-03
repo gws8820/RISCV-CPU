@@ -30,14 +30,6 @@ module control_unit (
     logic illegal_op, illegal_csr;
     assign instillegal = illegal_op || illegal_csr;
     
-    csr_req_t csr_req_reg;
-    always_comb begin
-        csr_req.valid      = csr_req_reg.valid && !instillegal;
-        csr_req.use_imm    = csr_req_reg.use_imm;
-        csr_req.csr_mode   = csr_req_reg.csr_mode;
-        csr_req.csr_target = csr_req_reg.csr_target;
-    end
-    
     control_main_decoder main_decoder (
         .opcode             (inst.i.opcode),
         .funct3             (funct3),
@@ -71,7 +63,7 @@ module control_unit (
         .wtarget            (inst.i.rs1),
         .csr_mode           (funct3.csr_mode),
         .csr_target         (inst.i.imm),
-        .csr_req            (csr_req_reg),
+        .csr_req            (csr_req),
         .illegal_csr        (illegal_csr)
     );
     

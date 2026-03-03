@@ -1,4 +1,5 @@
 .vscode
+.claude
 
 program.hex
 Software/cpu_programmer.exe

@@ -119,38 +119,35 @@ int print_log () {
             break;
         }
 
-        if (r == 0) {
-            if (res == RES_PRINT && len > 0) {
-                if (!boot_flag && len == 4) {
-                    uint32_t word =
-                        ((uint32_t)data[0]) |
-                        ((uint32_t)data[1] << 8) |
-                        ((uint32_t)data[2] << 16) |
-                        ((uint32_t)data[3] << 24);
-                        
-                    if (word == (uint32_t)BOOT_MSG) {
-                        printf("CPU Startup Complete.\n");
-                        printf("\n");
-                        boot_flag = 1;
-                        continue;
-                    }
-                }
+        if (r == 0 && res == RES_PRINT) {
+            if (len == 0 || len > 4) {
+                printf("Print Failed (Invalid Length: %d)\n", len);
+                continue;
+            }
 
-                char buf[5] = {0,};
-
-                for (int i = 0; i < len; i++) {
-                    buf[i] = (char)data[i];
-                }
-                buf[len] = '\0';
-
+            if (!boot_flag && len == 4) {
                 uint32_t word =
                     ((uint32_t)data[0]) |
                     ((uint32_t)data[1] << 8) |
                     ((uint32_t)data[2] << 16) |
                     ((uint32_t)data[3] << 24);
 
-                printf("0x%08X  '%s'\n", word, buf);
+                if (word == (uint32_t)BOOT_MSG) {
+                    printf("CPU Startup Complete.\n");
+                    printf("\n");
+                    boot_flag = 1;
+                    continue;
+                }
             }
+
+            uint32_t word = 0;
+            for (int i = 0; i < len; i++)
+                word |= ((uint32_t)data[i] << (i * 8));
+
+            char buf[5] = {0};
+            for (int i = 0; i < len; i++) buf[i] = (char)data[i];
+
+            printf("0x%08X  '%s'\n", word, buf);
         }
         else {
             Sleep(1);
@@ -179,7 +176,7 @@ int serial_open (char *com_port) {
     );
 
     if (hSerial == INVALID_HANDLE_VALUE) {
-        printf("Fail To Open Serial Port.\n");
+        printf("Failed to Open Serial Port.\n");
         return -1;
     }
 
@@ -188,7 +185,7 @@ int serial_open (char *com_port) {
     dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
     
     if (!GetCommState(hSerial, &dcbSerialParams)) {
-        printf("Fail To Get Serial Port State.\n");
+        printf("Failed to Get Serial Port State.\n");
         CloseHandle(hSerial);
         hSerial = INVALID_HANDLE_VALUE;
         return -1;
@@ -200,7 +197,7 @@ int serial_open (char *com_port) {
     dcbSerialParams.Parity   = NOPARITY;
     
     if (!SetCommState(hSerial, &dcbSerialParams)) {
-        printf("Fail To Set Serial Port State.\n");
+        printf("Failed to Set Serial Port State.\n");
         CloseHandle(hSerial);
         hSerial = INVALID_HANDLE_VALUE;
         return -1;
@@ -221,7 +218,7 @@ int serial_open (char *com_port) {
     // => Total Write Timeout = 50ms + (Requested Bytes * 10ms)
     
     if (!SetCommTimeouts(hSerial, &timeouts)) {
-        printf("Fail To Set Serial Port Timeouts.\n");
+        printf("Failed to Set Serial Port Timeouts.\n");
         CloseHandle(hSerial);
         hSerial = INVALID_HANDLE_VALUE;
         return -1;

@@ -94,7 +94,7 @@ int send_command (cmd_t cmd) {
         if (serial_write_byte((uint8_t)checksum) != 0)  return -1;
 
         if (check_ack() == -1) {
-            printf("Command Send FAIL.\n");
+            printf("Command Send Failed.\n");
         }
         else {
             printf("Command Send OK.\n");

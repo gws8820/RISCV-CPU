@@ -12,11 +12,11 @@ module stage_id (
     input   logic                   pred_taken_f,
     input   inst_t                  inst_f,
 
-    input   control_signal_t        control_signal_w,
+    input   logic                   regwrite_w,
     input   logic [4:0]             rd_w,
     input   logic [31:0]            result_w,
 
-    output  control_signal_t        control_signal_d,
+    output  control_bus_t           control_bus_d,
     output  cflow_hint_t            cflow_hint_d,
     output  logic [31:0]            pc_d,
     output  logic [31:0]            pcplus4_d,
@@ -28,42 +28,23 @@ module stage_id (
 
     input   trap_req_t              trap_req_f,
     output  trap_req_t              trap_req_d,
-    hazard_interface.requester      hazard_bus
+    output  logic                   instillegal,
+    input   hazard_res_t            hazard_res
 );
 
-    logic                           id_valid;
     inst_t                          inst_d;
     
-    trap_flag_t                     trap_flag;
     trap_req_t                      trap_req_prev;
 
     always_ff@(posedge clk) begin
         if (!start) begin
-            id_valid                <= 0;
-            pc_d                    <= 32'b0;
-            pcplus4_d               <= 32'b0;
-            pc_pred_d               <= 32'b0;
-            pred_taken_d            <= 0;
-
             trap_req_prev           <= '0;
         end
         else begin
-            priority if (hazard_bus.res.flush_d) begin
-                id_valid            <= 0;
-
+            priority if (hazard_res.flush_d) begin
                 trap_req_prev       <= '0;
             end
-            else if (hazard_bus.res.stall_d) begin
-                id_valid            <= id_valid;
-                pc_d                <= pc_d;
-                pcplus4_d           <= pcplus4_d;
-                pc_pred_d           <= pc_pred_d;
-                pred_taken_d        <= pred_taken_d;
-
-                trap_req_prev       <= trap_req_prev;
-            end
-            else begin
-                id_valid            <= 1;
+            else if (!hazard_res.stall_d) begin
                 pc_d                <= pc_f;
                 pcplus4_d           <= pcplus4_f;
                 pc_pred_d           <= pc_pred_f;
@@ -75,7 +56,7 @@ module stage_id (
     end
     
     always_comb begin
-        unique if (hazard_bus.res.flush_d) begin
+        unique if (hazard_res.flush_d) begin
             inst_d = INST_NOP;
         end
         else begin
@@ -94,7 +75,7 @@ module stage_id (
 
             is_rd_link  = (inst_d.i.rd  == 5'd1) || (inst_d.i.rd  == 5'd5);
             is_rs1_link = (inst_d.i.rs1 == 5'd1) || (inst_d.i.rs1 == 5'd5);
-            is_ret      = (inst_d.i.rd == 5'd0) && is_rs1_link && (inst_d.i.imm == 12'd0);
+            is_ret      = (inst_d.i.rd == 5'd0) && is_rs1_link;
 
             if (is_rd_link) begin
                 cflow_hint_d = CFHINT_CALL;
@@ -111,22 +92,24 @@ module stage_id (
         end
     end
     
-    control_unit control_unit (    
+    assign control_bus_d.valid = !hazard_res.flush_d;
+
+    control_unit control_unit (
         .inst                       (inst_d),
-        .cflow_mode                 (control_signal_d.cflow_mode),
-        .sysop_mode                 (control_signal_d.sysop_mode),
-        .funct3                     (control_signal_d.funct3),
-        .csr_req                    (control_signal_d.csr_req),
-        .fencei                     (control_signal_d.fencei),
-        .immsrc                     (control_signal_d.immsrc),
-        .alusrc_a                   (control_signal_d.alusrc_a),
-        .alusrc_b                   (control_signal_d.alusrc_b),
-        .alucontrol                 (control_signal_d.alucontrol),
-        .aluop                      (control_signal_d.aluop),
-        .memaccess                  (control_signal_d.memaccess),
-        .resultsrc                  (control_signal_d.resultsrc),
-        .regwrite                   (control_signal_d.regwrite),
-        .instillegal                (trap_flag.instillegal)
+        .cflow_mode                 (control_bus_d.cflow_mode),
+        .sysop_mode                 (control_bus_d.sysop_mode),
+        .funct3                     (control_bus_d.funct3),
+        .csr_req                    (control_bus_d.csr_req),
+        .fencei                     (control_bus_d.fencei),
+        .immsrc                     (control_bus_d.immsrc),
+        .alusrc_a                   (control_bus_d.alusrc_a),
+        .alusrc_b                   (control_bus_d.alusrc_b),
+        .alucontrol                 (control_bus_d.alucontrol),
+        .aluop                      (control_bus_d.aluop),
+        .memaccess                  (control_bus_d.memaccess),
+        .resultsrc                  (control_bus_d.resultsrc),
+        .regwrite                   (control_bus_d.regwrite),
+        .instillegal                (instillegal)
     );
     
     // Register File
@@ -138,7 +121,7 @@ module stage_id (
     
     regfile regfile (
         .clk                        (clk),
-        .regwrite                   (control_signal_w.regwrite),
+        .regwrite                   (regwrite_w),
         .waddr                      (rd_w),
         .wdata                      (result_w),
         .raddr1                     (rs1_d),
@@ -150,28 +133,17 @@ module stage_id (
     // Immediate Extender
     imm_extender imm_extender (
         .inst                       (inst_d),
-        .immsrc                     (control_signal_d.immsrc),
+        .immsrc                     (control_bus_d.immsrc),
         .immext                     (immext_d)
     );
     
-    // Hazard Packet
-    always_comb begin
-        hazard_bus.req.rs1_d        = rs1_d;
-        hazard_bus.req.rs2_d        = rs2_d;
-    end
-    
     // Trap Packet
     always_comb begin
-        trap_flag.instmisalign      = 0;
-        trap_flag.imemfault         = 0;
-        trap_flag.datamisalign      = 0;
-        trap_flag.dmemfault         = 0;
-
         if (trap_req_prev.valid) begin
             trap_req_d              = trap_req_prev;
         end
         else begin
-            if (trap_flag.instillegal) begin
+            if (instillegal) begin
                 trap_req_d.valid    = 1;
                 trap_req_d.mode     = TRAP_ENTER;
                 trap_req_d.cause    = CAUSE_ILLEGAL_INSTRUCTION;

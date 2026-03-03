@@ -14,7 +14,7 @@ module hazard_load_use_resolver (
 
     logic id_ex, id_mem1;
     always_comb begin
-        id_ex   = memaccess_e  == MEM_READ && rd_e != 0  && (rd_e == rs1_d || rd_e == rs2_d);
+        id_ex   = memaccess_e  == MEM_READ && rd_e  != 0 && (rd_e  == rs1_d || rd_e  == rs2_d);
         id_mem1 = memaccess_m1 == MEM_READ && rd_m1 != 0 && (rd_m1 == rs1_d || rd_m1 == rs2_d);
     end
 
