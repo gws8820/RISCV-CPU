@@ -46,6 +46,7 @@ module branch_predictor (
     assign                      pred_taken = (entry_type == ENRTY_BRANCH) ? (bht_taken && btb_hit) : btb_hit;
 
     branch_history_table bht (
+        .start                  (start),
         .clk                    (clk),
         .pc_f                   (pc_f),
         .bht_taken              (bht_taken),
@@ -55,6 +56,7 @@ module branch_predictor (
     );
 
     branch_target_buffer btb (
+        .start                  (start),
         .clk                    (clk),
         .pc_f                   (pc_f),
         .ras_empty              (ras_empty),

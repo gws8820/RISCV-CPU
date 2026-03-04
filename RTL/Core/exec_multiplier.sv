@@ -53,6 +53,7 @@ module exec_multiplier (
     always_ff@(posedge clk) begin
         if (!start) begin
             mul_valid           <= 0;
+            mulresult           <= 32'd0;
             mul_busy            <= 0;
             dsp_ready           <= 0;
         end

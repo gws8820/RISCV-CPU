@@ -93,9 +93,9 @@ module riscv_cpu_core (
     logic [31:0]            pc_pred;
     logic [31:0]            pc_jump;
     
-    logic                   pred_taken_reg;
     cflow_mode_t            cflow_mode_reg;
-    cflow_hint_t            cflow_hint;
+    cflow_hint_t            cflow_hint_reg;
+    logic                   pred_taken;
     logic                   cflow_taken;
     logic                   mispredict;
     

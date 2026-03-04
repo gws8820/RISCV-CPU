@@ -4,6 +4,7 @@ timeprecision 1ps;
 import riscv_defines::*;
 
 module branch_target_buffer (
+    input   logic                   start,
     input   logic                   clk,
 
     // Predict
@@ -74,13 +75,12 @@ module branch_target_buffer (
         update_entry.tag    = pc_e[31 -: TAG_WIDTH];
         update_entry.target = cflow_target;
     end
-    
-    initial begin
-        foreach (btb_mem[i]) btb_mem[i] <= '0;
-    end
 
     always_ff@(posedge clk) begin
-        if (cflow_valid && cflow_taken) begin
+        if (!start) begin
+            foreach (btb_mem[i]) btb_mem[i] <= '0;
+        end
+        else if (cflow_valid && cflow_taken) begin
             btb_mem[update_index] <= update_entry;
         end
     end

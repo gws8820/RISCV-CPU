@@ -56,7 +56,7 @@ module stage_id (
     end
     
     always_comb begin
-        unique if (hazard_res.flush_d) begin
+        unique if (hazard_res.flush_d || hazard_res.flush_d_reg) begin
             inst_d = INST_NOP;
         end
         else begin

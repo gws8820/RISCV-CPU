@@ -4,6 +4,7 @@ timeprecision 1ps;
 import riscv_defines::*;
 
 module branch_history_table (
+    input   logic           start,
     input   logic           clk,
 
     // Predict
@@ -27,12 +28,11 @@ module branch_history_table (
     logic [INDEX_WIDTH-1:0] update_index;
     assign update_index = pc_e[2 +: INDEX_WIDTH];
 
-    initial begin
-        foreach (bht_mem[i]) bht_mem[i] <= WEAKLY_NOT_TAKEN;
-    end
-
     always_ff@(posedge clk) begin
-        if (is_branch) begin
+        if (!start) begin
+            foreach (bht_mem[i]) bht_mem[i] <= WEAKLY_NOT_TAKEN;
+        end
+        else if (is_branch) begin
             case (bht_mem[update_index])
                 STRONGLY_NOT_TAKEN: bht_mem[update_index] <= cflow_taken ? WEAKLY_NOT_TAKEN : STRONGLY_NOT_TAKEN;
                 WEAKLY_NOT_TAKEN:   bht_mem[update_index] <= cflow_taken ? WEAKLY_TAKEN     : STRONGLY_NOT_TAKEN;

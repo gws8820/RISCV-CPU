@@ -35,6 +35,19 @@ initial begin
     prog_data   = '0;
 
     #20 start  = 1;
+
+    #(CLK_PERIOD * 500000);
+    $display("[TIMEOUT]");
+    $finish;
+end
+
+always @(posedge clk) begin
+    if (print_en) begin
+        if (print_data == 32'hABCD_1234)
+            $display("[BOOT]");
+        else
+            $write("%c", print_data[7:0]);
+    end
 end
 
 endmodule

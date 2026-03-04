@@ -12,7 +12,6 @@ module stage_mem1 (
 
     input   logic                   alu_valid, mul_valid, div_valid,
     input   logic [31:0]            aluresult_e, mulresult_e, divresult_e,
-
     input   logic [31:0]            storedata_e,
     input   logic [31:0]            csr_wdata_e,
 
