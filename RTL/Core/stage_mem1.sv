@@ -17,6 +17,10 @@ module stage_mem1 (
 
     input   logic [31:0]            result_w,
 
+    input   logic                   prog_en,
+    input   logic [31:0]            prog_addr,
+    input   logic [31:0]            prog_data,
+
     output  control_bus_t           control_bus_m1,
     output  logic [4:0]             rd_m1,
     output  logic [4:0]             rs2_m1,
@@ -33,6 +37,9 @@ module stage_mem1 (
     input   logic [31:0]            csr_result,
     input   hazard_res_t            hazard_res,
     
+    output  logic                   boot_en,
+    output  logic                   exit_en,
+    output  logic [7:0]             exit_code,
     output  logic                   print_en,
     output  logic [31:0]            print_data
 );
@@ -58,14 +65,14 @@ module stage_mem1 (
             trap_req_prev           <= '0;
         end
         else begin
-            priority if (hazard_res.flush_m1) begin
+            if (hazard_res.flush_m1) begin
                 control_bus_m1      <= '0;
                 alu_valid_m1        <= 0;
                 mul_valid_m1        <= 0;
                 div_valid_m1        <= 0;
                 trap_req_prev       <= '0;
             end
-            else if (!hazard_res.stall_m1) begin
+            else begin
                 control_bus_m1      <= control_bus_e;
                 pc_m1               <= pc_e;
                 pcplus4_m1          <= pcplus4_e;
@@ -125,8 +132,7 @@ module stage_mem1 (
     logic [31:0]                    wdata;
     
     // Store Align Unit
-    logic [29:0]    word_addr;
-    assign          {word_addr, byte_offset_m1} = exec_result;
+    assign byte_offset_m1 = exec_result[1:0];
 
     store_align_unit store_align_unit (
         .memaccess                  (memaccess_eff),
@@ -142,12 +148,17 @@ module stage_mem1 (
         .start                      (start),
         .clk                        (clk),
         .memaccess                  (memaccess_eff),
-        .word_addr                  (word_addr),
+        .mem_addr                   (exec_result),
         .wstrb                      (wstrb),
         .wdata                      (wdata),
         .rdata                      (loaddata_m1),
         .dmemfault                  (dmemfault),
-        
+        .prog_en                    (prog_en),
+        .prog_addr                  (prog_addr),
+        .prog_data                  (prog_data),
+        .boot_en                    (boot_en),
+        .exit_en                    (exit_en),
+        .exit_code                  (exit_code),
         .print_en                   (print_en),
         .print_data                 (print_data)
     );

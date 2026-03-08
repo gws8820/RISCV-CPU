@@ -38,11 +38,13 @@ typedef enum logic [7:0] {
     RES_STBY    = 8'h00,
     RES_ACK     = 8'h06,
     RES_NAK     = 8'h15,
-    RES_PRINT   = 8'h80
+    RES_BOOT    = 8'h80,
+    RES_EXIT    = 8'h81,
+    RES_PRINT   = 8'h82
 } uart_res_t;
 
 typedef struct packed {
     uart_res_t      res;
     logic [2:0]     len;
-    logic [31:0]    data; // 4Byte Max
+    logic [7:0]     data;
 } uart_tx_entry_t;

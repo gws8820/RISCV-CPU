@@ -18,6 +18,9 @@ module uart_controller(
     output  logic [31:0]    prog_addr,
     output  logic [31:0]    prog_data,
 
+    input   logic           boot_en,
+    input   logic           exit_en,
+    input   logic [7:0]     exit_code,
     input   logic           print_en,
     input   logic [31:0]    print_data
 );
@@ -94,6 +97,9 @@ module uart_controller(
         .clk                (clk),
 
         .res                (res),
+        .boot_en            (boot_en),
+        .exit_en            (exit_en),
+        .exit_code          (exit_code),
         .print_en           (print_en),
         .print_data         (print_data),
 

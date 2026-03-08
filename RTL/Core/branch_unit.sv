@@ -95,14 +95,15 @@ module branch_unit (
         end
     end
 
-    logic cflow_valid;
+    logic cflow_valid, pred_hit;
     logic miss_1, miss_2;
 
     always_comb begin
         cflow_valid     = cflow_mode_reg inside {CFLOW_BRANCH, CFLOW_JAL, CFLOW_JALR};
-        miss_1          = cflow_taken != pred_taken_reg;
-        miss_2          = cflow_taken && (pc_pred_reg != pc_jump);
-        mispredict      = branch_valid && cflow_valid && (miss_1 || miss_2);
+        miss_1          = cflow_taken   != pred_taken_reg;
+        miss_2          = cflow_taken   && (pc_pred_reg != pc_jump);
+        mispredict      = branch_valid  && cflow_valid && (miss_1 || miss_2);
+        pred_hit        = cflow_valid   && !mispredict;
     end
 
 endmodule

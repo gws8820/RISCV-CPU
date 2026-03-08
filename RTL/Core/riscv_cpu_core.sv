@@ -11,9 +11,21 @@ module riscv_cpu_core (
     input   logic [31:0]    prog_addr,
     input   logic [31:0]    prog_data,
 
+    output  logic           boot_en,
+    output  logic           exit_en,
+    output  logic [7:0]     exit_code,
     output  logic           print_en,
     output  logic [31:0]    print_data
 );
+
+    // -------- Backward Signals ---------
+
+    logic [31:0]            result_m1;
+    logic [31:0]            result_m2;
+    logic                   regwrite_w;
+    logic [4:0]             rd_w;
+    logic [31:0]            result_w;
+    logic                   instret_w;
     
     // ---------- Hazard Unit ------------
     
@@ -30,9 +42,11 @@ module riscv_cpu_core (
         hazard_bus.req.mispredict   = mispredict;
         hazard_bus.req.ex_fire      = ex_fire;
         hazard_bus.req.aluop_e      = control_bus_e.aluop;
-        hazard_bus.req.rs1_d        = inst_f.r.rs1;
+        hazard_bus.req.use_rs1_d    = control_bus_d.use_rs1;
+        hazard_bus.req.use_rs2_d    = control_bus_d.use_rs2;
+        hazard_bus.req.rs1_d        = rs1_d;
         hazard_bus.req.rs1_e        = rs1_e;
-        hazard_bus.req.rs2_d        = inst_f.r.rs2;
+        hazard_bus.req.rs2_d        = rs2_d;
         hazard_bus.req.rs2_e        = rs2_e;
         hazard_bus.req.rs2_m1       = rs2_m1;
         hazard_bus.req.rd_e         = rd_e;
@@ -84,8 +98,6 @@ module riscv_cpu_core (
     
     // -------- Branch Predictor ---------
 
-    logic                   ex_fire;
-
     logic [31:0]            pc_f;
     logic [31:0]            pc_e, pc_e_reg;
     logic [31:0]            pcplus4_e, pcplus4_e_reg;
@@ -129,7 +141,6 @@ module riscv_cpu_core (
 
     logic [31:0]            pcplus4_f;
     inst_t                  inst_f;
-
     trap_req_t              trap_req_f;
     
     stage_if stage_if (
@@ -170,7 +181,6 @@ module riscv_cpu_core (
     logic [4:0]             rs1_d, rs2_d, rd_d;
     logic [31:0]            rdata1_d, rdata2_d;
     logic [31:0]            immext_d;
-    
     trap_req_t              trap_req_d;
 
     stage_id stage_id (
@@ -209,12 +219,12 @@ module riscv_cpu_core (
     // ------------ EX Stage -------------
 
     control_bus_t           control_bus_e;
+    logic                   ex_fire;
     logic [4:0]             rs1_e, rs2_e, rd_e;
     logic                   alu_valid, mul_valid, div_valid;
     logic [31:0]            aluresult_e, mulresult_e, divresult_e;
     logic [31:0]            storedata_e;
     logic [31:0]            csr_wdata_e;
-
     trap_req_t              trap_req_e;
 
     stage_ex stage_ex (
@@ -275,13 +285,15 @@ module riscv_cpu_core (
     logic [31:0]            csr_wdata_m1;
     logic [31:0]            loaddata_m1;
     logic [1:0]             byte_offset_m1;
-    logic [31:0]            result_m1;
-    
     trap_req_t              trap_req_m1;
 
     stage_mem1 stage_mem1 (
         .start              (start),
         .clk                (clk),
+
+        .prog_en            (prog_en),
+        .prog_addr          (prog_addr),
+        .prog_data          (prog_data),
 
         .control_bus_e      (control_bus_e),
         .pc_e               (pc_e),
@@ -317,6 +329,9 @@ module riscv_cpu_core (
         .csr_result         (csr_bus.rdata),
         .hazard_res         (hazard_bus.res),
         
+        .boot_en            (boot_en),
+        .exit_en            (exit_en),
+        .exit_code          (exit_code),
         .print_en           (print_en),
         .print_data         (print_data)
     );
@@ -326,7 +341,6 @@ module riscv_cpu_core (
     control_bus_t           control_bus_m2;
     logic [4:0]             rd_m2;
     logic [31:0]            memresult_m2;
-    logic [31:0]            result_m2;
 
     stage_mem2 stage_mem2 (
         .start              (start),
@@ -347,11 +361,6 @@ module riscv_cpu_core (
     );
 
     // ------------ WB Stage -------------
-
-    logic                   regwrite_w;
-    logic [4:0]             rd_w;
-    logic [31:0]            result_w;
-    logic                   instret_w;
 
     stage_wb stage_wb (
         .start              (start),

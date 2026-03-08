@@ -17,12 +17,17 @@ module branch_history_table (
     input   logic           cflow_taken
 );
 
-    (* ram_style="distributed" *) bht_state_t bht_mem [0:TABLE_ENTRIES-1];
+    // Enum arrays cannot be inferred as Distributed RAM by Vivado
+    (* ram_style="distributed" *) logic [$bits(bht_state_t)-1:0] bht_mem [0:TABLE_ENTRIES-1];
+    initial foreach (bht_mem[i]) bht_mem[i] = $bits(bht_state_t)'(WEAKLY_NOT_TAKEN);
+
+    logic [INDEX_WIDTH-1:0] init_cnt;
+    logic                   init_done;
 
     // Predict Logic
     logic [INDEX_WIDTH-1:0] predict_index;
     assign predict_index = pc_f[2 +: INDEX_WIDTH];
-    assign bht_taken = bht_mem[predict_index][1];
+    assign bht_taken = init_done && bht_mem[predict_index][1];
 
     // Update Logic
     logic [INDEX_WIDTH-1:0] update_index;
@@ -30,14 +35,22 @@ module branch_history_table (
 
     always_ff@(posedge clk) begin
         if (!start) begin
-            foreach (bht_mem[i]) bht_mem[i] <= WEAKLY_NOT_TAKEN;
+            init_cnt                <= '0;
+            init_done               <= 0;
+        end
+        else if (!init_done) begin
+            bht_mem[init_cnt]       <= $bits(bht_state_t)'(WEAKLY_NOT_TAKEN);
+            if (init_cnt == (TABLE_ENTRIES - 1))
+                init_done           <= 1;
+            else
+                init_cnt            <= init_cnt + 1;
         end
         else if (is_branch) begin
-            case (bht_mem[update_index])
-                STRONGLY_NOT_TAKEN: bht_mem[update_index] <= cflow_taken ? WEAKLY_NOT_TAKEN : STRONGLY_NOT_TAKEN;
-                WEAKLY_NOT_TAKEN:   bht_mem[update_index] <= cflow_taken ? WEAKLY_TAKEN     : STRONGLY_NOT_TAKEN;
-                WEAKLY_TAKEN:       bht_mem[update_index] <= cflow_taken ? STRONGLY_TAKEN   : WEAKLY_NOT_TAKEN;
-                STRONGLY_TAKEN:     bht_mem[update_index] <= cflow_taken ? STRONGLY_TAKEN   : WEAKLY_TAKEN;
+            case (bht_state_t'(bht_mem[update_index]))
+                STRONGLY_NOT_TAKEN: bht_mem[update_index] <= $bits(bht_state_t)'(cflow_taken ? WEAKLY_NOT_TAKEN : STRONGLY_NOT_TAKEN);
+                WEAKLY_NOT_TAKEN:   bht_mem[update_index] <= $bits(bht_state_t)'(cflow_taken ? WEAKLY_TAKEN     : STRONGLY_NOT_TAKEN);
+                WEAKLY_TAKEN:       bht_mem[update_index] <= $bits(bht_state_t)'(cflow_taken ? STRONGLY_TAKEN   : WEAKLY_NOT_TAKEN);
+                STRONGLY_TAKEN:     bht_mem[update_index] <= $bits(bht_state_t)'(cflow_taken ? STRONGLY_TAKEN   : WEAKLY_TAKEN);
             endcase
         end
     end

@@ -9,11 +9,8 @@ module program_counter(
 );
 
     always_ff@(posedge clk) begin
-        if(!start)
-            pc <= 32'b0;
-        else if (!stall) begin
-            pc <= pc_next;
-        end
+        if (!start)         pc <= 32'b0;
+        else if (!stall)    pc <= pc_next;
     end
 
 endmodule

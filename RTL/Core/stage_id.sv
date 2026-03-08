@@ -41,7 +41,7 @@ module stage_id (
             trap_req_prev           <= '0;
         end
         else begin
-            priority if (hazard_res.flush_d) begin
+            if (hazard_res.flush_d) begin
                 trap_req_prev       <= '0;
             end
             else if (!hazard_res.stall_d) begin
@@ -56,7 +56,7 @@ module stage_id (
     end
     
     always_comb begin
-        unique if (hazard_res.flush_d || hazard_res.flush_d_reg) begin
+        unique if (hazard_res.flush_d_inst) begin
             inst_d = INST_NOP;
         end
         else begin
@@ -101,6 +101,8 @@ module stage_id (
         .funct3                     (control_bus_d.funct3),
         .csr_req                    (control_bus_d.csr_req),
         .fencei                     (control_bus_d.fencei),
+        .use_rs1                    (control_bus_d.use_rs1),
+        .use_rs2                    (control_bus_d.use_rs2),
         .immsrc                     (control_bus_d.immsrc),
         .alusrc_a                   (control_bus_d.alusrc_a),
         .alusrc_b                   (control_bus_d.alusrc_b),

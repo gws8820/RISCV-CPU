@@ -1,4 +1,4 @@
-localparam TABLE_ENTRIES    = 128;
+localparam TABLE_ENTRIES    = 256;
 localparam INDEX_WIDTH      = $clog2(TABLE_ENTRIES);
 localparam TAG_WIDTH        = 32 - (INDEX_WIDTH + 2); // Byte Aligned
 localparam BTB_ENTRY_WIDTH  = 1 + 2 + TAG_WIDTH + 32;

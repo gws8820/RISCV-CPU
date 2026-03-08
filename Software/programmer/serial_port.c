@@ -98,18 +98,20 @@ int check_ack () {
     return (res == RES_ACK) ? 0 : -1;
 }
 
-int print_log () {
+int cpu_monitor () {
     res_t   res;
     uint8_t len;
     uint8_t data[256];
-    int     boot_flag = 0;
 
     printf("\n");
     printf("----------------------------------------------\n");
     printf("\n");
-    printf("CPU Log Mode\n");
-    printf("Press 'q' to Exit.\n");
-    printf("\n");
+    printf("----------------------------------------------\n");
+    printf("                 CPU Monitor\n");
+    printf("----------------------------------------------\n");
+    printf("            Mode\tRead-Only\n");
+    printf("            Baud\t115200\n");
+    printf("            Exit\tPress 'q'\n");
     printf("----------------------------------------------\n");
     printf("\n");
 
@@ -119,35 +121,36 @@ int print_log () {
             break;
         }
 
-        if (r == 0 && res == RES_PRINT) {
-            if (len == 0 || len > 4) {
+        if (r == 0 && res == RES_BOOT) {
+            if (len != 0) {
+                printf("Boot Failed (Invalid Length: %d)\n", len);
+                continue;
+            }
+
+            printf("CPU Startup Complete.\n\n");
+        }
+        else if (r == 0 && res == RES_EXIT) {
+            if (len != 1) {
+                printf("Exit Failed (Invalid Length: %d)\n", len);
+                continue;
+            }
+
+            if (data[0] == 0) {
+                printf("\nProgram Exited Normally (code 0).\n");
+            }
+            else {
+                printf("\nProgram Exited with Error Code %u.\n", (unsigned)data[0]);
+            }
+            break;
+        }
+        else if (r == 0 && res == RES_PRINT) {
+            if (len != 1) {
                 printf("Print Failed (Invalid Length: %d)\n", len);
                 continue;
             }
 
-            if (!boot_flag && len == 4) {
-                uint32_t word =
-                    ((uint32_t)data[0]) |
-                    ((uint32_t)data[1] << 8) |
-                    ((uint32_t)data[2] << 16) |
-                    ((uint32_t)data[3] << 24);
-
-                if (word == (uint32_t)BOOT_MSG) {
-                    printf("CPU Startup Complete.\n");
-                    printf("\n");
-                    boot_flag = 1;
-                    continue;
-                }
-            }
-
-            uint32_t word = 0;
-            for (int i = 0; i < len; i++)
-                word |= ((uint32_t)data[i] << (i * 8));
-
-            char buf[5] = {0};
-            for (int i = 0; i < len; i++) buf[i] = (char)data[i];
-
-            printf("0x%08X  '%s'\n", word, buf);
+            putchar((char)data[0]);
+            fflush(stdout);
         }
         else {
             Sleep(1);
@@ -155,7 +158,7 @@ int print_log () {
     }
 
     printf("\n");
-    printf("Exit Logging.\n");
+    printf("Exit CPU Monitor.\n");
     return 0;
 }
 

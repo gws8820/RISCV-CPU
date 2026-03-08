@@ -11,6 +11,8 @@ module control_main_decoder(
     output  cflow_mode_t    cflow_mode,
     output  sysop_mode_t    sysop_mode,
     output  logic           fencei,
+    output  logic           use_rs1,
+    output  logic           use_rs2,
     output  immsrc_t        immsrc,
     output  alusrca_t       alusrc_a,
     output  alusrcb_t       alusrc_b,
@@ -30,6 +32,8 @@ module control_main_decoder(
         cflow_mode          = CFLOW_PCPLUS4;
         sysop_mode          = SYSOP_NORMAL;
         fencei              = 0;
+        use_rs1             = 0;
+        use_rs2             = 0;
         immsrc              = IMM_I;
         alusrc_a            = SRCA_REG;
         alusrc_b            = SRCB_REG;
@@ -67,6 +71,8 @@ module control_main_decoder(
                 
                 cflow_mode  = CFLOW_PCPLUS4;
                 sysop_mode  = SYSOP_NORMAL;
+                use_rs1     = 1;
+                use_rs2     = 1;
                 immsrc      = IMM_I;
                 alusrc_a    = SRCA_REG;
                 alusrc_b    = SRCB_REG;
@@ -84,6 +90,8 @@ module control_main_decoder(
                 
                 cflow_mode  = CFLOW_PCPLUS4;
                 sysop_mode  = SYSOP_NORMAL;
+                use_rs1     = 1;
+                use_rs2     = 0;
                 immsrc      = IMM_I;
                 alusrc_a    = SRCA_REG;
                 alusrc_b    = SRCB_IMM;
@@ -95,6 +103,8 @@ module control_main_decoder(
             OP_LOAD: begin
                 cflow_mode  = CFLOW_PCPLUS4;
                 sysop_mode  = SYSOP_NORMAL;
+                use_rs1     = 1;
+                use_rs2     = 0;
                 immsrc      = IMM_I;
                 alusrc_a    = SRCA_REG;
                 alusrc_b    = SRCB_IMM;
@@ -106,6 +116,8 @@ module control_main_decoder(
             OP_STORE: begin
                 cflow_mode  = CFLOW_PCPLUS4;
                 sysop_mode  = SYSOP_NORMAL;
+                use_rs1     = 1;
+                use_rs2     = 1;
                 immsrc      = IMM_S;
                 alusrc_a    = SRCA_REG;
                 alusrc_b    = SRCB_IMM;
@@ -117,6 +129,8 @@ module control_main_decoder(
             OP_LUI: begin
                 cflow_mode  = CFLOW_PCPLUS4;
                 sysop_mode  = SYSOP_NORMAL;
+                use_rs1     = 0;
+                use_rs2     = 0;
                 immsrc      = IMM_U;
                 alusrc_a    = SRCA_ZERO;
                 alusrc_b    = SRCB_IMM;
@@ -128,6 +142,8 @@ module control_main_decoder(
             OP_AUIPC: begin
                 cflow_mode  = CFLOW_PCPLUS4;
                 sysop_mode  = SYSOP_NORMAL;
+                use_rs1     = 0;
+                use_rs2     = 0;
                 immsrc      = IMM_U;
                 alusrc_a    = SRCA_PC;
                 alusrc_b    = SRCB_IMM;
@@ -139,6 +155,8 @@ module control_main_decoder(
             OP_BRANCH: begin
                 cflow_mode  = CFLOW_BRANCH;
                 sysop_mode  = SYSOP_NORMAL;
+                use_rs1     = 1;
+                use_rs2     = 1;
                 immsrc      = IMM_B;
                 alusrc_a    = SRCA_PC;
                 alusrc_b    = SRCB_IMM;
@@ -150,6 +168,8 @@ module control_main_decoder(
             OP_JALR: begin
                 cflow_mode  = CFLOW_JALR;
                 sysop_mode  = SYSOP_NORMAL;
+                use_rs1     = 1;
+                use_rs2     = 0;
                 immsrc      = IMM_I;
                 alusrc_a    = SRCA_REG;
                 alusrc_b    = SRCB_IMM;
@@ -161,6 +181,8 @@ module control_main_decoder(
             OP_JAL: begin
                 cflow_mode  = CFLOW_JAL;
                 sysop_mode  = SYSOP_NORMAL;
+                use_rs1     = 0;
+                use_rs2     = 0;
                 immsrc      = IMM_J;
                 alusrc_a    = SRCA_PC;
                 alusrc_b    = SRCB_IMM;
@@ -185,6 +207,8 @@ module control_main_decoder(
                 else begin // Zicsr Extension
                     cflow_mode  = CFLOW_PCPLUS4;
                     sysop_mode  = SYSOP_NORMAL;
+                    use_rs1     = !(csr_mode inside {CSR_RWI, CSR_RSI, CSR_RCI});
+                    use_rs2     = 0;
                     immsrc      = IMM_Z;
                     alusrc_a    = SRCA_REG;
                     alusrc_b    = SRCB_REG;

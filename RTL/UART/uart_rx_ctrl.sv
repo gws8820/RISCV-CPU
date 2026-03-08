@@ -26,7 +26,7 @@ module uart_rx_ctrl(
 
     logic [7:0]             data_len;
     logic [7:0]             data_counter;
-    logic [7:0]             data_buffer [0:255];
+    (* ram_style="distributed" *) logic [7:0] data_buffer [0:255];
 
     logic [7:0]             checksum;
 

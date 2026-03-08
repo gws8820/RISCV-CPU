@@ -15,7 +15,7 @@ module uart_tx_phy(
     output  logic           tx
 );
 
-    logic [7:0]             tx_fifo[0:PHY_FIFO_SIZE-1];
+    (* ram_style="block" *) logic [7:0] tx_fifo[0:PHY_FIFO_SIZE-1];
 
     logic [PHY_FIFO_BITS:0] rd_ptr, wr_ptr; // MSB Indicates Wrap Bit
     logic                   fifo_empty, fifo_full;

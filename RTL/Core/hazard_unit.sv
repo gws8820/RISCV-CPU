@@ -7,40 +7,39 @@ module hazard_unit (
     input   logic                   start, clk,
     hazard_interface.completer      hazard_bus
 );
-    logic flush_mispredict, flush_loaduse;
+    logic flush_mispredict, flush_loaduse, flush_muldiv;
     logic stall_muldiv, stall_loaduse;
+    (* MAX_FANOUT = 64 *) logic flush_d, flush_e, flush_e_sidefx, flush_m1, flush_m2;
+    (* MAX_FANOUT = 64 *) logic stall_f, stall_d, stall_e;
+
     logic flush_d_reg;
-
-    (* MAX_FANOUT = 64 *) logic flush_d, flush_e, flush_m1, flush_m2;
-    (* MAX_FANOUT = 64 *) logic stall_f, stall_d, stall_e, stall_m1;
-
     always_ff@(posedge clk) begin
-        if (!start) flush_d_reg <= 0;
-        else        flush_d_reg <= (hazard_bus.req.flushflag || flush_mispredict);
+        if (!start)     flush_d_reg <= 0;
+        else            flush_d_reg <= flush_d;
     end
 
     always_comb begin
-        flush_d     = (hazard_bus.req.flushflag || flush_mispredict);
-        flush_e     = (hazard_bus.req.flushflag || flush_mispredict || flush_loaduse);
-        flush_m1    = (hazard_bus.req.flushflag || flush_mispredict);
-        flush_m2    = (hazard_bus.req.flushflag);
+        flush_d         = (hazard_bus.req.flushflag || flush_mispredict);
+        flush_e         = (hazard_bus.req.flushflag || flush_mispredict || flush_loaduse);
+        flush_e_sidefx  = (hazard_bus.req.flushflag || flush_mispredict);
+        flush_m1        = (hazard_bus.req.flushflag || flush_mispredict || flush_muldiv);
+        flush_m2        = (hazard_bus.req.flushflag);
 
-        stall_f     = !flush_d  && (stall_muldiv || stall_loaduse);
-        stall_d     = !flush_d  && (stall_muldiv || stall_loaduse);
-        stall_e     = !flush_e  && stall_muldiv;
-        stall_m1    = !flush_m1 && stall_muldiv;
+        stall_f         = !flush_d  && (stall_muldiv || stall_loaduse);
+        stall_d         = !flush_d  && (stall_muldiv || stall_loaduse);
+        stall_e         = !flush_e  && stall_muldiv;
 
-        hazard_bus.res.flush_d      = flush_d;
-        hazard_bus.res.flush_d_reg  = flush_d_reg;
-        hazard_bus.res.flush_e      = flush_e;
-        hazard_bus.res.flush_m1     = flush_m1;
-        hazard_bus.res.flush_m2     = flush_m2;
-        hazard_bus.res.stall_f      = stall_f;
-        hazard_bus.res.stall_d      = stall_d;
-        hazard_bus.res.stall_e      = stall_e;
-        hazard_bus.res.stall_m1     = stall_m1;
+        hazard_bus.res.flush_d              = flush_d;
+        hazard_bus.res.flush_d_inst         = flush_d || flush_d_reg;
+        hazard_bus.res.flush_e              = flush_e;
+        hazard_bus.res.flush_e_sidefx       = flush_e_sidefx;
+        hazard_bus.res.flush_m1             = flush_m1;
+        hazard_bus.res.flush_m2             = flush_m2;
+        hazard_bus.res.stall_f              = stall_f;
+        hazard_bus.res.stall_d              = stall_d;
+        hazard_bus.res.stall_e              = stall_e;
         
-        hazard_bus.res.hazard_cause.flushflag = hazard_bus.req.flushflag;
+        hazard_bus.res.hazard_cause.flushflag   = hazard_bus.req.flushflag;
     
     end
     
@@ -77,6 +76,8 @@ module hazard_unit (
         .memaccess_m1                       (hazard_bus.req.memaccess_m1),
         .rd_e                               (hazard_bus.req.rd_e),
         .rd_m1                              (hazard_bus.req.rd_m1),
+        .use_rs1_d                          (hazard_bus.req.use_rs1_d),
+        .use_rs2_d                          (hazard_bus.req.use_rs2_d),
         .rs1_d                              (hazard_bus.req.rs1_d),
         .rs2_d                              (hazard_bus.req.rs2_d),
         .flag                               (hazard_bus.res.hazard_cause.load_use),
@@ -91,7 +92,8 @@ module hazard_unit (
         .aluop_e                            (hazard_bus.req.aluop_e),
         .flush_e                            (flush_e),
         .flag                               (hazard_bus.res.hazard_cause.muldiv_stall),
-        .stall                              (stall_muldiv)
+        .stall                              (stall_muldiv),
+        .flush                              (flush_muldiv)
     );
     
     hazard_branch_mispredict_resolver   branch_mispredict_resolver (

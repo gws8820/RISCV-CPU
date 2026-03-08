@@ -137,7 +137,7 @@ module stage_ex (
     exec_multiplier multiplier (
         .start                              (start),
         .clk                                (clk),
-        .flush                              (hazard_res.flush_e),
+        .flush                              (hazard_res.flush_e_sidefx),
         .ex_fire                            (ex_fire),
         .aluop                              (control_bus_e.aluop),
         .alucontrol                         (control_bus_e.alucontrol),
@@ -151,7 +151,7 @@ module stage_ex (
     exec_divisor divisor (
         .start                              (start),
         .clk                                (clk),
-        .flush                              (hazard_res.flush_e),
+        .flush                              (hazard_res.flush_e_sidefx),
         .ex_fire                            (ex_fire),
         .aluop                              (control_bus_e.aluop),
         .alucontrol                         (control_bus_e.alucontrol),
@@ -165,12 +165,12 @@ module stage_ex (
     branch_unit branch_unit (
         .start                              (start),
         .clk                                (clk),
-        .flush                              (hazard_res.flush_e),
+        .flush                              (hazard_res.flush_e_sidefx),
         .ex_fire                            (ex_fire),
         .cflow_mode                         (control_bus_e.cflow_mode),
         .branch_mode                        (control_bus_e.funct3.branch_mode),
         .cflow_hint                         (cflow_hint_e),
-        .in_a                               (fwd_a),
+        .in_a                               (fwd_a), // Prevent ALU operands from being remapped to PC/imm/zero.
         .in_b                               (fwd_b),
         .pred_taken                         (pred_taken_e),
         .pc_pred                            (pc_pred_e),

@@ -1,4 +1,4 @@
- timeunit 1ns;
+timeunit 1ns;
 timeprecision 1ps;
 
 import riscv_defines::*;

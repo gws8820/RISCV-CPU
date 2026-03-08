@@ -141,6 +141,8 @@ typedef struct packed {
     funct3_t        funct3;
     csr_req_t       csr_req;
     logic           fencei;
+    logic           use_rs1;
+    logic           use_rs2;
     immsrc_t        immsrc;
     alusrca_t       alusrc_a;
     alusrcb_t       alusrc_b;

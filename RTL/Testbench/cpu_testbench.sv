@@ -5,15 +5,18 @@ import riscv_defines::*;
 
 module cpu_testbench();
 
-logic start;
-logic clk;
+logic           start;
+logic           clk;
 
-logic prog_en;
-logic [31:0] prog_addr;
-logic [31:0] prog_data;
+logic           prog_en;
+logic [31:0]    prog_addr;
+logic [31:0]    prog_data;
 
-logic print_en;
-logic [31:0] print_data;
+logic           boot_en;
+logic           exit_en;
+logic [7:0]     exit_code;
+logic           print_en;
+logic [31:0]    print_data;
 
 riscv_cpu_core dut (
     .start      (start),
@@ -21,6 +24,9 @@ riscv_cpu_core dut (
     .prog_en    (prog_en),
     .prog_addr  (prog_addr),
     .prog_data  (prog_data),
+    .boot_en    (boot_en),
+    .exit_en    (exit_en),
+    .exit_code  (exit_code),
     .print_en   (print_en),
     .print_data (print_data)
 );
@@ -36,17 +42,24 @@ initial begin
 
     #20 start  = 1;
 
-    #(CLK_PERIOD * 500000);
+    #(CLK_PERIOD * 10000000);
     $display("[TIMEOUT]");
     $finish;
 end
 
 always @(posedge clk) begin
-    if (print_en) begin
-        if (print_data == 32'hABCD_1234)
-            $display("[BOOT]");
+    if (boot_en) begin
+        $display("[BOOT]");
+    end
+    if (exit_en) begin
+        if (exit_code == 0)
+            $display("[PASS]");
         else
-            $write("%c", print_data[7:0]);
+            $display("[FAIL: exit=%0d]", exit_code);
+        $finish;
+    end
+    if (print_en) begin
+        $write("%c", print_data[7:0]);
     end
 end
 

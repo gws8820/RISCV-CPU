@@ -12,9 +12,7 @@ module regfile(
 
     logic [31:0] registers [0:31];
 
-    initial begin
-        foreach (registers[i]) registers[i] <= 32'b0;
-    end
+    initial foreach (registers[i]) registers[i] <= 32'b0;
 
     logic hit1, hit2; // Data PassThrough
     always_comb begin

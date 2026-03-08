@@ -22,5 +22,9 @@ set_property    IOSTANDARD      LVCMOS33    [get_ports uart_rx]
 set_property    PACKAGE_PIN     R14         [get_ports uart_tx]
 set_property    IOSTANDARD      LVCMOS33    [get_ports uart_tx]
 
-# Reset CDC constraints
-set_false_path -from [get_clocks sys_clk_pin] -to [get_pins {rstn100_reg_reg/D}]
+# Timing Exceptions
+set_input_delay -clock          sys_clk_pin 0 [get_ports rstn_push]
+set_false_path  -from           [get_clocks sys_clk_pin] -to [get_pins {rstn100_reg_reg/D}]
+set_false_path  -to             [get_ports {rstn_led start_led}]
+set_false_path  -from           [get_ports uart_rx]
+set_false_path  -to             [get_ports uart_tx]

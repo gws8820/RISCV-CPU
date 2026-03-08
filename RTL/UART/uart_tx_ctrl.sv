@@ -8,6 +8,9 @@ module uart_tx_ctrl(
     input   logic               clk,
 
     input   uart_res_t          res,
+    input   logic               boot_en,
+    input   logic               exit_en,
+    input   logic  [7:0]        exit_code,
     input   logic               print_en,
     input   logic  [31:0]       print_data,
 
@@ -17,10 +20,14 @@ module uart_tx_ctrl(
     output  logic               tx_valid
 );
 
-    // ---------- ACK/NAK (RES) Register --------
+    // ----------- Backward Signals -------------
 
-    uart_res_t                  res_reg;
+    uart_tx_ctrl_t              tx_state;
+
+    // --------- ACK/NAK (RES) Register ---------
+
     logic                       res_valid;
+    uart_res_t                  res_reg;
     logic                       res_consume;
 
     assign res_consume = (tx_state == TX_CTRL_IDLE) && res_valid && tx_ready;
@@ -43,7 +50,8 @@ module uart_tx_ctrl(
 
     // --------- TX FIFO (Ring Buffer) ---------
 
-    uart_tx_entry_t             tx_fifo[0:CTRL_FIFO_SIZE-1];
+    // Struct arrays cannot be inferred as Distributed RAM by Vivado
+    (* ram_style="distributed" *) logic [$bits(uart_tx_entry_t)-1:0] tx_fifo[0:CTRL_FIFO_SIZE-1];
 
     logic [CTRL_FIFO_BITS:0]    rd_ptr, wr_ptr; // MSB Indicates Wrap Bit
     logic                       fifo_empty, fifo_full;
@@ -58,21 +66,32 @@ module uart_tx_ctrl(
         if (!rstn) begin
             wr_ptr  <= '0;
         end
-        else if (!fifo_full && print_en) begin
-            tx_fifo[wr_ptr[CTRL_FIFO_BITS-1:0]].res    <= RES_PRINT;
-            tx_fifo[wr_ptr[CTRL_FIFO_BITS-1:0]].len    <= 3'd4;
-            tx_fifo[wr_ptr[CTRL_FIFO_BITS-1:0]].data   <= print_data;
-            wr_ptr                                      <= wr_ptr + 1;
+        else if (!fifo_full) begin
+            if (boot_en) begin
+                tx_fifo[wr_ptr[CTRL_FIFO_BITS-1:0]]        <= {RES_BOOT, 3'd0, 8'd0};
+                wr_ptr                                     <= wr_ptr + 1;
+            end
+            else if (exit_en) begin
+                tx_fifo[wr_ptr[CTRL_FIFO_BITS-1:0]]        <= {RES_EXIT, 3'd1, exit_code};
+                wr_ptr                                     <= wr_ptr + 1;
+            end
+            else if (print_en) begin
+                tx_fifo[wr_ptr[CTRL_FIFO_BITS-1:0]]        <= {RES_PRINT, 3'd1, print_data[7:0]};
+                wr_ptr                                     <= wr_ptr + 1;
+            end
         end
     end
 
     // ------------- TX Controller (Byte Level) -------------
 
-    uart_tx_ctrl_t          tx_state;
     uart_tx_entry_t         active_entry;
+    uart_tx_entry_t         res_entry;
 
-    logic [7:0]             data_len;
-    logic [7:0]             data_counter;
+    always_comb begin
+        res_entry.res       = res_reg;
+        res_entry.len       = 3'd0;
+        res_entry.data      = 8'd0;
+    end
 
     logic [7:0]             checksum;
 
@@ -86,21 +105,13 @@ module uart_tx_ctrl(
 
             active_entry    <= '0;
 
-            data_len        <= '0;
-            data_counter    <= '0;
-
             checksum        <= '0;
         end
         else begin
             unique case (tx_state)
                 TX_CTRL_IDLE: begin
-                    data_len            <= 0;
-                    data_counter        <= '0;
-
                     if (res_valid && tx_ready) begin
-                        active_entry.res    <= res_reg;
-                        active_entry.len    <= '0;
-                        active_entry.data   <= '0;
+                        active_entry        <= res_entry;
 
                         tx_data             <= START_FLAG;
                         tx_valid            <= 1;
@@ -109,7 +120,7 @@ module uart_tx_ctrl(
                         checksum            <= START_FLAG;
                     end
                     else if (!fifo_empty && tx_ready) begin
-                        active_entry        <= tx_fifo[rd_ptr[CTRL_FIFO_BITS-1:0]];
+                        active_entry        <= uart_tx_entry_t'(tx_fifo[rd_ptr[CTRL_FIFO_BITS-1:0]]);
                         rd_ptr              <= rd_ptr + 1;
 
                         tx_data             <= START_FLAG;
@@ -128,48 +139,33 @@ module uart_tx_ctrl(
                 end
 
                 TX_CTRL_RES: if (tx_ready) begin
-                    tx_data             <= active_entry.res;
-                    tx_valid            <= 1;
-                    tx_state            <= TX_CTRL_LEN;
+                    tx_data                 <= active_entry.res;
+                    tx_valid                <= 1;
+                    tx_state                <= TX_CTRL_LEN;
 
-                    checksum            <= checksum + active_entry.res;
+                    checksum                <= checksum + active_entry.res;
                 end
 
                 TX_CTRL_LEN: if (tx_ready) begin
-                    if (active_entry.len > 0) begin
-                        data_len        <= active_entry.len;
-                        tx_data         <= active_entry.len;
-                        tx_valid        <= 1;
-                        tx_state        <= TX_CTRL_PAYLOAD;
+                    tx_data                 <= active_entry.len;
+                    tx_valid                <= 1;
+                    tx_state                <= (active_entry.len == 3'd0) ? TX_CTRL_CHECKSUM : TX_CTRL_PAYLOAD;
 
-                        checksum        <= checksum + active_entry.len;
-                    end
-                    else begin
-                        tx_data         <= '0;
-                        tx_valid        <= 1;
-                        tx_state        <= TX_CTRL_CHECKSUM;
-
-                        checksum        <= checksum;
-                    end
+                    checksum                <= checksum + active_entry.len;
                 end
 
                 TX_CTRL_PAYLOAD: if (tx_ready) begin
-                    tx_data             <= active_entry.data[data_counter*8 +: 8];
-                    tx_valid            <= 1;
-                    data_counter        <= data_counter + 1;
+                    tx_data                 <= active_entry.data;
+                    tx_valid                <= 1;
+                    tx_state                <= TX_CTRL_CHECKSUM;
 
-                    if (data_counter == data_len - 1)
-                        tx_state        <= TX_CTRL_CHECKSUM;
-                    else
-                        tx_state        <= TX_CTRL_PAYLOAD;
-
-                    checksum            <= checksum + active_entry.data[data_counter*8 +: 8];
+                    checksum                <= checksum + active_entry.data;
                 end
 
                 TX_CTRL_CHECKSUM: if (tx_ready) begin
-                    tx_data             <= checksum;
-                    tx_valid            <= 1;
-                    tx_state            <= TX_CTRL_IDLE;
+                    tx_data                 <= checksum;
+                    tx_valid                <= 1;
+                    tx_state                <= TX_CTRL_IDLE;
                 end
             endcase
         end

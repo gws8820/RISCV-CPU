@@ -9,7 +9,8 @@ module hazard_muldiv_stall_resolver(
     input   aluop_t aluop_e,
     input   logic   flush_e,
     output  logic   flag,
-    output  logic   stall
+    output  logic   stall,
+    output  logic   flush
 );
     
     logic           exec_init;
@@ -20,6 +21,7 @@ module hazard_muldiv_stall_resolver(
     always_comb begin
         flag  = exec_init || (stall_rem != 6'd0);
         stall = exec_init || (stall_rem != 6'd0);
+        flush = exec_init || (stall_rem != 6'd0);
     end
 
     always_ff@(posedge clk) begin
