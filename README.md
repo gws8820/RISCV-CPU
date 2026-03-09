@@ -20,8 +20,8 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 - **Branch Prediction**:
   - **BHT (Branch History Table)**: 256 entries. Uses a 2-bit Saturating Counter (Strongly/Weakly Taken/Not Taken) to predict conditional branches. Implemented as LUTRAM.
   - **BTB (Branch Target Buffer)**: 256 entries. Stores Valid bit, Entry Type (Branch, Jump, Return), Tag, and Target Address. Implemented as LUTRAM.
-  - **RAS (Return Address Stack)**: 32 entries. Predicts return addresses for `JALR` instructions marked as returns, supporting nested function calls.
-  - **Performance**: No pipeline stalls or flushes on predicted branch hits.
+  - **RAS (Return Address Stack)**: 32 entries. Push on JAL/JALR with call hint (`CFHINT_CALL`); pop on JALR with return hint (`CFHINT_RET`). Supports nested function calls.
+  - **Prediction Logic**: For branches, `pred_taken = bht_taken && btb_hit`; for JAL/JALR, `pred_taken = btb_hit`. No pipeline stalls or flushes on a correct prediction.
 - **Branch Resolution**:
   - **Branch Unit**: Resolution & validation in EX stage. Registers inputs for timing optimization (1-cycle latency).
   - **Recovery**: 3-cycle penalty on misprediction (Flush ID/EX/MEM1, redirect PC)
@@ -69,7 +69,8 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 | **IMEM** | `0x00000000` | 128 KB | Instruction Memory |
 | **DMEM** | `0x00020000` | 128 KB | Data Memory |
 | **Stack Top** | `0x00040000` | — | Top of DMEM (stack grows downward) |
-| **PRINT** | `0xFFFF0000` | — | MMIO: UART TX output |
+| **PRINT** | `0xFFFF0000` | — | MMIO: UART TX output (write) |
+| **INPUT** | `0xFFFF0004` | — | MMIO: UART RX input (read) |
 
 ### Instruction Memory (IMEM)
 - **Size**: 128 KB (32768 words)
@@ -81,9 +82,10 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 - **Width**: 32-bit
 - **Access**: Read/Write (byte-enable write strobe)
 - **IO Mapping**:
-  - Writes to `0xFFFF_0000` (`PRINT_ADDR`) with `data[8] == 0` are redirected to UART TX as `RES_PRINT`.
-  - Writes to `0xFFFF_0000` with `data[8] == 1` trigger `RES_EXIT` with `data[7:0]` as exit code.
-- **Access Fault**: Accesses outside the DMEM range (other than `PRINT_ADDR`) trigger a Data Access Fault trap.
+  - Writes to `0xFFFF_0000` (`PRINT_ADDR`) with `data[8] == 0` → `RES_PRINT` via UART TX.
+  - Writes to `0xFFFF_0000` with `data[8] == 1` → `RES_EXIT` with `data[7:0]` as exit code.
+  - Reads from `0xFFFF_0004` (`INPUT_ADDR`) → returns `input_data` if RX FIFO non-empty, else `0xFFFFFFFF`. Polled by `getchar()` in syscalls.
+- **Access Fault**: Accesses outside the DMEM range (other than `PRINT_ADDR` and `INPUT_ADDR`) trigger a Data Access Fault trap.
 
 ## Performance Characteristics
 
@@ -108,7 +110,7 @@ Measured on Zynq-7020 FPGA running at 100 MHz (RV32IM, `-O2`).
 - 3-stage pipeline: result available 3 cycles after issue, causing a **3-cycle stall** (`MUL_COUNT = 3`).
 
 **Divisor**
-- Algorithm: Restoring shift-subtract division.
+- Algorithm: Shift-compare-subtract. Handles signed/unsigned division and remainder, with special-case handling for divide-by-zero and signed overflow.
 - 2x loop unrolled: computes **2 quotient bits per clock cycle** combinatorially.
 - 32-bit division takes **17 cycles** total (1 setup + 16 compute), causing a **17-cycle stall** (`DIV_COUNT = 17`, `SHIFT_COUNT = 16`).
 
@@ -121,9 +123,9 @@ Measured on Zynq-7020 FPGA running at 100 MHz (RV32IM, `-O2`).
 |-------------|------------------|-----------------|-------|
 | **Data Hazard (RAW)** | 0 | EX | Forwarding from MEM1/MEM2/WB to EX. Loads are excluded from MEM1/MEM2 path. |
 | **Store-Data Hazard** | 0 | MEM1 | Forwarding from WB to MEM1 store data register |
-| **Load-Use Hazard** | 2 | ID | `id_ex` stall + `id_mem1` stall (2 bubbles inserted); final forward from WB→EX |
+| **Load-Use Hazard** | 2 | ID | Stall while load is in EX (`id_ex`) and again in MEM1 (`id_mem1`); 2 bubbles total; result forwarded from WB→EX |
 | **Branch Prediction Hit** | 0 | IF | Zero penalty (Seamless execution) |
-| **Branch Prediction Miss** | 3 | EX | Flush ID, EX, MEM1 stages; redirect PC |
+| **Branch Prediction Miss** | 3 | EX | Flush ID/EX/MEM1 stages; redirect PC to correct target |
 | **Multiplication Stall** | 3 | EX | Pipeline stall during multiplication |
 | **Division Stall** | 17 | EX | Pipeline stall during division |
 
@@ -162,7 +164,7 @@ Measured on Zynq-7020 FPGA running at 100 MHz (RV32IM, `-O2`).
 |-------------|------|-------------|
 | 0x300 | **mstatus** | Machine status register (MIE, MPIE bits) |
 | 0x304 | **mie** | Machine interrupt-enable register |
-| 0x305 | **mtvec** | Machine trap-handler base address (default: 0x40) |
+| 0x305 | **mtvec** | Machine trap-handler base address (default: `0x400`) |
 | 0x340 | **mscratch** | Machine scratch register for trap handlers |
 | 0x341 | **mepc** | Machine exception program counter |
 | 0x342 | **mcause** | Machine trap cause |
@@ -210,7 +212,7 @@ Integrated UART controller for communication and system control.
 | :---: | :---: | :---: | :---: | :---: |
 | 0xA5 | 1B | 1B | 0~252B | 1B |
 
-- **Payload**: Address (4B) + Data (nB). All little-endian.
+- **Payload**: `CMD_WRITE` — Address (4B) + Data (nB), little-endian.
 - **Checksum**: Sum of all bytes (START through last PAYLOAD byte), truncated to 8 bits.
 
 **TX Packet (FPGA → Host)**
@@ -226,6 +228,7 @@ Integrated UART controller for communication and system control.
 | **CMD_RESET** | 0x01 | Halt and reset CPU | None |
 | **CMD_WRITE** | 0x02 | Write to memory | Addr(4B) + Data |
 | **CMD_RUN**   | 0x03 | Start execution | None |
+| **CMD_INPUT** | 0x04 | Send stdin data to CPU RX FIFO | Data (nB) |
 
 #### 4. Responses (RES)
 
@@ -240,8 +243,9 @@ Integrated UART controller for communication and system control.
 #### 5. Boot Sequence
 1. Host sends `CMD_RUN`.
 2. CPU begins execution and immediately sends `RES_BOOT` (hardware-generated via `boot_flag`).
-3. User program output follows as `RES_PRINT` packets.
-4. On `_exit(code)`, CPU sends `RES_EXIT` with the exit code.
+3. Host enters CPU Console; keyboard input becomes active (line-buffered, sent as `CMD_INPUT`).
+4. User program output follows as `RES_PRINT` packets; `getchar()`/`scanf()` in the program poll `INPUT_ADDR`.
+5. On `_exit(code)`, CPU sends `RES_EXIT` with the exit code.
 
 ## Software & Tools
 
@@ -282,8 +286,39 @@ Shared startup and syscall code used by all applications.
 |------|-------------|
 | `crt0.S` | Startup code: initializes `sp` to stack top (`0x40000`), clears `.bss`, installs trap handler, calls `main` then `_exit` |
 | `linker.ld` | Linker script: IMEM @ `0x00000000`, DMEM @ `0x00020000`, stack top @ `0x00040000` |
-| `syscalls.c` | MMIO syscalls: `putchar`/`printf`/`sprintf`/`vprintf`/`vsprintf` write to `0xFFFF0000`; `_exit(code)` sends exit code as `RES_EXIT` then loops; `memcpy`, `memset`, `strlen`, `strcmp`, `strcpy` |
+| `syscalls.c` | Bare-metal syscall and standard library implementation (MMIO-based I/O, string utilities, timer functions) |
 | `common.mk` | Shared build rules: compile `.c`/`.S`, link `.elf`, generate `.hex` via `objcopy` |
+
+#### Supported Functions
+
+**I/O**
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `getchar` | `int getchar(void)` | Polls `INPUT_ADDR` until a byte is available, returns it as `int` |
+| `putchar` | `int putchar(int c)` | Writes a character to `PRINT_ADDR` (UART TX) |
+| `printf` | `int printf(const char *fmt, ...)` | Formatted output to UART TX; supports `%c`, `%s`, `%d`, `%i`, `%u`, `%x`, `%o`, `%p`, `%l*`, width, `0`/`-` padding |
+| `sprintf` | `int sprintf(char *str, const char *fmt, ...)` | Formatted output into a string buffer; same specifiers as `printf` |
+| `scanf` | `int scanf(const char *fmt, ...)` | Reads input via `getchar()`; supports `%c`, `%s`, `%d`, `%i`, `%u`, `%x`, width for `%s` |
+| `_exit` | `void _exit(int code)` | Sends `RES_EXIT` with exit code via `PRINT_ADDR`, then loops forever |
+
+**String & Memory**
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `memcpy` | `void *memcpy(void *dest, const void *src, size_t len)` | Copies `len` bytes from `src` to `dest` |
+| `memset` | `void *memset(void *dest, int byte, size_t len)` | Fills `len` bytes of `dest` with `byte` |
+| `strlen` | `size_t strlen(const char *s)` | Returns the length of string `s` |
+| `strcmp` | `int strcmp(const char *s1, const char *s2)` | Lexicographic comparison of `s1` and `s2` |
+| `strcpy` | `char *strcpy(char *dest, const char *src)` | Copies string `src` into `dest` |
+
+**Timer**
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `get_cycle` | `uint64_t get_cycle(void)` | Returns the 64-bit `mcycle` counter value |
+| `time_us` | `uint32_t time_us(void)` | Returns elapsed microseconds based on `mcycle` (100 MHz) |
+| `time_ms` | `uint32_t time_ms(void)` | Returns elapsed milliseconds based on `mcycle` (100 MHz) |
 
 ---
 
@@ -294,7 +329,7 @@ A bare-metal test program written in C.
 #### Files
 | File | Description |
 |------|-------------|
-| `main.c` | User program; uses `printf` for output |
+| `main.c` | User Program |
 | `Makefile` | Sets `APP_NAME`, `APP_SRCS`, includes `../../runtime/common.mk` |
 
 #### Build
@@ -359,8 +394,8 @@ A Windows-only interactive command-line tool that communicates with the FPGA ove
 | File | Description |
 |------|-------------|
 | `programmer.c` | COM port setup, menu-driven command dispatch (RESET/BUILD/WRITE/RUN), `make` build integration, `.hex` parsing and chunked IMEM upload via `CMD_WRITE` |
-| `programmer.h` | Constants (`CHUNK_SIZE=62`), command enum (`CMD_RESET/WRITE/RUN`) |
-| `serial_port.c` | Win32 serial port: open/close/read/write, frame receiver, CPU monitor |
+| `programmer.h` | Constants (`CHUNK_SIZE=62`), command enum (`CMD_RESET/WRITE/RUN/INPUT`) |
+| `serial_port.c` | Win32 serial port: open/close/read/write, frame receiver, CPU console; line-buffered keyboard input sent as `CMD_INPUT` after `RES_BOOT`; Ctrl+D exits |
 | `serial_port.h` | Protocol constants (`START_FLAG=0xA5`, `TIMEOUT_MS=20000`), response enum |
 
 #### Menu

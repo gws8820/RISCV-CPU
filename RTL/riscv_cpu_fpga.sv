@@ -134,6 +134,10 @@ module riscv_cpu_fpga (
     logic [7:0]         exit_code;
     logic               print_en;
     logic [31:0]        print_data;
+
+    logic               input_valid;
+    logic [7:0]         input_data;
+    logic               input_done;
     
     uart_controller uart_controller (
         .rstn           (rstn100_sync),
@@ -151,24 +155,30 @@ module riscv_cpu_fpga (
         .exit_en        (exit_en),
         .exit_code      (exit_code),
         .print_en       (print_en),
-        .print_data     (print_data)
+        .print_data     (print_data),
+        .input_valid    (input_valid),
+        .input_data     (input_data),
+        .input_done     (input_done)
     );
-    
+
     // ----------- RISC-V CPU -------------
-    
+
     riscv_cpu_core  cpu_core (
         .start          (start),
         .clk            (clk100_buf),
-        
+
         .prog_en        (prog_en),
         .prog_addr      (prog_addr),
         .prog_data      (prog_data),
-        
+
         .boot_en        (boot_en),
         .exit_en        (exit_en),
         .exit_code      (exit_code),
         .print_en       (print_en),
-        .print_data     (print_data)
+        .print_data     (print_data),
+        .input_valid    (input_valid),
+        .input_data     (input_data),
+        .input_done     (input_done)
     );
     
 endmodule

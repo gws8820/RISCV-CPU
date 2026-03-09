@@ -15,7 +15,11 @@ module riscv_cpu_core (
     output  logic           exit_en,
     output  logic [7:0]     exit_code,
     output  logic           print_en,
-    output  logic [31:0]    print_data
+    output  logic [31:0]    print_data,
+
+    input   logic           input_valid,
+    input   logic [7:0]     input_data,
+    output  logic           input_done
 );
 
     // -------- Backward Signals ---------
@@ -333,7 +337,10 @@ module riscv_cpu_core (
         .exit_en            (exit_en),
         .exit_code          (exit_code),
         .print_en           (print_en),
-        .print_data         (print_data)
+        .print_data         (print_data),
+        .input_valid        (input_valid),
+        .input_data         (input_data),
+        .input_done         (input_done)
     );
 
     // ------------ MEM2 Stage -----------

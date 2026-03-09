@@ -25,7 +25,7 @@ module instruction_memory(
     (* ram_style="block", cascade_height=1 *) logic [31:0] inst_mem [0:IMEM_WORD-1];
 
     `ifndef SYNTHESIS
-        initial $readmemh("dhrystone.hex", inst_mem);
+        initial $readmemh("firmware.hex", inst_mem);
     `endif
 
     always_ff@(posedge clk) begin

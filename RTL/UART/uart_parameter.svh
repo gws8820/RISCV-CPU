@@ -4,6 +4,9 @@ localparam OVERSAMPLE_BITS  = $clog2(OVERSAMPLE_RATE);
 
 localparam START_FLAG       = 8'hA5;
 
+localparam INPUT_FIFO_SIZE  = 64;
+localparam INPUT_FIFO_BITS  = $clog2(INPUT_FIFO_SIZE);
+
 localparam CTRL_FIFO_SIZE   = 1024;
 localparam CTRL_FIFO_BITS   = $clog2(CTRL_FIFO_SIZE);
 

@@ -11,12 +11,38 @@ module uart_rx_ctrl(
     input   logic           rx_valid,
 
     output  logic           start,
+
     output  logic           prog_en,
     output  logic  [31:0]   prog_addr,
     output  logic  [31:0]   prog_data,
 
+    output  logic           input_valid,
+    output  logic  [7:0]    input_data,
+    input   logic           input_done,
+
     output  uart_res_t      res
 );
+
+    // -------------- Input FIFO --------------
+
+    (* ram_style="distributed" *) logic [7:0] input_fifo [0:INPUT_FIFO_SIZE-1];
+
+    logic [INPUT_FIFO_BITS:0]   rd_ptr, wr_ptr; // MSB Indicates Wrap Bit
+    logic                       fifo_empty, fifo_full;
+
+    always_comb begin
+        fifo_empty      =   (rd_ptr == wr_ptr);
+        fifo_full       =   (wr_ptr[INPUT_FIFO_BITS]      != rd_ptr[INPUT_FIFO_BITS]) &&
+                            (wr_ptr[INPUT_FIFO_BITS-1:0]  == rd_ptr[INPUT_FIFO_BITS-1:0]);
+    end
+
+    assign input_valid  = !fifo_empty;
+    assign input_data   = input_fifo[rd_ptr[INPUT_FIFO_BITS-1:0]];
+
+
+    // ------------- RX Controller -------------
+
+    (* ram_style="distributed" *) logic [7:0] data_buffer [0:255];
 
     uart_rx_ctrl_t          rx_state;
     uart_cmd_t              cmd;
@@ -26,8 +52,7 @@ module uart_rx_ctrl(
 
     logic [7:0]             data_len;
     logic [7:0]             data_counter;
-    (* ram_style="distributed" *) logic [7:0] data_buffer [0:255];
-
+    
     logic [7:0]             checksum;
 
     always_ff @(posedge clk) begin
@@ -49,8 +74,14 @@ module uart_rx_ctrl(
             data_counter    <= '0;
 
             checksum        <= '0;
+
+            rd_ptr          <= '0;
+            wr_ptr          <= '0;
         end
         else begin
+            if (input_done && !fifo_empty)
+                rd_ptr <= rd_ptr + 1;
+
             unique case (rx_state)
                 RX_CTRL_IDLE: begin
                     cmd             <= CMD_RESET;
@@ -62,8 +93,6 @@ module uart_rx_ctrl(
                     data_counter    <= '0;
 
                     prog_en         <= 0;
-                    prog_addr       <= '0;
-                    prog_data       <= '0;
 
                     if (rx_valid) begin
                         if (rx_data == START_FLAG) begin
@@ -88,7 +117,11 @@ module uart_rx_ctrl(
                         data_len    <= 0;
                         rx_state    <= RX_CTRL_CHECKSUM;
                     end
-                    else if (rx_data >= 8 && (rx_data % 4) == 0) begin  // Data
+                    else if (cmd == CMD_INPUT) begin                    // Input data
+                        data_len    <= rx_data;
+                        rx_state    <= RX_CTRL_PAYLOAD;
+                    end
+                    else if (rx_data >= 8 && (rx_data % 4) == 0) begin  // Write data
                         data_len    <= rx_data - 4;
                         rx_state    <= RX_CTRL_PAYLOAD;
                     end
@@ -97,12 +130,19 @@ module uart_rx_ctrl(
                         res         <= RES_NAK;
                         rx_state    <= RX_CTRL_IDLE;
                     end
-                    
+
                     checksum        <= checksum + rx_data;
                 end
 
                 RX_CTRL_PAYLOAD: if (rx_valid) begin
-                    if (addr_counter < 4) begin         // Address
+                    if (cmd == CMD_INPUT) begin         // Input
+                        data_buffer[data_counter]       <= rx_data;
+                        data_counter                    <= data_counter + 1;
+
+                        if (data_counter == data_len - 1)
+                            rx_state    <= RX_CTRL_CHECKSUM;
+                    end
+                    else if (addr_counter < 4) begin    // Address
                         base_addr[addr_counter*8 +: 8]  <= rx_data;
                         addr_counter                    <= addr_counter + 1;
                     end
@@ -117,7 +157,7 @@ module uart_rx_ctrl(
                             rx_state    <= RX_CTRL_PAYLOAD;
                         end
                     end
-                    
+
                     checksum <= checksum + rx_data;
                 end
 
@@ -142,6 +182,8 @@ module uart_rx_ctrl(
                         end
                         CMD_RUN:    begin
                             start           <= 1;
+                            rd_ptr          <= '0;
+                            wr_ptr          <= '0;
                             res             <= RES_ACK;
                             rx_state        <= RX_CTRL_IDLE;
                         end
@@ -164,6 +206,18 @@ module uart_rx_ctrl(
                             end
 
                             data_counter    <= data_counter + 4;
+                        end
+                        CMD_INPUT:  begin
+                            if (!fifo_full) begin
+                                input_fifo[wr_ptr[INPUT_FIFO_BITS-1:0]] <= data_buffer[data_counter];
+                                wr_ptr                                  <= wr_ptr + 1;
+                                data_counter                    <= data_counter + 1;
+
+                                if (data_counter == data_len - 1) begin
+                                    res         <= RES_ACK;
+                                    rx_state    <= RX_CTRL_IDLE;
+                                end
+                            end
                         end
                         default:    begin
                             res             <= RES_NAK;

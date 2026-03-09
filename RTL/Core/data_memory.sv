@@ -20,25 +20,30 @@ module data_memory(
     output  logic           exit_en,
     output  logic [7:0]     exit_code,
     output  logic           print_en,
-    output  logic [31:0]    print_data
+    output  logic [31:0]    print_data,
+
+    input   logic           input_valid,
+    input   logic [7:0]     input_data,
+    output  logic           input_done
 );
 
     localparam              offset      = DMEM_ADDR[31:2];
 
     logic                   boot_flag;
-    logic [29:0]            dmem_idx, prog_idx, print_idx;
+    logic [29:0]            dmem_idx, prog_idx, print_idx, input_idx;
 
     assign                  dmem_idx    = mem_addr[31:2]    - offset;
     assign                  prog_idx    = prog_addr[31:2]   - offset;
     assign                  print_idx   = PRINT_ADDR[31:2]  - offset;
+    assign                  input_idx   = INPUT_ADDR[31:2]  - offset;
 
-    (* ram_style="block", cascade_height=1, ram_decomp="power" *) logic [31:0] data_mem [0:DMEM_WORD-1];
+    (* ram_style = "block" *) reg [31:0] data_mem [0:DMEM_WORD-1];
 
     `ifndef SYNTHESIS
         logic [31:0] raw_mem [0:(offset + DMEM_WORD - 1)];
         initial begin
             foreach (raw_mem[i]) raw_mem[i] = 32'h0;
-            $readmemh("dhrystone.hex", raw_mem);
+            $readmemh("firmware.hex", raw_mem);
             
             for (int i = 0; i < DMEM_WORD; i++)
                 data_mem[i] = raw_mem[offset + i];
@@ -47,24 +52,35 @@ module data_memory(
 
     always_ff@(posedge clk) begin
         if (prog_en && (prog_idx < DMEM_WORD)) begin
-            data_mem[prog_idx] <= prog_data;
+            data_mem[prog_idx][7:0]    <= prog_data[7:0];
+            data_mem[prog_idx][15:8]   <= prog_data[15:8];
+            data_mem[prog_idx][23:16]  <= prog_data[23:16];
+            data_mem[prog_idx][31:24]  <= prog_data[31:24];
         end
     end
     
-    // DMEM Access
     always_ff@(posedge clk) begin
-        rdata <= data_mem[dmem_idx];
-
         if (memaccess == MEM_WRITE && (dmem_idx < DMEM_WORD)) begin
-            if (wstrb[3]) data_mem[dmem_idx][31:24] <= wdata[31:24];
-            if (wstrb[2]) data_mem[dmem_idx][23:16] <= wdata[23:16];
-            if (wstrb[1]) data_mem[dmem_idx][15:8]  <= wdata[15:8];
-            if (wstrb[0]) data_mem[dmem_idx][7:0]   <= wdata[7:0];
+            if (wstrb[0]) data_mem[dmem_idx][7:0]    <= wdata[7:0];
+            if (wstrb[1]) data_mem[dmem_idx][15:8]   <= wdata[15:8];
+            if (wstrb[2]) data_mem[dmem_idx][23:16]  <= wdata[23:16];
+            if (wstrb[3]) data_mem[dmem_idx][31:24]  <= wdata[31:24];
         end
-
     end
 
-    // Print & Fault Detection
+    logic [31:0] rdata_mem;
+    always_ff@(posedge clk) begin
+        rdata_mem   <= data_mem[dmem_idx];
+        input_done  <= input_valid && (memaccess == MEM_READ) && (dmem_idx == input_idx);
+    end
+
+    always_comb begin
+        if (dmem_idx == input_idx)
+            rdata   = input_valid ? {24'b0, input_data} : 32'hFFFF_FFFF;
+        else
+            rdata   = rdata_mem;
+    end
+
     always_ff@(posedge clk) begin
         boot_en                 <= 0;
         exit_en                 <= 0;
@@ -81,7 +97,7 @@ module data_memory(
                 boot_en         <= 1;
                 boot_flag       <= 1;
             end
-            else if (memaccess == MEM_WRITE && dmem_idx == print_idx) begin
+            else if ((memaccess == MEM_WRITE) && (dmem_idx == print_idx)) begin
                 if (wdata[8]) begin
                     exit_en     <= 1;
                     exit_code   <= wdata[7:0];
@@ -94,6 +110,7 @@ module data_memory(
 
             dmemfault <= (memaccess != MEM_DISABLED)
                       && (dmem_idx != print_idx)
+                      && (dmem_idx != input_idx)
                       && (dmem_idx >= DMEM_WORD);
         end
     end

@@ -1,6 +1,44 @@
 #include "serial_port.h"
+#include "programmer.h"
 
-static HANDLE hSerial = INVALID_HANDLE_VALUE;
+static HANDLE hSerial   = INVALID_HANDLE_VALUE;
+
+static char input_buf[256];
+static int  input_len   = 0;
+static int  interactive = 0;
+static int  input_ready = 0;
+
+static int send_input(const char *buf, uint8_t len) {
+    int checksum = START_FLAG + CMD_INPUT + len;
+    if (serial_write_byte(START_FLAG)         != 0) return -1;
+    if (serial_write_byte((uint8_t)CMD_INPUT) != 0) return -1;
+    if (serial_write_byte(len)                != 0) return -1;
+    for (int i = 0; i < len; i++) {
+        checksum += (uint8_t)buf[i];
+        if (serial_write_byte((uint8_t)buf[i]) != 0) return -1;
+    }
+    return serial_write_byte((uint8_t)(checksum & 0xFF));
+}
+
+static void process_input(int ch) {
+    if (!input_ready)
+        return;
+
+    if (ch == '\r') {
+        putchar('\n'); fflush(stdout);
+        if (input_len > 0) {
+            input_buf[input_len++] = '\n';
+            send_input(input_buf, (uint8_t)input_len);
+            input_len = 0;
+        }
+    } else if (ch == '\b' && input_len > 0) {
+        input_len--;
+        printf("\b \b"); fflush(stdout);
+    } else if (input_len < 254) {
+        input_buf[input_len++] = (char)ch;
+        putchar(ch); fflush(stdout);
+    }
+}
 
 static int recv_frame (res_t *res, uint8_t *len, uint8_t *data) {
     uint8_t byte       = 0;
@@ -10,9 +48,8 @@ static int recv_frame (res_t *res, uint8_t *len, uint8_t *data) {
     while (1) {
         if (_kbhit()) {
             int ch = _getch();
-            if (ch == 'q' || ch == 'Q') {
-                return -2;
-            }
+            if (ch == 4) return -2;
+            if (interactive) process_input(ch);
         }
 
         if (serial_read_byte(&byte) != 0) {
@@ -32,7 +69,8 @@ static int recv_frame (res_t *res, uint8_t *len, uint8_t *data) {
         while (serial_read_byte(&byte) != 0) {
             if (_kbhit()) {
                 int ch = _getch();
-                if (ch == 'q' || ch == 'Q') return -2;
+                if (ch == 4) return -2;
+                process_input(ch);
             }
             if ((GetTickCount64() - start) >= (ULONGLONG)TIMEOUT_MS) return -1;
             Sleep(1);
@@ -47,7 +85,8 @@ static int recv_frame (res_t *res, uint8_t *len, uint8_t *data) {
         while (serial_read_byte(len) != 0) {
             if (_kbhit()) {
                 int ch = _getch();
-                if (ch == 'q' || ch == 'Q') return -2;
+                if (ch == 4) return -2;
+                process_input(ch);
             }
             if ((GetTickCount64() - start) >= (ULONGLONG)TIMEOUT_MS) return -1;
             Sleep(1);
@@ -61,7 +100,8 @@ static int recv_frame (res_t *res, uint8_t *len, uint8_t *data) {
         while (serial_read_byte(&data[i]) != 0) {
             if (_kbhit()) {
                 int ch = _getch();
-                if (ch == 'q' || ch == 'Q') return -2;
+                if (ch == 4) return -2;
+                process_input(ch);
             }
             if ((GetTickCount64() - start) >= (ULONGLONG)TIMEOUT_MS) return -1;
             Sleep(1);
@@ -75,7 +115,8 @@ static int recv_frame (res_t *res, uint8_t *len, uint8_t *data) {
         while (serial_read_byte(&byte) != 0) {
             if (_kbhit()) {
                 int ch = _getch();
-                if (ch == 'q' || ch == 'Q') return -2;
+                if (ch == 4) return -2;
+                process_input(ch);
             }
             if ((GetTickCount64() - start) >= (ULONGLONG)TIMEOUT_MS) return -1;
             Sleep(1);
@@ -98,20 +139,24 @@ int check_ack () {
     return (res == RES_ACK) ? 0 : -1;
 }
 
-int cpu_monitor () {
-    res_t   res;
-    uint8_t len;
-    uint8_t data[256];
+int cpu_console () {
+    res_t     res;
+    uint8_t   len;
+    uint8_t   data[256];
+    ULONGLONG boot_time = 0;
+
+    interactive = 1;
+    input_ready = 0;
+    input_len   = 0;
 
     printf("\n");
     printf("----------------------------------------------\n");
     printf("\n");
     printf("----------------------------------------------\n");
-    printf("                 CPU Monitor\n");
+    printf("                 CPU Console\n");
     printf("----------------------------------------------\n");
-    printf("            Mode\tRead-Only\n");
     printf("            Baud\t115200\n");
-    printf("            Exit\tPress 'q'\n");
+    printf("            Exit\tCtrl+D\n");
     printf("----------------------------------------------\n");
     printf("\n");
 
@@ -128,6 +173,9 @@ int cpu_monitor () {
             }
 
             printf("CPU Startup Complete.\n\n");
+            boot_time   = GetTickCount64();
+            input_ready = 1;
+            input_len   = 0;
         }
         else if (r == 0 && res == RES_EXIT) {
             if (len != 1) {
@@ -135,12 +183,15 @@ int cpu_monitor () {
                 continue;
             }
 
+            ULONGLONG elapsed_ms = GetTickCount64() - boot_time;
+            ULONGLONG elapsed_ns = elapsed_ms * 1000000ULL;
             if (data[0] == 0) {
-                printf("\nProgram Exited Normally (code 0).\n");
+                printf("\nProgram Exited Normally after %llu ms. (%llu ns)\n", elapsed_ms, elapsed_ns);
             }
             else {
-                printf("\nProgram Exited with Error Code %u.\n", (unsigned)data[0]);
+                printf("\nProgram Exited with Error Code %u. (after %llu ms / %llu ns)\n", (unsigned)data[0], elapsed_ms, elapsed_ns);
             }
+            input_ready = 0;
             break;
         }
         else if (r == 0 && res == RES_PRINT) {
@@ -157,8 +208,10 @@ int cpu_monitor () {
         }
     }
 
+    interactive = 0;
+
     printf("\n");
-    printf("Exit CPU Monitor.\n");
+    printf("Exit CPU Console.\n");
     return 0;
 }
 

@@ -21,8 +21,13 @@ module uart_controller(
     input   logic           boot_en,
     input   logic           exit_en,
     input   logic [7:0]     exit_code,
+    
     input   logic           print_en,
-    input   logic [31:0]    print_data
+    input   logic [31:0]    print_data,
+
+    output  logic           input_valid,
+    output  logic [7:0]     input_data,
+    input   logic           input_done
 );
 
     // ------------ Baud Generator -------------
@@ -65,9 +70,14 @@ module uart_controller(
         .rx_valid           (rx_valid),
 
         .start              (start),
+        
         .prog_en            (prog_en),
         .prog_addr          (prog_addr),
         .prog_data          (prog_data),
+
+        .input_valid        (input_valid),
+        .input_data         (input_data),
+        .input_done         (input_done),
 
         .res                (res)
     );

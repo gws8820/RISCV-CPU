@@ -2,11 +2,38 @@
 #include <stdarg.h>
 #include <limits.h>
 
+#ifndef CPU_FREQ_HZ
+#define CPU_FREQ_HZ 100000000u
+#endif
+#define CYCLES_PER_US (CPU_FREQ_HZ/1000000u)
+#define CYCLES_PER_MS (CPU_FREQ_HZ/1000u)
+
 #define PRINT_ADDR ((volatile uint32_t*)0xFFFF0000)
+#define INPUT_ADDR ((volatile uint32_t*)0xFFFF0004)
 
 /* ------------------------------------------------------------------ */
 /* Basic I/O                                                           */
 /* ------------------------------------------------------------------ */
+
+static int _ungetch_buf = -1;
+
+#undef getchar
+int getchar(void)
+{
+    if (_ungetch_buf != -1) {
+        int c = _ungetch_buf;
+        _ungetch_buf = -1;
+        return c;
+    }
+    uint32_t c;
+    do { c = *INPUT_ADDR; } while (c == 0xFFFFFFFFU);
+    return (int)(c & 0xFF);
+}
+
+static void ungetch(int c)
+{
+    _ungetch_buf = c;
+}
 
 #undef putchar
 int putchar(int c)
@@ -15,26 +42,148 @@ int putchar(int c)
     return (unsigned char)c;
 }
 
-void print(const char *s)
-{
-    while (*s) putchar((unsigned char)*s++);
-}
-
+#undef _exit
 void _exit(int code)
 {
     *PRINT_ADDR = (uint32_t)(0x100 | (code & 0xFF));
     while (1);
 }
 
-void exit(int code)
-{
-    _exit(code);
-}
 
 /* Benchmark timer hook: unused because timing is based on mcycle. */
 void setStats(int enable)
 {
     (void)enable;
+}
+
+/* ------------------------------------------------------------------ */
+/* Time functions (100MHz based)                                       */
+/* ------------------------------------------------------------------ */
+
+uint64_t get_cycle(void)
+{
+#if __riscv_xlen == 64
+    uint64_t x;
+    __asm__ volatile ("rdcycle %0" : "=r"(x));
+    return x;
+#else
+    uint32_t hi, lo, hi2;
+    __asm__ volatile ("rdcycleh %0" : "=r"(hi));
+    __asm__ volatile ("rdcycle %0"  : "=r"(lo));
+    __asm__ volatile ("rdcycleh %0" : "=r"(hi2));
+    if (hi != hi2) {
+        __asm__ volatile ("rdcycle %0"  : "=r"(lo));
+        hi = hi2;
+    }
+    return ((uint64_t)hi << 32) | lo;
+#endif
+}
+
+uint32_t time_us(void)
+{
+    uint32_t lo;
+    __asm__ volatile ("rdcycle %0" : "=r"(lo));
+    return lo / (uint32_t)CYCLES_PER_US;
+}
+
+uint32_t time_ms(void)
+{
+    uint32_t lo;
+    __asm__ volatile ("rdcycle %0" : "=r"(lo));
+    return lo / (uint32_t)CYCLES_PER_MS;
+}
+
+/* ------------------------------------------------------------------ */
+/* scanf                                                               */
+/* ------------------------------------------------------------------ */
+
+#undef scanf
+int scanf(const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    int matched = 0;
+
+    while (*fmt) {
+        if (*fmt != '%') {
+            if (*fmt == ' ' || *fmt == '\t' || *fmt == '\n') {
+                int c = getchar();
+                while (c == ' ' || c == '\t' || c == '\n' || c == '\r') c = getchar();
+                ungetch(c);
+            } else {
+                int c = getchar();
+                if (c != *fmt) { ungetch(c); break; }
+            }
+            fmt++;
+            continue;
+        }
+        fmt++;
+
+        int width = 0;
+        while (*fmt >= '0' && *fmt <= '9') width = width * 10 + (*fmt++ - '0');
+
+        switch (*fmt++) {
+        case 'd': case 'i': {
+            int neg = 0, val = 0;
+            int c = getchar();
+            while (c == ' ' || c == '\t' || c == '\n' || c == '\r') c = getchar();
+            if (c == '-') { neg = 1; c = getchar(); }
+            while (c >= '0' && c <= '9') { val = val * 10 + (c - '0'); c = getchar(); }
+            ungetch(c);
+            *va_arg(ap, int*) = neg ? -val : val;
+            matched++;
+            break;
+        }
+        case 'u': {
+            unsigned val = 0;
+            int c = getchar();
+            while (c == ' ' || c == '\t' || c == '\n' || c == '\r') c = getchar();
+            while (c >= '0' && c <= '9') { val = val * 10 + (c - '0'); c = getchar(); }
+            ungetch(c);
+            *va_arg(ap, unsigned*) = val;
+            matched++;
+            break;
+        }
+        case 'x': {
+            unsigned val = 0;
+            int c = getchar();
+            while (c == ' ' || c == '\t' || c == '\n' || c == '\r') c = getchar();
+            while ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+                val = val * 16 + (c >= 'a' ? c - 'a' + 10 : c >= 'A' ? c - 'A' + 10 : c - '0');
+                c = getchar();
+            }
+            ungetch(c);
+            *va_arg(ap, unsigned*) = val;
+            matched++;
+            break;
+        }
+        case 'c': {
+            *va_arg(ap, char*) = (char)getchar();
+            matched++;
+            break;
+        }
+        case 's': {
+            char *s = va_arg(ap, char*);
+            int c = getchar();
+            while (c == ' ' || c == '\t' || c == '\n' || c == '\r') c = getchar();
+            int n = 0;
+            while (c != ' ' && c != '\t' && c != '\n' && c != '\r' && c != '\0') {
+                if (width == 0 || n < width) *s++ = (char)c;
+                n++;
+                c = getchar();
+            }
+            ungetch(c);
+            *s = '\0';
+            matched++;
+            break;
+        }
+        default:
+            break;
+        }
+    }
+
+    va_end(ap);
+    return matched;
 }
 
 /* ------------------------------------------------------------------ */
@@ -55,21 +204,16 @@ static void printnum(void (*putch)(int, void **), void **putdat,
         num /= base;
     } while (num);
 
-    for (i = len; i < width; i++)
-        putch(padc, putdat);
-
-    while (len-- > 0)
-        putch(buf[len], putdat);
-}
-
-static unsigned long getuint(va_list *ap, int lflag)
-{
-    return lflag ? va_arg(*ap, unsigned long) : va_arg(*ap, unsigned int);
-}
-
-static long getint(va_list *ap, int lflag)
-{
-    return lflag ? va_arg(*ap, long) : va_arg(*ap, int);
+    if (padc != '-') {
+        for (i = len; i < width; i++)
+            putch(padc, putdat);
+    }
+    for (i = len - 1; i >= 0; i--)
+        putch(buf[i], putdat);
+    if (padc == '-') {
+        for (i = len; i < width; i++)
+            putch(' ', putdat);
+    }
 }
 
 static void vprintfmt(void (*putch)(int, void **), void **putdat,
@@ -133,14 +277,19 @@ static void vprintfmt(void (*putch)(int, void **), void **putdat,
             if (!s) s = "(null)";
             p = s;
             while (*p++) slen++;
-            for (i = slen; i < width; i++) putch(' ', putdat);
+            if (padc != '-') {
+                for (i = slen; i < width; i++) putch(' ', putdat);
+            }
             while (*s) putch((unsigned char)*s++, putdat);
+            if (padc == '-') {
+                for (i = slen; i < width; i++) putch(' ', putdat);
+            }
             break;
         }
 
         case 'd':
         case 'i':
-            num = (unsigned long)getint(&ap, lflag);
+            num = (unsigned long)(lflag ? va_arg(ap, long) : va_arg(ap, int));
             if ((long)num < 0) {
                 putch('-', putdat);
                 num = (unsigned long)(-(long)num);
@@ -150,18 +299,18 @@ static void vprintfmt(void (*putch)(int, void **), void **putdat,
             goto number;
 
         case 'u':
-            num  = getuint(&ap, lflag);
+            num  = lflag ? va_arg(ap, unsigned long) : va_arg(ap, unsigned int);
             base = 10;
             goto number;
 
         case 'x':
         case 'p':
-            num  = getuint(&ap, lflag);
+            num  = lflag ? va_arg(ap, unsigned long) : va_arg(ap, unsigned int);
             base = 16;
             goto number;
 
         case 'o':
-            num  = getuint(&ap, lflag);
+            num  = lflag ? va_arg(ap, unsigned long) : va_arg(ap, unsigned int);
             base = 8;
             goto number;
 
@@ -182,7 +331,7 @@ static void vprintfmt(void (*putch)(int, void **), void **putdat,
 }
 
 /* ------------------------------------------------------------------ */
-/* printf / vprintf                                                    */
+/* printf                                                              */
 /* ------------------------------------------------------------------ */
 
 static void putch_stdout(int c, void **unused)
@@ -191,12 +340,7 @@ static void putch_stdout(int c, void **unused)
     *PRINT_ADDR = (uint32_t)(unsigned char)c;
 }
 
-int vprintf(const char *fmt, va_list ap)
-{
-    vprintfmt(putch_stdout, 0, fmt, ap);
-    return 0;
-}
-
+#undef printf
 int printf(const char *fmt, ...)
 {
     va_list ap;
@@ -207,7 +351,7 @@ int printf(const char *fmt, ...)
 }
 
 /* ------------------------------------------------------------------ */
-/* sprintf / vsprintf                                                  */
+/* sprintf                                                             */
 /* ------------------------------------------------------------------ */
 
 static void putch_str(int c, void **data)
@@ -217,27 +361,23 @@ static void putch_str(int c, void **data)
     (*pstr)++;
 }
 
-int vsprintf(char *str, const char *fmt, va_list ap)
-{
-    char *str0 = str;
-    vprintfmt(putch_str, (void **)&str, fmt, ap);
-    *str = '\0';
-    return (int)(str - str0);
-}
-
+#undef sprintf
 int sprintf(char *str, const char *fmt, ...)
 {
     va_list ap;
+    char *str0 = str;
     va_start(ap, fmt);
-    int len = vsprintf(str, fmt, ap);
+    vprintfmt(putch_str, (void **)&str, fmt, ap);
     va_end(ap);
-    return len;
+    *str = '\0';
+    return (int)(str - str0);
 }
 
 /* ------------------------------------------------------------------ */
 /* String and memory helpers used directly by Dhrystone.               */
 /* ------------------------------------------------------------------ */
 
+#undef memcpy
 void *memcpy(void *dest, const void *src, size_t len)
 {
     char       *d = (char *)dest;
@@ -246,6 +386,7 @@ void *memcpy(void *dest, const void *src, size_t len)
     return dest;
 }
 
+#undef memset
 void *memset(void *dest, int byte, size_t len)
 {
     char *d = (char *)dest;
@@ -253,6 +394,7 @@ void *memset(void *dest, int byte, size_t len)
     return dest;
 }
 
+#undef strlen
 size_t strlen(const char *s)
 {
     const char *p = s;
@@ -260,13 +402,7 @@ size_t strlen(const char *s)
     return (size_t)(p - s);
 }
 
-size_t strnlen(const char *s, size_t n)
-{
-    const char *p = s;
-    while (n-- && *p) p++;
-    return (size_t)(p - s);
-}
-
+#undef strcmp
 int strcmp(const char *s1, const char *s2)
 {
     unsigned char c1, c2;
@@ -274,6 +410,7 @@ int strcmp(const char *s1, const char *s2)
     return (int)c1 - (int)c2;
 }
 
+#undef strcpy
 char *strcpy(char *dest, const char *src)
 {
     char *d = dest;

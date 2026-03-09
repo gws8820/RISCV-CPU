@@ -31,7 +31,8 @@ typedef enum logic [2:0] {
 typedef enum logic [7:0] {
     CMD_RESET   = 8'h01,
     CMD_WRITE   = 8'h02,
-    CMD_RUN     = 8'h03
+    CMD_RUN     = 8'h03,
+    CMD_INPUT   = 8'h04
 } uart_cmd_t;
 
 typedef enum logic [7:0] {

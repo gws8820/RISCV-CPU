@@ -20,7 +20,7 @@ typedef enum {
 } res_t;
 
 int     check_ack ();
-int     cpu_monitor ();
+int     cpu_console ();
 
 int     serial_open (char *com_port);
 void    serial_close ();

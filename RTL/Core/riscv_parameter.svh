@@ -14,3 +14,4 @@ localparam SHIFT_COUNT          = DIV_COUNT - 1;
 localparam BOOT_MSG             = 32'hABCD_1234;
 localparam DMEM_ADDR            = 32'h0002_0000;
 localparam PRINT_ADDR           = 32'hFFFF_0000;
+localparam INPUT_ADDR           = 32'hFFFF_0004;

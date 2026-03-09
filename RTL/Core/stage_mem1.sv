@@ -41,7 +41,11 @@ module stage_mem1 (
     output  logic                   exit_en,
     output  logic [7:0]             exit_code,
     output  logic                   print_en,
-    output  logic [31:0]            print_data
+    output  logic [31:0]            print_data,
+
+    input   logic                   input_valid,
+    input   logic [7:0]             input_data,
+    output  logic                   input_done
 );
 
     trap_req_t                      trap_req_prev;
@@ -160,7 +164,10 @@ module stage_mem1 (
         .exit_en                    (exit_en),
         .exit_code                  (exit_code),
         .print_en                   (print_en),
-        .print_data                 (print_data)
+        .print_data                 (print_data),
+        .input_valid                (input_valid),
+        .input_data                 (input_data),
+        .input_done                 (input_done)
     );
     
     // Trap Packet

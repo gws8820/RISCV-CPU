@@ -18,14 +18,13 @@ static int select_program(char *program_path, size_t program_path_size, char *bu
         printf("1. Custom Firmware\n");
         printf("2. Dhrystone Benchmark\n");
         printf("3. RISC-V Test\n");
+        printf("4. Back\n");
         printf("\n");
-        printf("Image (1-3):\t");
+        printf("Mode (1-4):\t");
 
         if (scanf("%d", &app_input) != 1) {
             while (getchar() != '\n');
-            continue;
         }
-        printf("\n");
 
         if (app_input == 1) {
             snprintf(program_path, program_path_size, "../build/firmware/firmware.hex");
@@ -57,18 +56,18 @@ static int select_program(char *program_path, size_t program_path_size, char *bu
             return 0;
         }
 
-        printf("\n");
-        printf("----------------------------------------------\n");
-        printf("\n");
-        printf("Invalid Image.\n");
-        printf("\n");
-        printf("----------------------------------------------\n");
-        printf("\n");
+        if (app_input == 4) {
+            return -1;
+        }
 
+        printf("Invalid Mode.\n");
+        printf("\n");
+        printf("----------------------------------------------\n");
+        printf("\n");
     }
 }
 
-static int send_chunk (uint32_t addr, uint32_t *data, uint8_t len) {
+static int send_chunk(uint32_t addr, uint32_t *data, uint8_t len) {
     int checksum = 0;
 
     // Header
@@ -113,7 +112,7 @@ static int flush_chunk (uint32_t chunk_base, uint32_t *chunk_data, uint32_t chun
     return 0;
 }
 
-static int write_program_image(const char *program_path) {
+static int write_program(const char *program_path) {
     FILE        *fp;
     char        line[256];
     uint32_t    chunk_data[CHUNK_SIZE];
@@ -184,6 +183,7 @@ static int build_program(void) {
         return -1;
     }
 
+    printf("\n");
     printf("Building Program Image...\n");
     status = system(build_cmd);
     if (status != 0) {
@@ -198,12 +198,11 @@ static int build_program(void) {
         while (getchar() != '\n');
         return 0;
     }
-    printf("\n");
-
     if (write_now == 'y' || write_now == 'Y') {
-        return write_program_image(program_path);
+        return write_program(program_path);
     }
 
+    printf("Aborted.\n");
     return 0;
 }
 
@@ -213,7 +212,7 @@ static int send_command (cmd_t cmd) {
         if (select_program(program_path, sizeof(program_path), NULL, 0) != 0) {
             return -1;
         }
-        return write_program_image(program_path);
+        return write_program(program_path);
     }
     else {
         int checksum = 0;
@@ -233,7 +232,7 @@ static int send_command (cmd_t cmd) {
     }
     
     if (cmd == CMD_RUN) {
-        cpu_monitor();
+        cpu_console();
     }
     
     return 0;

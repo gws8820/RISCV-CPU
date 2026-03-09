@@ -82,7 +82,7 @@ module uart_tx_ctrl(
         end
     end
 
-    // ------------- TX Controller (Byte Level) -------------
+    // ------------- TX Controller -------------
 
     uart_tx_entry_t         active_entry;
     uart_tx_entry_t         res_entry;

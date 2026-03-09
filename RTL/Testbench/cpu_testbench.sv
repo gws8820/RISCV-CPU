@@ -19,16 +19,19 @@ logic           print_en;
 logic [31:0]    print_data;
 
 riscv_cpu_core dut (
-    .start      (start),
-    .clk        (clk),
-    .prog_en    (prog_en),
-    .prog_addr  (prog_addr),
-    .prog_data  (prog_data),
-    .boot_en    (boot_en),
-    .exit_en    (exit_en),
-    .exit_code  (exit_code),
-    .print_en   (print_en),
-    .print_data (print_data)
+    .start          (start),
+    .clk            (clk),
+    .prog_en        (prog_en),
+    .prog_addr      (prog_addr),
+    .prog_data      (prog_data),
+    .boot_en        (boot_en),
+    .exit_en        (exit_en),
+    .exit_code      (exit_code),
+    .print_en       (print_en),
+    .print_data     (print_data),
+    .input_valid    (1'b0),
+    .input_data     (8'h0),
+    .input_done     ()
 );
 
 always #(CLK_PERIOD/2) clk = ~clk;
