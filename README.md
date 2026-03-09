@@ -1,7 +1,7 @@
 # RISC-V CPU
 
-A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featuring an integrated UART controller for system programming and debugging. Achieved **90.6 DMIPS@100MHz** on the Dhrystone 2.2 RV32IM benchmark.
-
+A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featuring an integrated UART controller for system programming and debugging. Achieved **91.0 DMIPS@100MHz** on the Dhrystone 2.2 RV32IM benchmark.
+  
 ## Features
 
 ### ISA Support
@@ -95,9 +95,9 @@ Measured on Zynq-7020 FPGA running at 100 MHz (RV32IM, `-O2`).
 
 | Metric | Value |
 |--------|-------|
-| **Dhrystones/Second** | 159,235 |
-| **DMIPS** | 90.6 |
-| **DMIPS/MHz** | 0.906 |
+| **Dhrystones/Second** | 160000 |
+| **DMIPS** | 91.0 |
+| **DMIPS/MHz** | 0.91 |
 
 > DMIPS = Dhrystones/Second ÷ 1,757 (VAX 11/780 reference = 1 DMIPS)
 
