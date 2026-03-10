@@ -309,6 +309,20 @@ static void vprintfmt(void (*putch)(int, void **), void **putdat,
             base = 16;
             goto number;
 
+        case 'f': {
+            double dval = va_arg(ap, double);
+            long ipart;
+            unsigned long fpart;
+            if (dval < 0.0) { putch('-', putdat); dval = -dval; }
+            ipart = (long)dval;
+            fpart = (unsigned long)((dval - (double)ipart) * 1000.0 + 0.5);
+            if (fpart >= 1000) { ipart++; fpart -= 1000; }
+            printnum(putch, putdat, (unsigned long)ipart, 10, width > 0 ? width : 1, padc);
+            putch('.', putdat);
+            printnum(putch, putdat, fpart, 10, 3, '0');
+            break;
+        }
+
         case 'o':
             num  = lflag ? va_arg(ap, unsigned long) : va_arg(ap, unsigned int);
             base = 8;
@@ -347,6 +361,13 @@ int printf(const char *fmt, ...)
     va_start(ap, fmt);
     vprintfmt(putch_stdout, 0, fmt, ap);
     va_end(ap);
+    return 0;
+}
+
+#undef vprintf
+int vprintf(const char *fmt, va_list ap)
+{
+    vprintfmt(putch_stdout, 0, fmt, ap);
     return 0;
 }
 

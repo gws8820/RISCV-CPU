@@ -1,6 +1,7 @@
 APP_DIR      := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 APP_NAME     := dhrystone
 APP_SRCS     := dhrystone.c dhrystone_main.c
+OPT          := -O2
 EXTRA_CFLAGS := -std=gnu89 -fwrapv -Wno-implicit-int -Wno-implicit-function-declaration
 EXTRA_LDLIBS := -lgcc
 

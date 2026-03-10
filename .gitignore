@@ -1,6 +1,7 @@
 .vscode
 .claude
 
+IP
 Software/build/*
 
 timing_report.txt

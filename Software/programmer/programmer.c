@@ -16,11 +16,12 @@ static int select_program(char *program_path, size_t program_path_size, char *bu
         printf("Select Program Image\n");
         printf("\n");
         printf("1. Custom Firmware\n");
-        printf("2. Dhrystone Benchmark\n");
-        printf("3. RISC-V Test\n");
-        printf("4. Back\n");
+        printf("2. CoreMark Benchmark\n");
+        printf("3. Dhrystone Benchmark\n");
+        printf("4. RISC-V Test\n");
+        printf("5. Back\n");
         printf("\n");
-        printf("Mode (1-4):\t");
+        printf("Mode (1-5):\t");
 
         if (scanf("%d", &app_input) != 1) {
             while (getchar() != '\n');
@@ -29,18 +30,25 @@ static int select_program(char *program_path, size_t program_path_size, char *bu
         if (app_input == 1) {
             snprintf(program_path, program_path_size, "../build/firmware/firmware.hex");
             if (build_cmd != NULL && build_cmd_size > 0) {
-                snprintf(build_cmd, build_cmd_size, "cd /d ..\\apps\\firmware && make");
+                snprintf(build_cmd, build_cmd_size, "cd /d ..\\apps\\firmware && make -B");
             }
             return 0;
         }
         if (app_input == 2) {
-            snprintf(program_path, program_path_size, "../build/dhrystone/dhrystone.hex");
+            snprintf(program_path, program_path_size, "../build/coremark/coremark.hex");
             if (build_cmd != NULL && build_cmd_size > 0) {
-                snprintf(build_cmd, build_cmd_size, "cd /d ..\\apps\\dhrystone && make");
+                snprintf(build_cmd, build_cmd_size, "cd /d ..\\apps\\coremark && make -B");
             }
             return 0;
         }
         if (app_input == 3) {
+            snprintf(program_path, program_path_size, "../build/dhrystone/dhrystone.hex");
+            if (build_cmd != NULL && build_cmd_size > 0) {
+                snprintf(build_cmd, build_cmd_size, "cd /d ..\\apps\\dhrystone && make -B");
+            }
+            return 0;
+        }
+        if (app_input == 4) {
             char test_name[128];
 
             printf("Enter riscv-test name (e.g. add, lw, mul):\t");
@@ -51,12 +59,12 @@ static int select_program(char *program_path, size_t program_path_size, char *bu
 
             snprintf(program_path, program_path_size, "../build/riscv-tests/%s.hex", test_name);
             if (build_cmd != NULL && build_cmd_size > 0) {
-                snprintf(build_cmd, build_cmd_size, "cd /d ..\\apps\\riscv-tests && make TEST=%s run", test_name);
+                snprintf(build_cmd, build_cmd_size, "cd /d ..\\apps\\riscv-tests && make -B TEST=%s run", test_name);
             }
             return 0;
         }
 
-        if (app_input == 4) {
+        if (app_input == 5) {
             return -1;
         }
 

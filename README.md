@@ -1,6 +1,6 @@
 # RISC-V CPU
 
-A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featuring an integrated UART controller for system programming and debugging. Achieved **91.0 DMIPS@100MHz** on the Dhrystone 2.2 RV32IM benchmark.
+A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featuring an integrated UART controller for system programming and debugging. Achieved **263.7 CoreMark** and **91.0 DMIPS** at 100 MHz.
   
 ## Features
 
@@ -89,9 +89,20 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 
 ## Performance Characteristics
 
+### CoreMark Benchmark
+
+Measured on Zynq-7020 FPGA running at 100 MHz (RV32IM, `-O2`, `ITERATIONS=3000`).
+
+| Metric | Value |
+|--------|-------|
+| **CoreMark Score** | 263.7 |
+| **CoreMark/MHz** | 2.64 |
+
+---
+
 ### Dhrystone 2.2 Benchmark
 
-Measured on Zynq-7020 FPGA running at 100 MHz (RV32IM, `-O2`).
+Measured on Zynq-7020 FPGA running at 100 MHz (RV32IM, `-O2`, `NUMBER_OF_RUNS=100000`).
 
 | Metric | Value |
 |--------|-------|
@@ -261,10 +272,12 @@ Software/
 │   └── common.mk       # Shared Makefile rules (compile, link, hex generation)
 ├── apps/           # Application source code
 │   ├── firmware/       # Custom test firmware
+│   ├── coremark/       # CoreMark benchmark
 │   ├── dhrystone/      # Dhrystone benchmark
 │   └── riscv-tests/    # Official RISC-V test suite (submodule)
 ├── build/          # Compiled output (per-app subdirectories)
 │   ├── firmware/       # firmware.hex, firmware.elf, *.o
+│   ├── coremark/       # coremark.hex, coremark.elf, *.o
 │   ├── dhrystone/      # dhrystone.hex, dhrystone.elf, *.o
 │   └── riscv-tests/    # add.hex, lw.hex, mul.hex, ...
 └── programmer/     # Host-side UART programming tool (Windows)
@@ -297,7 +310,7 @@ Shared startup and syscall code used by all applications.
 |----------|-----------|-------------|
 | `getchar` | `int getchar(void)` | Polls `INPUT_ADDR` until a byte is available, returns it as `int` |
 | `putchar` | `int putchar(int c)` | Writes a character to `PRINT_ADDR` (UART TX) |
-| `printf` | `int printf(const char *fmt, ...)` | Formatted output to UART TX; supports `%c`, `%s`, `%d`, `%i`, `%u`, `%x`, `%o`, `%p`, `%l*`, width, `0`/`-` padding |
+| `printf` | `int printf(const char *fmt, ...)` | Formatted output to UART TX; supports `%c`, `%s`, `%d`, `%i`, `%u`, `%x`, `%o`, `%p`, `%f`, `%l*`, width, `0`/`-` padding |
 | `sprintf` | `int sprintf(char *str, const char *fmt, ...)` | Formatted output into a string buffer; same specifiers as `printf` |
 | `scanf` | `int scanf(const char *fmt, ...)` | Reads input via `getchar()`; supports `%c`, `%s`, `%d`, `%i`, `%u`, `%x`, width for `%s` |
 | `_exit` | `void _exit(int code)` | Sends `RES_EXIT` with exit code via `PRINT_ADDR`, then loops forever |
@@ -337,6 +350,35 @@ A bare-metal test program written in C.
 cd Software/apps/firmware
 make clean && make
 ```
+
+---
+
+### `apps/coremark/` — CoreMark Benchmark
+
+Runs the [EEMBC CoreMark](https://github.com/eembc/coremark) benchmark (v1.0) on bare-metal RISC-V.
+
+#### Files
+| File | Description |
+|------|-------------|
+| `core_portme.h` | Platform configuration: `HAS_FLOAT=1`, 64-bit cycle counter (`rdcycle`/`rdcycleh`), `MEM_STATIC` |
+| `core_portme.c` | Timing (`start_time`/`stop_time`/`get_time`/`time_in_secs`), seed variables, `ee_printf` via `vprintf` |
+| `Makefile` | Sets `APP_NAME`, `APP_SRCS`, `ITERATIONS=3000`, `-DPERFORMANCE_RUN=1`, links `-lgcc` for soft-float |
+
+#### Timer Mechanism
+CoreMark timing uses the 64-bit `mcycle` hardware counter (100 MHz):
+```c
+start_time()  →  start_time_val = rdcycleh:rdcycle
+stop_time()   →  stop_time_val  = rdcycleh:rdcycle
+time_in_secs(ticks)  →  (double)ticks / 100000000.0
+```
+
+#### Build
+```bash
+cd Software/apps/coremark
+make clean && make
+```
+
+> CoreMark requires ≥ 10 seconds of continuous execution for a valid result. At 263.769 CoreMark/s, `ITERATIONS=3000` gives ~11.4 seconds.
 
 ---
 
@@ -478,7 +520,7 @@ This project relies on **Vivado Simulator (XSim)** for functional verification.
 - `Simulation/`: Waveform configuration files for Vivado Simulator
 - `Software/`: Firmware, benchmarks, and host programming tool
   - `runtime/`: Common bare-metal runtime (shared by all apps)
-  - `apps/`: Application source code (firmware, dhrystone, riscv-tests)
+  - `apps/`: Application source code (firmware, coremark, dhrystone, riscv-tests)
   - `build/`: Compiled output per app
   - `programmer/`: Host-side UART programming tool (Windows)
 - `Constraints/`: FPGA constraint files (.xdc)

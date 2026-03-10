@@ -58,8 +58,6 @@ module branch_unit (
         end
     end
 
-    assign pc_jump = branch_valid ? (aluresult_reg & ~32'd1) : 32'b0;
-
     logic lt, ltu, eq;
     always_comb begin
         lt  = $signed(in_a_reg) < $signed(in_b_reg);
@@ -97,6 +95,8 @@ module branch_unit (
 
     logic cflow_valid, pred_hit;
     logic miss_1, miss_2;
+
+    assign pc_jump      = branch_valid ? (aluresult_reg & ~32'd1) : 32'b0;
 
     always_comb begin
         cflow_valid     = cflow_mode_reg inside {CFLOW_BRANCH, CFLOW_JAL, CFLOW_JALR};

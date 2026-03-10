@@ -13,10 +13,11 @@ RUNTIME_SRCS ?= crt0.S syscalls.c
 RUNTIME_DIR  ?= $(APP_DIR)../../runtime/
 BUILD_DIR    ?= $(APP_DIR)../../build/$(APP_NAME)
 INCS         ?= -I$(APP_DIR) -I$(RUNTIME_DIR)
+OPT          ?= -O2
 EXTRA_CFLAGS ?=
 EXTRA_LDLIBS ?=
 
-CFLAGS       = -march=$(ARCH) -mabi=$(ABI) -O2 -nostdlib -nostartfiles -ffreestanding $(INCS) $(EXTRA_CFLAGS)
+CFLAGS       = -march=$(ARCH) -mabi=$(ABI) $(OPT) -nostdlib -nostartfiles -ffreestanding $(INCS) $(EXTRA_CFLAGS)
 LDFLAGS      = -T $(RUNTIME_DIR)linker.ld
 
 APP_OBJS     = $(addprefix $(BUILD_DIR)/,$(APP_SRCS:.c=.o))
