@@ -111,7 +111,6 @@ int main (int argc, char** argv)
     /* Start timer */
     /***************/
 
-    setStats(1);
     Start_Timer();
 
     for (Run_Index = 1; Run_Index <= Number_Of_Runs; ++Run_Index)
@@ -173,7 +172,6 @@ int main (int argc, char** argv)
     /**************/
 
     Stop_Timer();
-    setStats(0);
 
     User_Time = End_Time - Begin_Time;
 

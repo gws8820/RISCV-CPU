@@ -201,7 +201,8 @@ Measured on Zynq-7020 FPGA running at 100 MHz (RV32IM, `-O2`, `NUMBER_OF_RUNS=10
 Integrated UART controller for communication and system control.
 
 - **System Programmer**: Loads compiled programs (`.hex`) into Instruction Memory.
-- **Standard Output**: MMIO-based character output for debugging.
+- **Standard Output**: MMIO-based character output; `putchar`/`printf` write characters to `PRINT_ADDR`, sent to host as `RES_PRINT` packets.
+- **Standard Input**: MMIO-based character input; host sends bytes via `CMD_INPUT`, stored in `INPUT_FIFO`; `getchar`/`scanf` poll `INPUT_ADDR` until a byte is available.
 
 ### Protocol Specification
 
@@ -214,6 +215,14 @@ Integrated UART controller for communication and system control.
 | **Stop Bits** | 1 bit |
 | **Parity** | None |
 | **Oversampling** | 16x |
+
+**FIFO Sizes**
+
+| FIFO | Size | Description |
+|:---|:---|:---|
+| `INPUT_FIFO` | 64 entries | CPU input buffer: stores bytes received via `CMD_INPUT`, read by CPU via `INPUT_ADDR` |
+| `CTRL_FIFO` | 1024 entries | Controller-level buffer: decoded command bytes passed from PHY to UART controller |
+| `PHY_FIFO` | 4096 entries | PHY-level buffer: raw received bytes from UART RX line |
 
 #### 2. Packet Structure
 
@@ -310,10 +319,11 @@ Shared startup and syscall code used by all applications.
 |----------|-----------|-------------|
 | `getchar` | `int getchar(void)` | Polls `INPUT_ADDR` until a byte is available, returns it as `int` |
 | `putchar` | `int putchar(int c)` | Writes a character to `PRINT_ADDR` (UART TX) |
-| `printf` | `int printf(const char *fmt, ...)` | Formatted output to UART TX; supports `%c`, `%s`, `%d`, `%i`, `%u`, `%x`, `%o`, `%p`, `%f`, `%l*`, width, `0`/`-` padding |
+| `printf` | `int printf(const char *fmt, ...)` | Formatted output to UART TX; supports `%c`, `%s`, `%d`, `%i`, `%u`, `%x`, `%o`, `%p`, `%f`, `%l*`, `%*` (width from arg), width, `0`/`-` padding |
+| `vprintf` | `int vprintf(const char *fmt, va_list ap)` | `va_list` variant of `printf`; used internally by `ee_printf` in CoreMark |
 | `sprintf` | `int sprintf(char *str, const char *fmt, ...)` | Formatted output into a string buffer; same specifiers as `printf` |
-| `scanf` | `int scanf(const char *fmt, ...)` | Reads input via `getchar()`; supports `%c`, `%s`, `%d`, `%i`, `%u`, `%x`, width for `%s` |
-| `_exit` | `void _exit(int code)` | Sends `RES_EXIT` with exit code via `PRINT_ADDR`, then loops forever |
+| `scanf` | `int scanf(const char *fmt, ...)` | Reads input via `getchar()`; supports `%c`, `%s`, `%d`, `%i`, `%u`, `%x`, width for `%s`; skips whitespace before numeric/string fields |
+| `_exit` | `void _exit(int code)` | Writes `0x100 | (code & 0xFF)` to `PRINT_ADDR` (triggers `RES_EXIT`), then loops forever |
 
 **String & Memory**
 
@@ -362,15 +372,7 @@ Runs the [EEMBC CoreMark](https://github.com/eembc/coremark) benchmark (v1.0) on
 |------|-------------|
 | `core_portme.h` | Platform configuration: `HAS_FLOAT=1`, 64-bit cycle counter (`rdcycle`/`rdcycleh`), `MEM_STATIC` |
 | `core_portme.c` | Timing (`start_time`/`stop_time`/`get_time`/`time_in_secs`), seed variables, `ee_printf` via `vprintf` |
-| `Makefile` | Sets `APP_NAME`, `APP_SRCS`, `ITERATIONS=3000`, `-DPERFORMANCE_RUN=1`, links `-lgcc` for soft-float |
-
-#### Timer Mechanism
-CoreMark timing uses the 64-bit `mcycle` hardware counter (100 MHz):
-```c
-start_time()  →  start_time_val = rdcycleh:rdcycle
-stop_time()   →  stop_time_val  = rdcycleh:rdcycle
-time_in_secs(ticks)  →  (double)ticks / 100000000.0
-```
+| `Makefile` | Sets `APP_NAME`, `APP_SRCS`, `ITERATIONS=3000`, `-DPERFORMANCE_RUN=1` |
 
 #### Build
 ```bash
@@ -378,7 +380,7 @@ cd Software/apps/coremark
 make clean && make
 ```
 
-> CoreMark requires ≥ 10 seconds of continuous execution for a valid result. At 263.769 CoreMark/s, `ITERATIONS=3000` gives ~11.4 seconds.
+> CoreMark requires ≥ 10 seconds of continuous execution for a valid result. At 263.7 CoreMark/s, `ITERATIONS=3000` gives ~11.4 seconds.
 
 ---
 
@@ -417,7 +419,6 @@ RISC-V ISA compliance tests (git submodule).
 
 #### Build
 ```bash
-# Build a single test
 cd Software/apps/riscv-tests
 make TEST=add run
 

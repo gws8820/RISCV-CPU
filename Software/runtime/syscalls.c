@@ -12,51 +12,6 @@
 #define INPUT_ADDR ((volatile uint32_t*)0xFFFF0004)
 
 /* ------------------------------------------------------------------ */
-/* Basic I/O                                                           */
-/* ------------------------------------------------------------------ */
-
-static int _ungetch_buf = -1;
-
-#undef getchar
-int getchar(void)
-{
-    if (_ungetch_buf != -1) {
-        int c = _ungetch_buf;
-        _ungetch_buf = -1;
-        return c;
-    }
-    uint32_t c;
-    do { c = *INPUT_ADDR; } while (c == 0xFFFFFFFFU);
-    return (int)(c & 0xFF);
-}
-
-static void ungetch(int c)
-{
-    _ungetch_buf = c;
-}
-
-#undef putchar
-int putchar(int c)
-{
-    *PRINT_ADDR = (uint32_t)(unsigned char)c;
-    return (unsigned char)c;
-}
-
-#undef _exit
-void _exit(int code)
-{
-    *PRINT_ADDR = (uint32_t)(0x100 | (code & 0xFF));
-    while (1);
-}
-
-
-/* Benchmark timer hook: unused because timing is based on mcycle. */
-void setStats(int enable)
-{
-    (void)enable;
-}
-
-/* ------------------------------------------------------------------ */
 /* Time functions (100MHz based)                                       */
 /* ------------------------------------------------------------------ */
 
@@ -94,96 +49,41 @@ uint32_t time_ms(void)
 }
 
 /* ------------------------------------------------------------------ */
-/* scanf                                                               */
+/* Basic I/O                                                           */
 /* ------------------------------------------------------------------ */
 
-#undef scanf
-int scanf(const char *fmt, ...)
+static int _ungetch_buf = -1;
+
+#undef getchar
+int getchar(void)
 {
-    va_list ap;
-    va_start(ap, fmt);
-    int matched = 0;
-
-    while (*fmt) {
-        if (*fmt != '%') {
-            if (*fmt == ' ' || *fmt == '\t' || *fmt == '\n') {
-                int c = getchar();
-                while (c == ' ' || c == '\t' || c == '\n' || c == '\r') c = getchar();
-                ungetch(c);
-            } else {
-                int c = getchar();
-                if (c != *fmt) { ungetch(c); break; }
-            }
-            fmt++;
-            continue;
-        }
-        fmt++;
-
-        int width = 0;
-        while (*fmt >= '0' && *fmt <= '9') width = width * 10 + (*fmt++ - '0');
-
-        switch (*fmt++) {
-        case 'd': case 'i': {
-            int neg = 0, val = 0;
-            int c = getchar();
-            while (c == ' ' || c == '\t' || c == '\n' || c == '\r') c = getchar();
-            if (c == '-') { neg = 1; c = getchar(); }
-            while (c >= '0' && c <= '9') { val = val * 10 + (c - '0'); c = getchar(); }
-            ungetch(c);
-            *va_arg(ap, int*) = neg ? -val : val;
-            matched++;
-            break;
-        }
-        case 'u': {
-            unsigned val = 0;
-            int c = getchar();
-            while (c == ' ' || c == '\t' || c == '\n' || c == '\r') c = getchar();
-            while (c >= '0' && c <= '9') { val = val * 10 + (c - '0'); c = getchar(); }
-            ungetch(c);
-            *va_arg(ap, unsigned*) = val;
-            matched++;
-            break;
-        }
-        case 'x': {
-            unsigned val = 0;
-            int c = getchar();
-            while (c == ' ' || c == '\t' || c == '\n' || c == '\r') c = getchar();
-            while ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
-                val = val * 16 + (c >= 'a' ? c - 'a' + 10 : c >= 'A' ? c - 'A' + 10 : c - '0');
-                c = getchar();
-            }
-            ungetch(c);
-            *va_arg(ap, unsigned*) = val;
-            matched++;
-            break;
-        }
-        case 'c': {
-            *va_arg(ap, char*) = (char)getchar();
-            matched++;
-            break;
-        }
-        case 's': {
-            char *s = va_arg(ap, char*);
-            int c = getchar();
-            while (c == ' ' || c == '\t' || c == '\n' || c == '\r') c = getchar();
-            int n = 0;
-            while (c != ' ' && c != '\t' && c != '\n' && c != '\r' && c != '\0') {
-                if (width == 0 || n < width) *s++ = (char)c;
-                n++;
-                c = getchar();
-            }
-            ungetch(c);
-            *s = '\0';
-            matched++;
-            break;
-        }
-        default:
-            break;
-        }
+    if (_ungetch_buf != -1) {
+        int c = _ungetch_buf;
+        _ungetch_buf = -1;
+        return c;
     }
+    uint32_t c;
+    do { c = *INPUT_ADDR; } while (c == 0xFFFFFFFFU);
+    return (int)(c & 0xFF);
+}
 
-    va_end(ap);
-    return matched;
+static void ungetch(int c)
+{
+    _ungetch_buf = c;
+}
+
+#undef putchar
+int putchar(int c)
+{
+    *PRINT_ADDR = (uint32_t)(unsigned char)c;
+    return (unsigned char)c;
+}
+
+#undef _exit
+void _exit(int code)
+{
+    *PRINT_ADDR = (uint32_t)(0x100 | (code & 0xFF));
+    while (1);
 }
 
 /* ------------------------------------------------------------------ */
@@ -395,7 +295,100 @@ int sprintf(char *str, const char *fmt, ...)
 }
 
 /* ------------------------------------------------------------------ */
-/* String and memory helpers used directly by Dhrystone.               */
+/* scanf                                                               */
+/* ------------------------------------------------------------------ */
+
+#undef scanf
+int scanf(const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    int matched = 0;
+
+    while (*fmt) {
+        if (*fmt != '%') {
+            if (*fmt == ' ' || *fmt == '\t' || *fmt == '\n') {
+                int c = getchar();
+                while (c == ' ' || c == '\t' || c == '\n' || c == '\r') c = getchar();
+                ungetch(c);
+            } else {
+                int c = getchar();
+                if (c != *fmt) { ungetch(c); break; }
+            }
+            fmt++;
+            continue;
+        }
+        fmt++;
+
+        int width = 0;
+        while (*fmt >= '0' && *fmt <= '9') width = width * 10 + (*fmt++ - '0');
+
+        switch (*fmt++) {
+        case 'd': case 'i': {
+            int neg = 0, val = 0;
+            int c = getchar();
+            while (c == ' ' || c == '\t' || c == '\n' || c == '\r') c = getchar();
+            if (c == '-') { neg = 1; c = getchar(); }
+            while (c >= '0' && c <= '9') { val = val * 10 + (c - '0'); c = getchar(); }
+            ungetch(c);
+            *va_arg(ap, int*) = neg ? -val : val;
+            matched++;
+            break;
+        }
+        case 'u': {
+            unsigned val = 0;
+            int c = getchar();
+            while (c == ' ' || c == '\t' || c == '\n' || c == '\r') c = getchar();
+            while (c >= '0' && c <= '9') { val = val * 10 + (c - '0'); c = getchar(); }
+            ungetch(c);
+            *va_arg(ap, unsigned*) = val;
+            matched++;
+            break;
+        }
+        case 'x': {
+            unsigned val = 0;
+            int c = getchar();
+            while (c == ' ' || c == '\t' || c == '\n' || c == '\r') c = getchar();
+            while ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+                val = val * 16 + (c >= 'a' ? c - 'a' + 10 : c >= 'A' ? c - 'A' + 10 : c - '0');
+                c = getchar();
+            }
+            ungetch(c);
+            *va_arg(ap, unsigned*) = val;
+            matched++;
+            break;
+        }
+        case 'c': {
+            *va_arg(ap, char*) = (char)getchar();
+            matched++;
+            break;
+        }
+        case 's': {
+            char *s = va_arg(ap, char*);
+            int c = getchar();
+            while (c == ' ' || c == '\t' || c == '\n' || c == '\r') c = getchar();
+            int n = 0;
+            while (c != ' ' && c != '\t' && c != '\n' && c != '\r' && c != '\0') {
+                if (width == 0 || n < width) *s++ = (char)c;
+                n++;
+                c = getchar();
+            }
+            ungetch(c);
+            *s = '\0';
+            matched++;
+            break;
+        }
+        default:
+            break;
+        }
+    }
+
+    va_end(ap);
+    return matched;
+}
+
+/* ------------------------------------------------------------------ */
+/* String and memory helpers                                           */
 /* ------------------------------------------------------------------ */
 
 #undef memcpy
