@@ -15,7 +15,7 @@ BUILD_DIR    ?= $(APP_DIR)../../build/$(APP_NAME)
 INCS         ?= -I$(APP_DIR) -I$(RUNTIME_DIR)
 OPT          ?= -O2
 EXTRA_CFLAGS ?=
-EXTRA_LDLIBS ?=
+EXTRA_LDLIBS ?= -lgcc
 
 CFLAGS       = -march=$(ARCH) -mabi=$(ABI) $(OPT) -nostdlib -nostartfiles -ffreestanding $(INCS) $(EXTRA_CFLAGS)
 LDFLAGS      = -T $(RUNTIME_DIR)linker.ld
