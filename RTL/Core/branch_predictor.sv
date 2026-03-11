@@ -22,22 +22,16 @@ module branch_predictor (
     logic   is_branch;
     assign  is_branch           = (cflow_mode == CFLOW_BRANCH);
 
-
-    logic                       ras_push, ras_pop;
-    logic [31:0]                ras_ret_addr, ras_tos;
     logic                       ras_empty;
-
-    assign ras_push             = (cflow_hint == CFHINT_CALL) && (cflow_mode inside {CFLOW_JAL, CFLOW_JALR});
-    assign ras_pop              = (cflow_hint == CFHINT_RET)  && (cflow_mode == CFLOW_JALR);
-    assign ras_ret_addr         = pc_e + 4;
+    logic [31:0]                ras_tos;
 
     branch_return_address_stack ras (
         .start                  (start),
         .clk                    (clk),
+        .pc_e                   (pc_e),
+        .cflow_mode             (cflow_mode),
+        .cflow_hint             (cflow_hint),
         .empty                  (ras_empty),
-        .push                   (ras_push),
-        .ret_addr               (ras_ret_addr),
-        .pop                    (ras_pop),
         .tos                    (ras_tos)
     );
 

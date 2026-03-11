@@ -55,13 +55,46 @@ trap_handler:
     call putc_mmio
     li   a0, ' '
     call putc_mmio
+    li   a0, 'P'
+    call putc_mmio
+    li   a0, 'C'
+    call putc_mmio
+    li   a0, '='
+    call putc_mmio
+
+    csrr a0, mepc
+    call puthex32
+    li   a0, ' '
+    call putc_mmio
+    li   a0, 'C'
+    call putc_mmio
+    li   a0, 'A'
+    call putc_mmio
+    li   a0, 'U'
+    call putc_mmio
+    li   a0, 'S'
+    call putc_mmio
+    li   a0, 'E'
+    call putc_mmio
+    li   a0, '='
+    call putc_mmio
 
     csrr a0, mcause
     call puthex32
     li   a0, ' '
     call putc_mmio
+    li   a0, 'T'
+    call putc_mmio
+    li   a0, 'V'
+    call putc_mmio
+    li   a0, 'A'
+    call putc_mmio
+    li   a0, 'L'
+    call putc_mmio
+    li   a0, '='
+    call putc_mmio
 
-    csrr a0, mepc
+    csrr a0, mtval
     call puthex32
     li   a0, '\n'
     call putc_mmio

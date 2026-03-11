@@ -1,7 +1,52 @@
 # RISC-V CPU
 
 A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featuring an integrated UART controller for system programming and debugging. Achieved **263.7 CoreMark** and **91.0 DMIPS** at 100 MHz.
-  
+
+## Table of Contents
+
+- [Features](#features)
+  - [ISA Support](#isa-support)
+  - [Microarchitecture](#microarchitecture)
+- [Clock Domain and Reset](#clock-domain-and-reset)
+  - [Target FPGA](#target-fpga)
+  - [Clock and Reset Signals](#clock-and-reset-signals)
+  - [Reset Behavior](#reset-behavior)
+- [Memory Specifications](#memory-specifications)
+  - [Memory Map](#memory-map)
+  - [Instruction Memory (IMEM)](#instruction-memory-imem)
+  - [Data Memory (DMEM)](#data-memory-dmem)
+- [Performance Characteristics](#performance-characteristics)
+  - [CoreMark Benchmark](#coremark-benchmark)
+  - [Dhrystone 2.2 Benchmark](#dhrystone-22-benchmark)
+  - [Hardware Multiplier & Divisor](#hardware-multiplier--divisor)
+  - [Pipeline Performance](#pipeline-performance)
+  - [Hazard Penalties](#hazard-penalties)
+  - [Trap/Exception Penalties](#trapexception-penalties)
+- [Supported Instructions](#supported-instructions)
+  - [RV32I Base Integer Instructions](#rv32i-base-integer-instructions)
+  - [RV32M Standard Extension](#rv32m-standard-extension)
+  - [Other Extensions](#other-extensions)
+- [CSR Registers](#csr-registers)
+  - [Machine-Mode CSRs](#machine-mode-csrs)
+  - [Read-Only CSRs](#read-only-csrs)
+- [UART Subsystem](#uart-subsystem)
+  - [Protocol Specification](#protocol-specification)
+- [Software & Tools](#software--tools)
+  - [Directory Structure](#directory-structure)
+  - [Toolchain Requirements](#toolchain-requirements)
+  - [`runtime/` — Common Bare-Metal Runtime](#runtime--common-bare-metal-runtime)
+  - [`apps/firmware/` — Custom Test Firmware](#appsfirmware--custom-test-firmware)
+  - [`apps/coremark/` — CoreMark Benchmark](#appscoremark--coremark-benchmark)
+  - [`apps/dhrystone/` — Dhrystone Benchmark](#appsdhrystone--dhrystone-benchmark)
+  - [`apps/riscv-tests/` — Official RISC-V Test Suite](#appsriscv-tests--official-risc-v-test-suite)
+  - [`programmer/` — Host-Side UART Programming Tool](#programmer--host-side-uart-programming-tool)
+  - [Typical Workflow](#typical-workflow)
+- [Simulation](#simulation)
+  - [Vivado GUI](#vivado-gui)
+  - [Batch Script](#batch-script)
+- [Directory Structure](#directory-structure-1)
+- [License](#license)
+
 ## Features
 
 ### ISA Support
@@ -497,20 +542,23 @@ programmer.exe
 
 ## Simulation
 
-### Vivado Simulator
-This project relies on **Vivado Simulator (XSim)** for functional verification.
+This project uses **Vivado Simulator (XSim)** for functional verification. The testbench prints CPU program output and simulation events (`[BOOT]`, `[PASS]`, `[FAIL: exit=N]`, `[TIMEOUT]`) to the simulation log.
 
-1.  **Setup**:
-    - Add `RTL/Testbench/cpu_testbench.sv` to the project as a **Simulation Source**.
-    - Set `cpu_testbench` as the **Top Module** in simulation settings.
+### Vivado GUI
 
-2.  **Waveform**:
-    - Add `Simulation/waveform.wcfg` to the simulation sources for pre-configured signal views.
-    - This configuration includes grouped signals for each pipeline stage (IF, ID, EX, MEM, WB) and debug interfaces.
+1.  Add `RTL/Testbench/cpu_testbench.sv` to the project as a **Simulation Source** and set `cpu_testbench` as the **Top Module**.
+2.  Add `Simulation/waveform.wcfg` to the simulation sources for pre-configured signal views. Includes grouped signals for each pipeline stage (IF, ID, EX, MEM1, MEM2, WB) and debug interfaces.
+3.  Run **Behavioral Simulation**.
 
-3.  **Execution**:
-    - Run **Behavioral Simulation**.
-    - The testbench prints `[BOOT]`, `[PASS]`, or `[FAIL: exit=N]` based on CPU events.
+### Batch Script
+
+Runs the full XSim flow (compile → elaborate → simulate) without opening Vivado GUI.
+
+```bat
+Simulation\simulate.bat [app]   # app defaults to firmware
+```
+
+Loads `Software/build/<app>/<app>.hex`. Logs are written to `xvlog.log`, `elaborate.log`, and `simulate.log`.
 
 ## Directory Structure
 
@@ -530,6 +578,3 @@ This project relies on **Vivado Simulator (XSim)** for functional verification.
 
 See `LICENSE` file for details.
 
-## Contributors
-
-Developed as part of a RISC-V CPU design project.
