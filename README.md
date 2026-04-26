@@ -13,8 +13,8 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
   - [Reset Behavior](#reset-behavior)
 - [Memory Specifications](#memory-specifications)
   - [Memory Map](#memory-map)
-  - [Instruction Memory (IMEM)](#instruction-memory-imem)
-  - [Data Memory (DMEM)](#data-memory-dmem)
+  - [ROM (Read-Only Memory)](#rom-read-only-memory)
+  - [RAM (Random-Access Memory)](#ram-random-access-memory)
 - [Performance Characteristics](#performance-characteristics)
   - [CoreMark Benchmark](#coremark-benchmark)
   - [Dhrystone 2.2 Benchmark](#dhrystone-22-benchmark)
@@ -111,26 +111,28 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 ### Memory Map
 | Region | Base Address | Size | Description |
 |--------|-------------|------|-------------|
-| **IMEM** | `0x00000000` | 128 KB | Instruction Memory |
-| **DMEM** | `0x00020000` | 128 KB | Data Memory |
-| **Stack Top** | `0x00040000` | — | Top of DMEM (stack grows downward) |
+| **ROM** | `0x00000000` | 128 KB | Program ROM (`.text`, `.rodata`, `.data` load image) |
+| **RAM** | `0x00020000` | 128 KB | Data RAM (`.data`, `.bss`, stack) |
+| **Stack Top** | `0x00040000` | — | Top of RAM (stack grows downward) |
 | **PRINT** | `0xFFFF0000` | — | MMIO: UART TX output (write) |
 | **INPUT** | `0xFFFF0004` | — | MMIO: UART RX input (read) |
 
-### Instruction Memory (IMEM)
+### ROM (Read-Only Memory)
 - **Size**: 128 KB (32768 words)
 - **Width**: 32-bit
-- **Access**: Read-only; writable via UART programmer (runtime, without FPGA reconfiguration)
+- **Access**: Read-only from the CPU; writable via UART programmer before `RUN`
+- **Contents**: Full firmware image. Instruction fetches, `.rodata` loads, and `.data` initialization reads come from ROM.
 
-### Data Memory (DMEM)
+### RAM (Random-Access Memory)
 - **Size**: 128 KB (32768 words)
 - **Width**: 32-bit
 - **Access**: Read/Write (byte-enable write strobe)
+- **Initialization**: `crt0.S` copies `.data` from ROM to RAM and clears `.bss` before `main()`.
 - **IO Mapping**:
-  - Writes to `0xFFFF_0000` (`PRINT_ADDR`) with `data[8] == 0` → `RES_PRINT` via UART TX.
+  - Writes to `0xFFFF_0000` (`MMIO_PRINT_ADDR`) with `data[8] == 0` → `RES_PRINT` via UART TX.
   - Writes to `0xFFFF_0000` with `data[8] == 1` → `RES_EXIT` with `data[7:0]` as exit code.
-  - Reads from `0xFFFF_0004` (`INPUT_ADDR`) → returns `input_data` if RX FIFO non-empty, else `0xFFFFFFFF`. Polled by `getchar()` in syscalls.
-- **Access Fault**: Accesses outside the DMEM range (other than `PRINT_ADDR` and `INPUT_ADDR`) trigger a Data Access Fault trap.
+  - Reads from `0xFFFF_0004` (`MMIO_INPUT_ADDR`) → returns `input_data` if RX FIFO non-empty, else `0xFFFFFFFF`. Polled by `getchar()` in syscalls.
+- **Access Fault**: Stores to ROM and accesses outside ROM/RAM/MMIO trigger a Data Access Fault trap.
 
 ## Performance Characteristics
 
@@ -147,7 +149,8 @@ Measured on Zynq-7020 FPGA running at 100 MHz (RV32IM, `-O2`, `ITERATIONS=3000`)
 
 ### Dhrystone 2.2 Benchmark
 
-Measured on Zynq-7020 FPGA running at 100 MHz (RV32IM, `-O2`, `NUMBER_OF_RUNS=100000`).
+Reference measurement on Zynq-7020 FPGA running at 100 MHz (RV32IM, `-O2`, `NUMBER_OF_RUNS=100000`).
+The current simulation sanity configuration uses `NUMBER_OF_RUNS=10`.
 
 | Metric | Value |
 |--------|-------|
@@ -245,9 +248,9 @@ Measured on Zynq-7020 FPGA running at 100 MHz (RV32IM, `-O2`, `NUMBER_OF_RUNS=10
 
 Integrated UART controller for communication and system control.
 
-- **System Programmer**: Loads compiled programs (`.hex`) into Instruction Memory.
-- **Standard Output**: MMIO-based character output; `putchar`/`printf` write characters to `PRINT_ADDR`, sent to host as `RES_PRINT` packets.
-- **Standard Input**: MMIO-based character input; host sends bytes via `CMD_INPUT`, stored in `INPUT_FIFO`; `getchar`/`scanf` poll `INPUT_ADDR` until a byte is available.
+- **System Programmer**: Loads compiled programs (`.hex`) into Program ROM.
+- **Standard Output**: MMIO-based character output; `putchar`/`printf` write characters to `MMIO_PRINT_ADDR`, sent to host as `RES_PRINT` packets.
+- **Standard Input**: MMIO-based character input; host sends bytes via `CMD_INPUT`, stored in `INPUT_FIFO`; `getchar`/`scanf` poll `MMIO_INPUT_ADDR` until a byte is available.
 
 ### Protocol Specification
 
@@ -265,9 +268,8 @@ Integrated UART controller for communication and system control.
 
 | FIFO | Size | Description |
 |:---|:---|:---|
-| `INPUT_FIFO` | 64 entries | CPU input buffer: stores bytes received via `CMD_INPUT`, read by CPU via `INPUT_ADDR` |
-| `CTRL_FIFO` | 1024 entries | Controller-level buffer: decoded command bytes passed from PHY to UART controller |
-| `PHY_FIFO` | 4096 entries | PHY-level buffer: raw received bytes from UART RX line |
+| `INPUT_FIFO` | 64 entries | CPU input buffer: stores bytes received via `CMD_INPUT`, read by CPU via `MMIO_INPUT_ADDR`. Flushed on `CMD_RESET`. |
+| `PRINT_FIFO` | 2048 entries | CPU output buffer: queues `RES_BOOT`/`RES_PRINT`/`RES_EXIT` packets for UART TX. Flushed on `CMD_RESET`. |
 
 #### 2. Packet Structure
 
@@ -299,18 +301,21 @@ Integrated UART controller for communication and system control.
 
 | Response | Code | LEN | Payload | Description |
 |:---:|:---:|:---:|:---|:---|
-| **RES_ACK**   | 0x06 | 0 | None | Command acknowledged |
-| **RES_NAK**   | 0x15 | 0 | None | Command rejected |
-| **RES_BOOT**  | 0x80 | 0 | None | CPU started (sent once on `CMD_RUN`) |
-| **RES_EXIT**  | 0x81 | 1 | Exit code (1B) | Program exited via `_exit()` |
-| **RES_PRINT** | 0x82 | 1 | Character (1B) | MMIO character output |
+| **RES_ACK**      | 0x06 | 0 | None | Command acknowledged |
+| **RES_NAK**      | 0x15 | 0 | None | Command rejected |
+| **RES_BOOT**     | 0x80 | 0 | None | CPU started (sent once on `CMD_RUN`) |
+| **RES_EXIT**     | 0x81 | 1 | Exit code (1B) | Program exited via `_exit()` |
+| **RES_PRINT**    | 0x82 | 1 | Character (1B) | MMIO character output |
+| **RES_OVERFLOW** | 0x83 | 1 | Drop count (1B) | TX FIFO overflow: N output events were dropped (max 255) |
 
 #### 5. Boot Sequence
-1. Host sends `CMD_RUN`.
+1. Host sends `CMD_RUN`. The programmer automatically issues `CMD_RESET` first.
 2. CPU begins execution and immediately sends `RES_BOOT` (hardware-generated via `boot_flag`).
 3. Host enters CPU Console; keyboard input becomes active (line-buffered, sent as `CMD_INPUT`).
-4. User program output follows as `RES_PRINT` packets; `getchar()`/`scanf()` in the program poll `INPUT_ADDR`.
-5. On `_exit(code)`, CPU sends `RES_EXIT` with the exit code.
+4. User program output follows as `RES_PRINT` packets; `getchar()`/`scanf()` in the program poll `MMIO_INPUT_ADDR`.
+5. On `_exit(code)`, CPU sends `RES_EXIT` with the exit code. Console exits.
+
+> **Note**: If `PRINT_FIFO` overflows, existing entries are preserved and transmitted first. Dropped entries are counted and reported as `RES_OVERFLOW` after the FIFO drains. Console exits on receiving `RES_OVERFLOW`.
 
 ## Software & Tools
 
@@ -320,8 +325,8 @@ Integrated UART controller for communication and system control.
 ```
 Software/
 ├── runtime/        # Common bare-metal runtime (shared by all apps)
-│   ├── crt0.S          # Startup code: sp init, BSS clear, main call, trap handler
-│   ├── linker.ld       # Linker script: IMEM @ 0x0, DMEM @ 0x20000, stack @ 0x40000
+│   ├── crt0.S          # Startup code: sp init, data copy, BSS clear, main call, trap handler
+│   ├── linker.ld       # Linker script: ROM @ 0x0, RAM @ 0x20000, stack @ 0x40000
 │   ├── syscalls.c      # MMIO syscalls: putchar, printf, sprintf, _exit, memcpy, etc.
 │   └── common.mk       # Shared Makefile rules (compile, link, hex generation)
 ├── apps/           # Application source code
@@ -351,8 +356,8 @@ Shared startup and syscall code used by all applications.
 
 | File | Description |
 |------|-------------|
-| `crt0.S` | Startup code: initializes `sp` to stack top (`0x40000`), clears `.bss`, installs trap handler, calls `main` then `_exit` |
-| `linker.ld` | Linker script: IMEM @ `0x00000000`, DMEM @ `0x00020000`, stack top @ `0x00040000` |
+| `crt0.S` | Startup code: initializes `sp`, copies `.data` from ROM to RAM, clears `.bss`, installs trap handler, calls `main` then `_exit` |
+| `linker.ld` | Linker script: ROM @ `0x00000000`, RAM @ `0x00020000`, stack top @ `0x00040000` |
 | `syscalls.c` | Bare-metal syscall and standard library implementation (MMIO-based I/O, string utilities, timer functions) |
 | `common.mk` | Shared build rules: compile `.c`/`.S`, link `.elf`, generate `.hex` via `objcopy` |
 
@@ -362,13 +367,13 @@ Shared startup and syscall code used by all applications.
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `getchar` | `int getchar(void)` | Polls `INPUT_ADDR` until a byte is available, returns it as `int` |
-| `putchar` | `int putchar(int c)` | Writes a character to `PRINT_ADDR` (UART TX) |
+| `getchar` | `int getchar(void)` | Polls `MMIO_INPUT_ADDR` until a byte is available, returns it as `int` |
+| `putchar` | `int putchar(int c)` | Writes a character to `MMIO_PRINT_ADDR` (UART TX) |
 | `printf` | `int printf(const char *fmt, ...)` | Formatted output to UART TX; supports `%c`, `%s`, `%d`, `%i`, `%u`, `%x`, `%o`, `%p`, `%f`, `%l*`, `%*` (width from arg), width, `0`/`-` padding |
 | `vprintf` | `int vprintf(const char *fmt, va_list ap)` | `va_list` variant of `printf`; used internally by `ee_printf` in CoreMark |
 | `sprintf` | `int sprintf(char *str, const char *fmt, ...)` | Formatted output into a string buffer; same specifiers as `printf` |
 | `scanf` | `int scanf(const char *fmt, ...)` | Reads input via `getchar()`; supports `%c`, `%s`, `%d`, `%i`, `%u`, `%x`, width for `%s`; skips whitespace before numeric/string fields |
-| `_exit` | `void _exit(int code)` | Writes `0x100 | (code & 0xFF)` to `PRINT_ADDR` (triggers `RES_EXIT`), then loops forever |
+| `_exit` | `void _exit(int code)` | Writes `0x100 | (code & 0xFF)` to `MMIO_PRINT_ADDR` (triggers `RES_EXIT`), then loops forever |
 
 **String & Memory**
 
@@ -436,7 +441,7 @@ Runs the classic Dhrystone 2.2 synthetic integer benchmark.
 #### Files
 | File | Description |
 |------|-------------|
-| `dhrystone.h` | Merged header: `HZ=100000000`, `CLOCK_TYPE="mcycle"`, `NUMBER_OF_RUNS=100000`; `Start_Timer`/`Stop_Timer` use `mcycle` CSR |
+| `dhrystone.h` | Merged header: `HZ=100000000`, `CLOCK_TYPE="mcycle"`, `NUMBER_OF_RUNS=10` for simulation sanity runs; `Start_Timer`/`Stop_Timer` use `mcycle` CSR |
 | `dhrystone.c` | Dhrystone auxiliary procedures (Proc_6~8, Func_1~3) |
 | `dhrystone_main.c` | Dhrystone main benchmark loop and result output |
 | `util.h` | Benchmark utilities: `setStats` declaration, `encoding.h` include guard |
@@ -481,10 +486,10 @@ A Windows-only interactive command-line tool that communicates with the FPGA ove
 #### Files
 | File | Description |
 |------|-------------|
-| `programmer.c` | COM port setup, menu-driven command dispatch (RESET/BUILD/WRITE/RUN), `make` build integration, `.hex` parsing and chunked IMEM upload via `CMD_WRITE` |
+| `programmer.c` | COM port setup, menu-driven command dispatch (RESET/BUILD/WRITE/RUN), `make` build integration, `.hex` parsing and chunked ROM upload via `CMD_WRITE`. `RUN` automatically issues `CMD_RESET` first to flush FIFOs. |
 | `programmer.h` | Constants (`CHUNK_SIZE=62`), command enum (`CMD_RESET/WRITE/RUN/INPUT`) |
-| `serial_port.c` | Win32 serial port: open/close/read/write, frame receiver, CPU console; line-buffered keyboard input sent as `CMD_INPUT` after `RES_BOOT`; Ctrl+D exits |
-| `serial_port.h` | Protocol constants (`START_FLAG=0xA5`, `TIMEOUT_MS=20000`), response enum |
+| `serial_port.c` | Win32 serial port: open/close/read/write, frame receiver, CPU console; line-buffered keyboard input sent as `CMD_INPUT` after `RES_BOOT`; Ctrl+D exits; exits on `RES_EXIT` or `RES_OVERFLOW` |
+| `serial_port.h` | Protocol constants (`START_FLAG=0xA5`, `TIMEOUT_MS=20000`), response enum (`RES_ACK/NAK/BOOT/EXIT/PRINT/OVERFLOW`) |
 
 #### Menu
 ```
@@ -535,22 +540,26 @@ programmer.exe
 ```
 
 1. Enter COM port number (e.g., `3` for `COM3`)
-2. `RESET` — Halt and reset CPU
+2. `RESET` — Halt CPU, flush TX/RX FIFOs
 3. `BUILD` — Build selected app, then optionally write immediately
-4. `WRITE` — Upload selected `.hex` to IMEM
-5. `RUN` — Start CPU and enter CPU Monitor (press `q` to exit)
+4. `WRITE` — Upload selected `.hex` to ROM
+5. `RUN` — Auto-reset, start CPU, enter CPU Console (Ctrl+D to exit)
 
 ## Simulation
 
-This project uses **Vivado Simulator (XSim)** for functional verification. The testbench prints CPU program output and simulation events (`[BOOT]`, `[PASS]`, `[FAIL: exit=N]`, `[TIMEOUT]`) to the simulation log.
+This project uses **Vivado Simulator (XSim)** for functional verification.
 
-### Vivado GUI
+### CPU Testbench
+
+The CPU testbench (`RTL/Testbench/cpu_testbench.sv`) prints program output and simulation events (`[BOOT]`, `[PASS]`, `[FAIL: exit=N]`, `[TIMEOUT]`) to the simulation log.
+
+#### Vivado GUI
 
 1.  Add `RTL/Testbench/cpu_testbench.sv` to the project as a **Simulation Source** and set `cpu_testbench` as the **Top Module**.
 2.  Add `Simulation/waveform.wcfg` to the simulation sources for pre-configured signal views. Includes grouped signals for each pipeline stage (IF, ID, EX, MEM1, MEM2, WB) and debug interfaces.
 3.  Run **Behavioral Simulation**.
 
-### Batch Script
+#### Batch Script
 
 Runs the full XSim flow (compile → elaborate → simulate) without opening Vivado GUI.
 
@@ -559,6 +568,14 @@ Simulation\simulate.bat [app]   # app defaults to firmware
 ```
 
 Loads `Software/build/<app>/<app>.hex`. Logs are written to `xvlog.log`, `elaborate.log`, and `simulate.log`.
+
+### UART Testbench
+
+The UART testbench (`RTL/Testbench/uart_testbench.sv`) verifies the UART controller in isolation, covering command parsing, ROM write, input FIFO, MMIO frame output, overflow behavior, and frame checksums.
+
+```bat
+Simulation\uart_simulate.bat
+```
 
 ## Directory Structure
 
@@ -577,4 +594,3 @@ Loads `Software/build/<app>/<app>.hex`. Logs are written to `xvlog.log`, `elabor
 ## License
 
 See `LICENSE` file for details.
-

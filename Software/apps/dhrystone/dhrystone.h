@@ -100,7 +100,7 @@
  * User Configuration
  * ========================================================= */
 #define RISCV_CPU_HZ    100000000   /* CPU clock frequency (Hz)  */
-#define NUMBER_OF_RUNS  100000      /* Benchmark iterations      */
+#define NUMBER_OF_RUNS  10          /* Benchmark iterations      */
 /* ========================================================= */
 
 /* variables for time measurement: */

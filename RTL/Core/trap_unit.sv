@@ -5,7 +5,7 @@ import riscv_defines::*;
 
 module trap_unit (
     input   [31:0]                      mtvec_i, mepc_i,
-    trap_interface.completer            trap_bus
+    trap_interface.sink                 trap_bus
 );
 
     always_comb begin

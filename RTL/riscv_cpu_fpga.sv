@@ -125,60 +125,32 @@ module riscv_cpu_fpga (
     
     // --------- UART Controller ----------
     
-    logic               prog_en;
-    logic [31:0]        prog_addr;
-    logic [31:0]        prog_data;
-
-    logic               boot_en;
-    logic               exit_en;
-    logic [7:0]         exit_code;
-    logic               print_en;
-    logic [31:0]        print_data;
-
-    logic               input_valid;
-    logic [7:0]         input_data;
-    logic               input_done;
+    memory_init_interface           rom_init();
+    mmio_out_interface              mmio_out();
+    mmio_in_interface               mmio_in();
     
     uart_controller uart_controller (
-        .rstn           (rstn100_sync),
-        .clk            (clk100_buf),
-        .rx             (uart_rx),
-        .tx             (uart_tx),
+        .rstn                       (rstn100_sync),
+        .clk                        (clk100_buf),
+        .rx                         (uart_rx),
+        .tx                         (uart_tx),
         
-        .start          (start),
+        .start                      (start),
         
-        .prog_en        (prog_en),
-        .prog_addr      (prog_addr),
-        .prog_data      (prog_data),
-        
-        .boot_en        (boot_en),
-        .exit_en        (exit_en),
-        .exit_code      (exit_code),
-        .print_en       (print_en),
-        .print_data     (print_data),
-        .input_valid    (input_valid),
-        .input_data     (input_data),
-        .input_done     (input_done)
+        .rom_init                   (rom_init),
+        .mmio_out                   (mmio_out),
+        .mmio_in                    (mmio_in)
     );
 
-    // ----------- RISC-V CPU -------------
+    // ------------ CPU Core ------------
 
     riscv_cpu_core  cpu_core (
-        .start          (start),
-        .clk            (clk100_buf),
+        .start                      (start),
+        .clk                        (clk100_buf),
 
-        .prog_en        (prog_en),
-        .prog_addr      (prog_addr),
-        .prog_data      (prog_data),
-
-        .boot_en        (boot_en),
-        .exit_en        (exit_en),
-        .exit_code      (exit_code),
-        .print_en       (print_en),
-        .print_data     (print_data),
-        .input_valid    (input_valid),
-        .input_data     (input_data),
-        .input_done     (input_done)
+        .rom_init                   (rom_init),
+        .mmio_out                   (mmio_out),
+        .mmio_in                    (mmio_in)
     );
     
 endmodule

@@ -16,7 +16,7 @@ set_property    PACKAGE_PIN     K14         [get_ports start_led]
 set_property    IOSTANDARD      LVCMOS33    [get_ports start_led]
 
 # UART
-set_property    PACKAGE_PIN     P14         [get_ports uart_rx]
+set_property    PACKAGE_PIN     U12         [get_ports uart_rx]
 set_property    IOSTANDARD      LVCMOS33    [get_ports uart_rx]
 
 set_property    PACKAGE_PIN     R14         [get_ports uart_tx]

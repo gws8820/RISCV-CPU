@@ -9,7 +9,7 @@ module csr_unit (
     output  logic [31:0]    mtvec_o, mepc_o,
 
     input   trap_req_t      trap,
-    csr_interface.completer csr_bus
+    csr_interface.sink      csr_bus
 );
 
     csr_t                   csr;

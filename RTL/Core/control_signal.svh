@@ -128,6 +128,13 @@ typedef enum logic [1:0] {
 } memaccess_t;
 
 typedef enum logic [1:0] {
+    LOAD_ZERO,
+    LOAD_RAM,
+    LOAD_ROM,
+    LOAD_INPUT
+} loadsrc_t;
+
+typedef enum logic [1:0] {
     RESULT_ALU,
     RESULT_MEM,
     RESULT_PCPLUS4,

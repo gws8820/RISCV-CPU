@@ -9,14 +9,14 @@ interface csr_interface ();
 
     logic [31:0]    rdata;
 
-    modport requester (
+    modport source (
         input  rdata,
 
         output req,
         output wdata
     );
 
-    modport completer (
+    modport sink (
         input  req,
         input  wdata,
 

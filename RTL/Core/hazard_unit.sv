@@ -4,30 +4,30 @@ timeprecision 1ps;
 import riscv_defines::*;
 
 module hazard_unit (
-    input   logic                   start, clk,
-    hazard_interface.completer      hazard_bus
+    input   logic                           start, clk,
+    hazard_interface.sink                   hazard_bus
 );
-    logic flush_mispredict, flush_loaduse, flush_muldiv;
-    logic stall_muldiv, stall_loaduse;
-    (* MAX_FANOUT = 64 *) logic flush_d, flush_e, flush_e_sidefx, flush_m1, flush_m2;
-    (* MAX_FANOUT = 64 *) logic stall_f, stall_d, stall_e;
+    logic                                   flush_mispredict, flush_loaduse, flush_muldiv;
+    logic                                   stall_muldiv, stall_loaduse;
+    (* MAX_FANOUT = 64 *) logic             flush_d, flush_e, flush_e_sidefx, flush_m1, flush_m2;
+    (* MAX_FANOUT = 64 *) logic             stall_f, stall_d, stall_e;
 
     logic flush_d_reg;
     always_ff@(posedge clk) begin
-        if (!start)     flush_d_reg <= 0;
-        else            flush_d_reg <= flush_d;
+        if (!start)                         flush_d_reg <= 0;
+        else                                flush_d_reg <= flush_d;
     end
 
     always_comb begin
-        flush_d         = (hazard_bus.req.flushflag || flush_mispredict);
-        flush_e         = (hazard_bus.req.flushflag || flush_mispredict || flush_loaduse);
-        flush_e_sidefx  = (hazard_bus.req.flushflag || flush_mispredict);
-        flush_m1        = (hazard_bus.req.flushflag || flush_mispredict || flush_muldiv);
-        flush_m2        = (hazard_bus.req.flushflag);
+        flush_d                             = (hazard_bus.req.flushflag || flush_mispredict);
+        flush_e                             = (hazard_bus.req.flushflag || flush_mispredict || flush_loaduse);
+        flush_e_sidefx                      = (hazard_bus.req.flushflag || flush_mispredict);
+        flush_m1                            = (hazard_bus.req.flushflag || flush_mispredict || flush_muldiv);
+        flush_m2                            = (hazard_bus.req.flushflag);
 
-        stall_f         = !flush_d  && (stall_muldiv || stall_loaduse);
-        stall_d         = !flush_d  && (stall_muldiv || stall_loaduse);
-        stall_e         = !flush_e  && stall_muldiv;
+        stall_f                             = !flush_d  && (stall_muldiv || stall_loaduse);
+        stall_d                             = !flush_d  && (stall_muldiv || stall_loaduse);
+        stall_e                             = !flush_e  && stall_muldiv;
 
         hazard_bus.res.flush_d              = flush_d;
         hazard_bus.res.flush_d_inst         = flush_d || flush_d_reg;

@@ -7,12 +7,12 @@ interface trap_interface ();
     trap_req_t req;
     trap_res_t res;
     
-    modport requester (
+    modport source (
         input  res,
         output req
     );
     
-    modport completer (
+    modport sink (
         input  req,
         output res
     );

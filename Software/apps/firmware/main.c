@@ -15,13 +15,9 @@ extern uint64_t get_cycle(void);
 extern uint32_t time_us(void);
 extern uint32_t time_ms(void);
 
-void run_print(void) {
-    printf("Hello, world! Cycle: %lu, Time: %u us\n", get_cycle(), time_us());
-}
-
 int main(void) {
-    for (int i=0; i<10; i++) {
-        run_print();
+    for (int i = 0; i < 2000; i++) {
+        printf("%d\n", i);
     }
     return 0;
 }

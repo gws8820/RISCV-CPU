@@ -192,7 +192,7 @@ module stage_ex (
                 SYSOP_ECALL: begin
                     trap_req_e.valid        = 1;
                     trap_req_e.mode         = TRAP_ENTER;
-                    trap_req_e.cause        = CAUSE_ECALL_MMODE;
+                    trap_req_e.cause        = CAUSE_ECALL_FROM_MMODE;
                     trap_req_e.pc           = pc_e;
                     trap_req_e.tval         = 32'b0;
                 end
@@ -206,7 +206,7 @@ module stage_ex (
                 SYSOP_MRET: begin
                     trap_req_e.valid        = 1;
                     trap_req_e.mode         = TRAP_RETURN;
-                    trap_req_e.cause        = CAUSE_INST_MISALIGNED;    // Default
+                    trap_req_e.cause        = CAUSE_INST_ADDR_MISALIGNED;    // Default
                     trap_req_e.pc           = pc_e;
                     trap_req_e.tval         = 32'b0;
                 end

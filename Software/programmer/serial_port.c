@@ -166,7 +166,7 @@ int cpu_console () {
 
         if (r == 0 && res == RES_BOOT) {
             if (len != 0) {
-                printf("Boot Failed (Invalid Length: %d)\n", len);
+                printf("Boot Failed.\n");
                 continue;
             }
 
@@ -177,7 +177,7 @@ int cpu_console () {
         }
         else if (r == 0 && res == RES_EXIT) {
             if (len != 1) {
-                printf("Exit Failed (Invalid Length: %d)\n", len);
+                printf("Exit Failed.\n");
                 continue;
             }
 
@@ -194,12 +194,27 @@ int cpu_console () {
         }
         else if (r == 0 && res == RES_PRINT) {
             if (len != 1) {
-                printf("Print Failed (Invalid Length: %d)\n", len);
+                printf("Print Failed: Invalid Length '%d'\n", len);
                 continue;
             }
 
             putchar((char)data[0]);
             fflush(stdout);
+        }
+        else if (r == 0 && res == RES_OVERFLOW) {
+            if (len != 1) {
+                continue;
+            }
+
+            if (data[0] == 0xFF) {
+                printf("\nUART TX FIFO Overflow: Dropped 255+ Output Event(s).\n");
+            }
+            else {
+                printf("\nUART TX FIFO Overflow: Dropped %u Output Event(s).\n", (unsigned)data[0]);
+            }
+            fflush(stdout);
+            input_ready = 0;
+            break;
         }
         else {
             Sleep(1);

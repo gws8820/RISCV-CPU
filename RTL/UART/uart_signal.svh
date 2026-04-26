@@ -36,12 +36,13 @@ typedef enum logic [7:0] {
 } uart_cmd_t;
 
 typedef enum logic [7:0] {
-    RES_STBY    = 8'h00,
-    RES_ACK     = 8'h06,
-    RES_NAK     = 8'h15,
-    RES_BOOT    = 8'h80,
-    RES_EXIT    = 8'h81,
-    RES_PRINT   = 8'h82
+    RES_STBY        = 8'h00,
+    RES_ACK         = 8'h06,
+    RES_NAK         = 8'h15,
+    RES_BOOT        = 8'h80,
+    RES_EXIT        = 8'h81,
+    RES_PRINT       = 8'h82,
+    RES_OVERFLOW    = 8'h83
 } uart_res_t;
 
 typedef struct packed {

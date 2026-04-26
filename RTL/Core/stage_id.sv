@@ -10,7 +10,7 @@ module stage_id (
     input   logic [31:0]            pcplus4_f,
     input   logic [31:0]            pc_pred_f,
     input   logic                   pred_taken_f,
-    input   inst_t                  inst_f,
+    input   inst_t                  fetch_inst,
 
     input   logic                   regwrite_w,
     input   logic [4:0]             rd_w,
@@ -28,21 +28,31 @@ module stage_id (
 
     input   trap_req_t              trap_req_f,
     output  trap_req_t              trap_req_d,
-    output  logic                   instillegal,
     input   hazard_res_t            hazard_res
 );
 
     inst_t                          inst_d;
+    inst_t                          inst_hold;
+    logic                           inst_illegal;
     
     trap_req_t                      trap_req_prev;
+    logic                           stall_d_prev;
 
     always_ff@(posedge clk) begin
         if (!start) begin
+            inst_hold               <= INST_NOP;
             trap_req_prev           <= '0;
+            stall_d_prev            <= 0;
         end
         else begin
+            stall_d_prev            <= hazard_res.stall_d;
+
             if (hazard_res.flush_d) begin
+                inst_hold           <= INST_NOP;
                 trap_req_prev       <= '0;
+            end
+            else if (hazard_res.stall_d && !stall_d_prev) begin
+                inst_hold           <= fetch_inst;
             end
             else if (!hazard_res.stall_d) begin
                 pc_d                <= pc_f;
@@ -56,11 +66,14 @@ module stage_id (
     end
     
     always_comb begin
-        unique if (hazard_res.flush_d_inst) begin
+        priority if (hazard_res.flush_d_inst) begin
             inst_d = INST_NOP;
         end
+        else if (stall_d_prev) begin
+            inst_d = inst_hold;
+        end
         else begin
-            inst_d = inst_f;
+            inst_d = fetch_inst;
         end
 
         if (inst_d.i.opcode == OP_JAL) begin
@@ -111,7 +124,7 @@ module stage_id (
         .memaccess                  (control_bus_d.memaccess),
         .resultsrc                  (control_bus_d.resultsrc),
         .regwrite                   (control_bus_d.regwrite),
-        .instillegal                (instillegal)
+        .inst_illegal               (inst_illegal)
     );
     
     // Register File
@@ -145,7 +158,7 @@ module stage_id (
             trap_req_d              = trap_req_prev;
         end
         else begin
-            if (instillegal) begin
+            if (inst_illegal) begin
                 trap_req_d.valid    = 1;
                 trap_req_d.mode     = TRAP_ENTER;
                 trap_req_d.cause    = CAUSE_ILLEGAL_INSTRUCTION;

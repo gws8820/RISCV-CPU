@@ -5,24 +5,16 @@ typedef enum logic [1:0] {
 } trap_mode_t;
 
 typedef enum logic [31:0] {
-  CAUSE_INST_MISALIGNED     = 32'd0,
-  CAUSE_INST_ACCESS_FAULT   = 32'd1,
-  CAUSE_ILLEGAL_INSTRUCTION = 32'd2,
-  CAUSE_BREAKPOINT          = 32'd3,
-  CAUSE_LOAD_ADDR_MISALIGN  = 32'd4,
-  CAUSE_LOAD_ACCESS_FAULT   = 32'd5,
-  CAUSE_STORE_ADDR_MISALIGN = 32'd6,
-  CAUSE_STORE_ACCESS_FAULT  = 32'd7,
-  CAUSE_ECALL_MMODE         = 32'd11
+  CAUSE_INST_ADDR_MISALIGNED       = 32'd0,
+  CAUSE_INST_ACCESS_FAULT          = 32'd1,
+  CAUSE_ILLEGAL_INSTRUCTION        = 32'd2,
+  CAUSE_BREAKPOINT                 = 32'd3,
+  CAUSE_LOAD_ADDR_MISALIGNED       = 32'd4,
+  CAUSE_LOAD_ACCESS_FAULT          = 32'd5,
+  CAUSE_STORE_AMO_ADDR_MISALIGNED  = 32'd6,
+  CAUSE_STORE_AMO_ACCESS_FAULT     = 32'd7,
+  CAUSE_ECALL_FROM_MMODE           = 32'd11
 } trap_cause_t;
-
-typedef struct packed {
-    logic           instillegal;
-    logic           instmisalign;
-    logic           imemfault;
-    logic           datamisalign;
-    logic           dmemfault;
-} trap_flag_t;
 
 typedef struct packed {
     logic           valid;

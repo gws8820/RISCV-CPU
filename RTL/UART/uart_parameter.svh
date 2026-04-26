@@ -7,8 +7,5 @@ localparam START_FLAG       = 8'hA5;
 localparam INPUT_FIFO_SIZE  = 64;
 localparam INPUT_FIFO_BITS  = $clog2(INPUT_FIFO_SIZE);
 
-localparam CTRL_FIFO_SIZE   = 1024;
-localparam CTRL_FIFO_BITS   = $clog2(CTRL_FIFO_SIZE);
-
-localparam PHY_FIFO_SIZE    = 4096;
-localparam PHY_FIFO_BITS    = $clog2(PHY_FIFO_SIZE);
+localparam PRINT_FIFO_SIZE  = 2048;
+localparam PRINT_FIFO_BITS  = $clog2(PRINT_FIFO_SIZE);

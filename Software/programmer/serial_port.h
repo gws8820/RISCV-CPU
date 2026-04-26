@@ -16,7 +16,8 @@ typedef enum {
     RES_NAK             = 0x15,
     RES_BOOT            = 0x80,
     RES_EXIT            = 0x81,
-    RES_PRINT           = 0x82
+    RES_PRINT           = 0x82,
+    RES_OVERFLOW        = 0x83
 } res_t;
 
 int     check_ack ();

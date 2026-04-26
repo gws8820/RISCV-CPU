@@ -2,34 +2,46 @@ OUTPUT_ARCH(riscv)
 ENTRY(_start)
 
 MEMORY {
-    IMEM (rx)  : ORIGIN = 0x00000000, LENGTH = 128K
-    DMEM (rw)  : ORIGIN = 0x00020000, LENGTH = 128K
+    ROM (rx)  : ORIGIN = 0x00000000, LENGTH = 128K
+    RAM (rw)  : ORIGIN = 0x00020000, LENGTH = 128K
 }
 
 SECTIONS {
     .text : {
+        . = ALIGN(4);
         *(.text.init)
         *(.text*)
-    } > IMEM
+        . = ALIGN(4);
+    } > ROM
 
     .rodata : {
+        . = ALIGN(4);
         *(.rodata*)
         *(.srodata*)
-    } > DMEM
+        *(.eh_frame*)
+        . = ALIGN(4);
+    } > ROM
 
     .data : {
+        . = ALIGN(4);
+        _data_start = .;
         *(.data*)
         *(.sdata*)
-    } > DMEM
+        . = ALIGN(4);
+        _data_end = .;
+    } > RAM AT > ROM
+    _data_load_start = LOADADDR(.data);
 
     .bss (NOLOAD) : {
+        . = ALIGN(4);
         _bss_start = .;
         *(.sbss*)
         *(.bss*)
         *(COMMON)
+        . = ALIGN(4);
         _bss_end = .;
         _end = .;
-    } > DMEM
+    } > RAM
 
-    _stack_top = ORIGIN(DMEM) + LENGTH(DMEM);
+    _stack_top = ORIGIN(RAM) + LENGTH(RAM);
 }

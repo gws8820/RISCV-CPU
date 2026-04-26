@@ -15,22 +15,19 @@ module stage_if (
 
     output  logic [31:0]            pc_f,
     output  logic [31:0]            pcplus4_f,
-    output  inst_t                  inst_f,
+    output  logic [31:0]            fetch_addr,
+    
+    input   logic                   fetch_access_fault,
     
     input   trap_res_t              trap_res,
     output  trap_req_t              trap_req_f,
-    output  logic                   instmisalign,
-    output  logic                   imemfault,
-    input   hazard_res_t            hazard_res,
-    
-    input   logic                   prog_en,
-    input   logic [31:0]            prog_addr,
-    input   logic [31:0]            prog_data
+    input   hazard_res_t            hazard_res
 );
 
     // PCNext Selector
     logic [31:0] pc_next;
-    assign pcplus4_f = pc_f + 4;
+    assign pcplus4_f                = pc_f + 4;
+    assign fetch_addr               = pc_f;
     
     pcnext_selector pcnext_selector (
         .pcplus4_f                  (pcplus4_f),
@@ -54,50 +51,38 @@ module stage_if (
         .pc                         (pc_f)
     );
 
-    // Inst Misalign Checker
-    inst_misalign_checker inst_misalign_checker (
+    // Instruction Alignment Checker
+    logic                           inst_addr_misaligned;
+
+    inst_alignment_checker inst_alignment_checker (
         .pc                         (pc_f),
-        .instmisalign               (instmisalign)
+        .inst_addr_misaligned       (inst_addr_misaligned)
     );
 
-    // Instruction Memory
-    instruction_memory instruction_memory (
-        .start                      (start),
-        .clk                        (clk),
-        .stall                      (hazard_res.stall_f), // Although stall_d is the precise signal, stall_f is used here because both stages stall in tandem.
-        .pc                         (pc_f),
-        .instmisalign               (instmisalign),
-        .imemfault                  (imemfault),
-        .inst                       (inst_f),
-        
-        .prog_en                    (prog_en),
-        .prog_addr                  (prog_addr),
-        .prog_data                  (prog_data)
-    );
-    
     // Trap Packet
     always_comb begin
         if (!start) begin
             trap_req_f              = '0;
         end
         else begin
-            if (instmisalign) begin
+            if (inst_addr_misaligned) begin
                 trap_req_f.valid    = 1;
                 trap_req_f.mode     = TRAP_ENTER;
-                trap_req_f.cause    = CAUSE_INST_MISALIGNED;
+                trap_req_f.cause    = CAUSE_INST_ADDR_MISALIGNED;
                 trap_req_f.pc       = pc_f;
                 trap_req_f.tval     = pc_f;
             end
-            else if (imemfault) begin
+            else if (fetch_access_fault) begin
                 trap_req_f.valid    = 1;
                 trap_req_f.mode     = TRAP_ENTER;
                 trap_req_f.cause    = CAUSE_INST_ACCESS_FAULT;
                 trap_req_f.pc       = pc_f;
                 trap_req_f.tval     = pc_f;
             end
-            else trap_req_f         = '0;
+            else begin
+                trap_req_f          = '0;
+            end
         end
     end
-
 
 endmodule

@@ -8,8 +8,8 @@
 #define CYCLES_PER_US (CPU_FREQ_HZ/1000000u)
 #define CYCLES_PER_MS (CPU_FREQ_HZ/1000u)
 
-#define PRINT_ADDR ((volatile uint32_t*)0xFFFF0000)
-#define INPUT_ADDR ((volatile uint32_t*)0xFFFF0004)
+#define MMIO_PRINT_ADDR ((volatile uint32_t*)0xFFFF0000)
+#define MMIO_INPUT_ADDR ((volatile uint32_t*)0xFFFF0004)
 
 /* ------------------------------------------------------------------ */
 /* Time functions (100MHz based)                                       */
@@ -63,7 +63,7 @@ int getchar(void)
         return c;
     }
     uint32_t c;
-    do { c = *INPUT_ADDR; } while (c == 0xFFFFFFFFU);
+    do { c = *MMIO_INPUT_ADDR; } while (c == 0xFFFFFFFFU);
     return (int)(c & 0xFF);
 }
 
@@ -75,14 +75,14 @@ static void ungetch(int c)
 #undef putchar
 int putchar(int c)
 {
-    *PRINT_ADDR = (uint32_t)(unsigned char)c;
+    *MMIO_PRINT_ADDR = (uint32_t)(unsigned char)c;
     return (unsigned char)c;
 }
 
 #undef _exit
 void _exit(int code)
 {
-    *PRINT_ADDR = (uint32_t)(0x100 | (code & 0xFF));
+    *MMIO_PRINT_ADDR = (uint32_t)(0x100 | (code & 0xFF));
     while (1);
 }
 
@@ -251,7 +251,7 @@ static void vprintfmt(void (*putch)(int, void **), void **putdat,
 static void putch_stdout(int c, void **unused)
 {
     (void)unused;
-    *PRINT_ADDR = (uint32_t)(unsigned char)c;
+    *MMIO_PRINT_ADDR = (uint32_t)(unsigned char)c;
 }
 
 #undef printf

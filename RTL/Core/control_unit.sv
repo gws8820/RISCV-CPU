@@ -20,7 +20,7 @@ module control_unit (
     output  memaccess_t     memaccess,
     output  resultsrc_t     resultsrc,
     output  logic           regwrite,
-    output  logic           instillegal
+    output  logic           inst_illegal
 );
     
     logic is_rtype, is_alt;
@@ -30,7 +30,7 @@ module control_unit (
     assign funct7 = inst.r.funct7;
     
     logic illegal_op, illegal_csr;
-    assign instillegal = illegal_op || illegal_csr;
+    assign inst_illegal = illegal_op || illegal_csr;
     
     control_main_decoder main_decoder (
         .opcode             (inst.i.opcode),

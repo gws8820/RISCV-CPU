@@ -10,4 +10,4 @@ package riscv_defines;
     `include "hazard_signal.svh"
     `include "csr_signal.svh"
     `include "trap_signal.svh"
-endpackage 
+endpackage

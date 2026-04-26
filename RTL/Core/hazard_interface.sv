@@ -7,12 +7,12 @@ interface hazard_interface ();
     hazard_req_t req;
     hazard_res_t res;
     
-    modport requester (
+    modport source (
         input  res,
         output req
     );
     
-    modport completer (
+    modport sink (
         input  req,
         output res
     );

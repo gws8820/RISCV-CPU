@@ -214,36 +214,37 @@ static int build_program(void) {
     return 0;
 }
 
-static int send_command (cmd_t cmd) {
-    if (cmd == CMD_WRITE) {
+static int send_command(cmd_t cmd, int print_ok) {
+    int cs = 0;
+    cs = send_byte(START_FLAG, cs);
+    cs = send_byte((uint8_t)cmd, cs);
+    cs = send_byte(0, cs);
+    if (cs == -1 || serial_write_byte((uint8_t)cs) != 0 || check_ack() != 0) {
+        printf("Command Send Failed.\n");
+        return -1;
+    }
+    if (print_ok) printf("Command Send OK.\n");
+    return 0;
+}
+
+static int exec_command(cmd_t cmd) {
+    if (cmd == CMD_RESET) {
+        return send_command(CMD_RESET, 1);
+    }
+    else if (cmd == CMD_WRITE) {
         char program_path[260];
-        if (select_program(program_path, sizeof(program_path), NULL, 0) != 0) {
+        if (select_program(program_path, sizeof(program_path), NULL, 0) != 0)
             return -1;
-        }
         return write_program(program_path);
     }
-    else {
-        int checksum = 0;
-        checksum = send_byte(START_FLAG, checksum);     // START
-        checksum = send_byte((uint8_t)cmd, checksum);   // CMD
-        checksum = send_byte(0, checksum);              // LEN
-
-        if (checksum == -1)                             return -1;
-        if (serial_write_byte((uint8_t)checksum) != 0)  return -1;
-
-        if (check_ack() == -1) {
-            printf("Command Send Failed.\n");
-        }
-        else {
-            printf("Command Send OK.\n");
-        }
-    }
-    
-    if (cmd == CMD_RUN) {
+    else if (cmd == CMD_RUN) {
+        if (send_command(CMD_RESET, 0) != 0) return -1;
+        if (send_command(CMD_RUN, 1) != 0)   return -1;
         cpu_console();
+        return 0;
     }
-    
-    return 0;
+
+    return -1;
 }
 
 int main () {
@@ -297,18 +298,18 @@ int main () {
 
         if (cmd_input == 1) {
             cmd = CMD_RESET;
-            send_command(cmd);
+            exec_command(cmd);
         }
         else if (cmd_input == 2) {
             build_program();
         }
         else if (cmd_input == 3) {
             cmd = CMD_WRITE;
-            send_command(cmd);
+            exec_command(cmd);
         }
         else if (cmd_input == 4) {
             cmd = CMD_RUN;
-            send_command(cmd);
+            exec_command(cmd);
         }
         else if (cmd_input == 5) {
             serial_close();
