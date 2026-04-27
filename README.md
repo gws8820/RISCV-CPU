@@ -1,5 +1,8 @@
 # RISC-V CPU
 
+[![riscv/learn](https://img.shields.io/badge/🎉%20Featured%20in-riscv%2Flearn-4A90D9?style=flat-square)](https://github.com/riscv/learn)
+[![awesome-riscv](https://img.shields.io/badge/🎉%20Featured%20in-awesome--riscv-F5A623?style=flat-square)](https://github.com/suryakantamangaraj/awesome-riscv)
+
 A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featuring an integrated UART controller for system programming and debugging. Achieved **263.7 CoreMark** and **91.0 DMIPS** at 100 MHz.
 
 ## Table of Contents
