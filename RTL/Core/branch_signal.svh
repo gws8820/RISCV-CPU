@@ -1,10 +1,10 @@
-localparam TABLE_ENTRIES    = 256;
-localparam INDEX_WIDTH      = $clog2(TABLE_ENTRIES);
-localparam TAG_WIDTH        = 32 - (INDEX_WIDTH + 2); // Byte Aligned
-localparam BTB_ENTRY_WIDTH  = 1 + 2 + TAG_WIDTH + 32;
+localparam int unsigned TABLE_ENTRIES    = 256;
+localparam int unsigned INDEX_WIDTH      = $clog2(TABLE_ENTRIES);
+localparam int unsigned TAG_WIDTH        = 32 - (INDEX_WIDTH + 2); // Byte Aligned
+localparam int unsigned BTB_ENTRY_WIDTH  = 1 + 2 + TAG_WIDTH + 32;
 
-localparam RAS_SIZE         = 32;
-localparam RAS_PTR_BITS     = $clog2(RAS_SIZE);
+localparam int unsigned RAS_SIZE         = 32;
+localparam int unsigned RAS_PTR_BITS     = $clog2(RAS_SIZE);
 
 typedef enum logic [1:0] {
     STRONGLY_NOT_TAKEN      = 2'b00,

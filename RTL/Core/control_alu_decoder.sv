@@ -12,9 +12,14 @@ module control_alu_decoder(
 );
 
     always_comb begin
-        unique case (aluop)
+        alucontrol = ALU_ADD;
+
+        case (aluop)
+            ALUOP_ADD: begin
+                alucontrol = ALU_ADD;
+            end
             ALUOP_ARITH: begin
-                unique case(funct3)
+                case (funct3)
                     3'b000:     alucontrol = (is_rtype && is_alt) ? ALU_SUB : ALU_ADD;
                     3'b001:     alucontrol = ALU_SLL;
                     3'b010:     alucontrol = ALU_SLT;
@@ -27,7 +32,7 @@ module control_alu_decoder(
                 endcase
             end
             ALUOP_MUL, ALUOP_DIV: begin
-                unique case(funct3)
+                case (funct3)
                     3'b000:     alucontrol = ALU_MUL;
                     3'b001:     alucontrol = ALU_MULH;
                     3'b010:     alucontrol = ALU_MULHSU;
@@ -39,7 +44,9 @@ module control_alu_decoder(
                     default:    alucontrol = ALU_MUL;
                 endcase
             end
-            default: alucontrol = ALU_ADD;
+            default: begin
+                alucontrol = ALU_ADD;
+            end
         endcase
     end
 endmodule

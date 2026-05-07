@@ -39,8 +39,13 @@ module stage_wb (
     
     // Result Selector
     always_comb begin
-        unique case(control_bus_w.resultsrc)
+        result_w = result_w_prev;
+
+        case (control_bus_w.resultsrc)
+            RESULT_ALU:             result_w = result_w_prev;
             RESULT_MEM:             result_w = memresult_w;
+            RESULT_PCPLUS4:         result_w = result_w_prev;
+            RESULT_CSR:             result_w = result_w_prev;
             default:                result_w = result_w_prev;
         endcase
     end

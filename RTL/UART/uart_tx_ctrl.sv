@@ -156,47 +156,47 @@ module uart_tx_ctrl(
                 TX_CTRL_IDLE: begin
                     if (tx_valid) begin
                         if (tx_ready) begin
-                            tx_data             <= '0;
-                            tx_valid            <= 0;
+                            tx_data         <= '0;
+                            tx_valid        <= 0;
 
-                            checksum            <= '0;
+                            checksum        <= '0;
                         end
                     end
                     else begin
                         if (res_consume) begin
-                            active_entry        <= res_entry;
+                            active_entry    <= res_entry;
 
-                            tx_data             <= START_FLAG;
-                            tx_valid            <= 1;
-                            tx_state            <= TX_CTRL_RES;
+                            tx_data         <= START_FLAG;
+                            tx_valid        <= 1;
+                            tx_state        <= TX_CTRL_RES;
 
-                            checksum            <= START_FLAG;
+                            checksum        <= START_FLAG;
                         end
                         else if (!fifo_empty && !is_overflow) begin
-                            active_entry        <= uart_tx_entry_t'(tx_fifo[rd_ptr[PRINT_FIFO_BITS-1:0]]);
-                            rd_ptr              <= rd_ptr + 1;
+                            active_entry    <= uart_tx_entry_t'(tx_fifo[rd_ptr[PRINT_FIFO_BITS-1:0]]);
+                            rd_ptr          <= rd_ptr + 1;
 
-                            tx_data             <= START_FLAG;
-                            tx_valid            <= 1;
-                            tx_state            <= TX_CTRL_RES;
+                            tx_data         <= START_FLAG;
+                            tx_valid        <= 1;
+                            tx_state        <= TX_CTRL_RES;
 
-                            checksum            <= START_FLAG;
+                            checksum        <= START_FLAG;
                         end
                         else if (overflow_consume) begin
-                            active_entry        <= overflow_entry;
+                            active_entry    <= overflow_entry;
 
-                            tx_data             <= START_FLAG;
-                            tx_valid            <= 1;
-                            tx_state            <= TX_CTRL_RES;
+                            tx_data         <= START_FLAG;
+                            tx_valid        <= 1;
+                            tx_state        <= TX_CTRL_RES;
 
-                            checksum            <= START_FLAG;
+                            checksum        <= START_FLAG;
                         end
                         else begin
-                            tx_data             <= '0;
-                            tx_valid            <= 0;
-                            tx_state            <= TX_CTRL_IDLE;
+                            tx_data         <= '0;
+                            tx_valid        <= 0;
+                            tx_state        <= TX_CTRL_IDLE;
 
-                            checksum            <= '0;
+                            checksum        <= '0;
                         end
                     end
                 end
@@ -206,15 +206,15 @@ module uart_tx_ctrl(
                     tx_valid                <= 1;
                     tx_state                <= TX_CTRL_LEN;
 
-                    checksum                <= checksum + active_entry.res;
+                    checksum                <= checksum + 8'(active_entry.res);
                 end
 
                 TX_CTRL_LEN:            if (tx_ready) begin
-                    tx_data                 <= active_entry.len;
+                    tx_data                 <= {5'b0, active_entry.len};
                     tx_valid                <= 1;
                     tx_state                <= (active_entry.len == 3'd0) ? TX_CTRL_CHECKSUM : TX_CTRL_PAYLOAD;
 
-                    checksum                <= checksum + active_entry.len;
+                    checksum                <= checksum + 8'(active_entry.len);
                 end
 
                 TX_CTRL_PAYLOAD:        if (tx_ready) begin

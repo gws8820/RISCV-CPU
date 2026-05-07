@@ -12,8 +12,13 @@ module trap_unit (
         trap_bus.res.flushflag          = 0;
         trap_bus.res.redirflag          = 0;
         trap_bus.res.rediraddr          = 32'b0;
-        
-        unique case (trap_bus.req.mode)
+
+        case (trap_bus.req.mode)
+            TRAP_NONE: begin
+                trap_bus.res.flushflag  = 0;
+                trap_bus.res.redirflag  = 0;
+                trap_bus.res.rediraddr  = 32'b0;
+            end
             TRAP_ENTER: begin
                 trap_bus.res.flushflag  = 1;
                 trap_bus.res.redirflag  = 1;

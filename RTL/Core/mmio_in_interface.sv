@@ -7,15 +7,15 @@ interface mmio_in_interface ();
     logic           ready;
 
     modport source (
-        output valid,
-        output data,
-        input  ready
+        output      valid,
+        output      data,
+        input       ready
     );
 
     modport sink (
-        input  valid,
-        input  data,
-        output ready
+        input       valid,
+        input       data,
+        output      ready
     );
 
 endinterface

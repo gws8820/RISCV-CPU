@@ -75,11 +75,16 @@ module branch_unit (
         (branch_mode_reg == BRANCH_BGEU && !ltu);
 
     always_comb begin
+        cflow_taken             = 0;
+
         if (!branch_valid) begin
             cflow_taken         = 0;
         end
         else begin
-            unique case (cflow_mode_reg)
+            case (cflow_mode_reg)
+                CFLOW_PCPLUS4: begin
+                    cflow_taken = 0;
+                end
                 CFLOW_BRANCH: begin
                     cflow_taken = branch_taken;
                 end
@@ -93,17 +98,18 @@ module branch_unit (
         end
     end
 
-    logic cflow_valid, pred_hit;
+    logic cflow_valid;
+    (* mark_debug = "true" *)   logic pred_hit;
     logic miss_1, miss_2;
 
-    assign pc_jump      = branch_valid ? (aluresult_reg & ~32'd1) : 32'b0;
+    assign pc_jump              = branch_valid ? (aluresult_reg & ~32'd1) : 32'b0;
 
     always_comb begin
-        cflow_valid     = cflow_mode_reg inside {CFLOW_BRANCH, CFLOW_JAL, CFLOW_JALR};
-        miss_1          = cflow_taken   != pred_taken_reg;
-        miss_2          = cflow_taken   && (pc_pred_reg != pc_jump);
-        mispredict      = branch_valid  && cflow_valid && (miss_1 || miss_2);
-        pred_hit        = cflow_valid   && !mispredict;
+        cflow_valid             = cflow_mode_reg inside {CFLOW_BRANCH, CFLOW_JAL, CFLOW_JALR};
+        miss_1                  = cflow_taken   != pred_taken_reg;
+        miss_2                  = cflow_taken   && (pc_pred_reg != pc_jump);
+        mispredict              = branch_valid  && cflow_valid && (miss_1 || miss_2);
+        pred_hit                = cflow_valid   && !mispredict;
     end
 
 endmodule

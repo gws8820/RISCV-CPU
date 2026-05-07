@@ -22,10 +22,10 @@ module memory_ram(
     
     always_ff@(posedge clk) begin
         if (access == MEM_WRITE && (ram_idx < RAM_SIZE_WORD)) begin
-            if (wstrb[0]) ram_array[ram_idx][7:0]    <= write_data[7:0];
-            if (wstrb[1]) ram_array[ram_idx][15:8]   <= write_data[15:8];
-            if (wstrb[2]) ram_array[ram_idx][23:16]  <= write_data[23:16];
-            if (wstrb[3]) ram_array[ram_idx][31:24]  <= write_data[31:24];
+            if (wstrb[0])   ram_array[ram_idx][7:0]    <= write_data[7:0];
+            if (wstrb[1])   ram_array[ram_idx][15:8]   <= write_data[15:8];
+            if (wstrb[2])   ram_array[ram_idx][23:16]  <= write_data[23:16];
+            if (wstrb[3])   ram_array[ram_idx][31:24]  <= write_data[31:24];
         end
 
         read_data <= (ram_idx < RAM_SIZE_WORD) ? ram_array[ram_idx] : 32'b0;

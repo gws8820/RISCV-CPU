@@ -25,7 +25,6 @@ module branch_target_buffer (
 
     // Struct arrays cannot be inferred as Distributed RAM by Vivado
     (* ram_style="distributed" *) logic [BTB_ENTRY_WIDTH-1:0] btb_mem [0:TABLE_ENTRIES-1];
-    initial foreach (btb_mem[i]) btb_mem[i] = '0;
 
     logic [INDEX_WIDTH-1:0]         init_cnt;
     logic                           init_done;
@@ -75,26 +74,26 @@ module branch_target_buffer (
     end
 
     always_comb begin
-        update_entry.valid  = cflow_valid ? 1 : 0;
-        update_entry.etype  = update_type;
-        update_entry.tag    = pc_e[31 -: TAG_WIDTH];
-        update_entry.target = cflow_target;
+        update_entry.valid          = cflow_valid ? 1 : 0;
+        update_entry.etype          = update_type;
+        update_entry.tag            = pc_e[31 -: TAG_WIDTH];
+        update_entry.target         = cflow_target;
     end
 
     always_ff@(posedge clk) begin
         if (!start) begin
-            init_cnt            <= 0;
-            init_done           <= 0;
+            init_cnt                <= 0;
+            init_done               <= 0;
         end
         else if (!init_done) begin
-            btb_mem[init_cnt]   <= '0;
+            btb_mem[init_cnt]       <= '0;
             if (init_cnt == (TABLE_ENTRIES - 1))
-                init_done       <= 1;
+                init_done           <= 1;
             else
-                init_cnt        <= init_cnt + 1;
+                init_cnt            <= init_cnt + 1;
         end
         else if (cflow_valid && cflow_taken) begin
-            btb_mem[update_index] <= BTB_ENTRY_WIDTH'(update_entry);
+            btb_mem[update_index]   <= BTB_ENTRY_WIDTH'(update_entry);
         end
     end
 

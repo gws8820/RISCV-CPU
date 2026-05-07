@@ -56,7 +56,7 @@ module uart_tx_phy(
                     TX_SYNC_DATA:   begin
                         tx                          <= active_entry[bit_counter];
 
-                        unique case (bit_counter)
+                        case (bit_counter)
                             7:      begin
                                 tx_sync_state       <= TX_SYNC_STOP;
                                 bit_counter         <= '0;

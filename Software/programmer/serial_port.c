@@ -40,9 +40,10 @@ static void process_input(int ch) {
     }
 }
 
-static int recv_frame (res_t *res, uint8_t *len, uint8_t *data) {
+static int recv_frame (res_t *res, uint8_t *len, uint8_t *data, DWORD start_timeout_ms) {
     uint8_t byte       = 0;
     int     checksum   = 0;
+    ULONGLONG start    = GetTickCount64();
 
     // Wait for Start Flag
     while (1) {
@@ -53,6 +54,10 @@ static int recv_frame (res_t *res, uint8_t *len, uint8_t *data) {
         }
 
         if (serial_read_byte(&byte) != 0) {
+            if (start_timeout_ms != 0 &&
+                (GetTickCount64() - start) >= (ULONGLONG)start_timeout_ms) {
+                return -1;
+            }
             Sleep(1);
             continue;
         }
@@ -72,7 +77,7 @@ static int recv_frame (res_t *res, uint8_t *len, uint8_t *data) {
                 if (ch == 4) return -2;
                 process_input(ch);
             }
-            if ((GetTickCount64() - start) >= (ULONGLONG)TIMEOUT_MS) return -1;
+            if ((GetTickCount64() - start) >= (ULONGLONG)FRAME_BYTE_TIMEOUT_MS) return -1;
             Sleep(1);
         }
     }
@@ -88,7 +93,7 @@ static int recv_frame (res_t *res, uint8_t *len, uint8_t *data) {
                 if (ch == 4) return -2;
                 process_input(ch);
             }
-            if ((GetTickCount64() - start) >= (ULONGLONG)TIMEOUT_MS) return -1;
+            if ((GetTickCount64() - start) >= (ULONGLONG)FRAME_BYTE_TIMEOUT_MS) return -1;
             Sleep(1);
         }
     }
@@ -103,7 +108,7 @@ static int recv_frame (res_t *res, uint8_t *len, uint8_t *data) {
                 if (ch == 4) return -2;
                 process_input(ch);
             }
-            if ((GetTickCount64() - start) >= (ULONGLONG)TIMEOUT_MS) return -1;
+            if ((GetTickCount64() - start) >= (ULONGLONG)FRAME_BYTE_TIMEOUT_MS) return -1;
             Sleep(1);
         }
         checksum += data[i];
@@ -118,7 +123,7 @@ static int recv_frame (res_t *res, uint8_t *len, uint8_t *data) {
                 if (ch == 4) return -2;
                 process_input(ch);
             }
-            if ((GetTickCount64() - start) >= (ULONGLONG)TIMEOUT_MS) return -1;
+            if ((GetTickCount64() - start) >= (ULONGLONG)FRAME_BYTE_TIMEOUT_MS) return -1;
             Sleep(1);
         }
     }
@@ -132,7 +137,8 @@ int check_ack () {
     uint8_t len     = 0;
     uint8_t data[256] = {0};
 
-    if (recv_frame(&res, &len, data) != 0) {
+    if (recv_frame(&res, &len, data, FRAME_START_TIMEOUT_MS) != 0) {
+        printf("No valid ACK response received within %d ms.\n", FRAME_START_TIMEOUT_MS);
         return -1;
     }
 
@@ -144,6 +150,7 @@ int cpu_console () {
     uint8_t   len;
     uint8_t   data[256];
     ULONGLONG boot_time = 0;
+    int       boot_seen = 0;
 
     interactive = 1;
     input_ready = 0;
@@ -159,8 +166,12 @@ int cpu_console () {
     printf("\n");
 
     while (1) {
-        int r = recv_frame(&res, &len, data);
+        int r = recv_frame(&res, &len, data, boot_seen ? 0 : FRAME_START_TIMEOUT_MS);
         if (r == -2) {
+            break;
+        }
+        if (r == -1 && !boot_seen) {
+            printf("CPU boot response timeout after %d ms.\n", FRAME_START_TIMEOUT_MS);
             break;
         }
 
@@ -172,6 +183,7 @@ int cpu_console () {
 
             printf("CPU Startup Complete.\n\n");
             boot_time   = GetTickCount64();
+            boot_seen   = 1;
             input_ready = 1;
             input_len   = 0;
         }

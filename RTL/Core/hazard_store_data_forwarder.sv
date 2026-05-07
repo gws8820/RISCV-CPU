@@ -18,8 +18,8 @@ module hazard_store_data_forwarder (
     logic mem2_hit, wb_hit;
 
     always_comb begin
-        mem2_hit = regwrite_m2 && (rd_m2 != 0) && (memaccess_m2 != MEM_READ) && (rd_m2 == rs2_m1);
-        wb_hit = (memaccess_m1 == MEM_WRITE) && regwrite_w && (rd_w != 0) && (rd_w == rs2_m1);
+        mem2_hit        = regwrite_m2 && (rd_m2 != 0) && (memaccess_m2 != MEM_READ) && (rd_m2 == rs2_m1);
+        wb_hit          = (memaccess_m1 == MEM_WRITE) && regwrite_w && (rd_w != 0) && (rd_w == rs2_m1);
 
         if (!mem2_hit && wb_hit) begin
             flag        = 1;

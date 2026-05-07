@@ -91,7 +91,10 @@ module stage_ex (
     assign storedata_e = fwd_b;
     
     always_comb begin
-        unique case(hazard_res.forwarda_e)
+        fwd_a = rdata1_e;
+        fwd_b = rdata2_e;
+
+        case (hazard_res.forwarda_e)
             FWD_EX:                         fwd_a = rdata1_e;
             FWD_MEM1:                       fwd_a = result_m1;
             FWD_MEM2:                       fwd_a = result_m2;
@@ -99,7 +102,7 @@ module stage_ex (
             default:                        fwd_a = rdata1_e;
         endcase
 
-        unique case(hazard_res.forwardb_e)
+        case (hazard_res.forwardb_e)
             FWD_EX:                         fwd_b = rdata2_e;
             FWD_MEM1:                       fwd_b = result_m1;
             FWD_MEM2:                       fwd_b = result_m2;
@@ -110,14 +113,17 @@ module stage_ex (
     
     // ALU Source Selector
     always_comb begin
-        unique case(control_bus_e.alusrc_a)
+        in_a = fwd_a;
+        in_b = fwd_b;
+
+        case (control_bus_e.alusrc_a)
             SRCA_REG:                       in_a = fwd_a;
             SRCA_PC:                        in_a = pc_e;
             SRCA_ZERO:                      in_a = 32'b0;
             default:                        in_a = fwd_a;
         endcase
 
-        unique case(control_bus_e.alusrc_b)
+        case (control_bus_e.alusrc_b)
             SRCB_REG:                       in_b = fwd_b;
             SRCB_IMM:                       in_b = immext_e;
             default:                        in_b = fwd_b;
@@ -184,11 +190,16 @@ module stage_ex (
 
     // Trap Packet
     always_comb begin
+        trap_req_e                          = '0;
+
         if (trap_req_prev.valid) begin
             trap_req_e                      = trap_req_prev;
         end
         else begin 
-            unique case (control_bus_e.sysop_mode)
+            case (control_bus_e.sysop_mode)
+                SYSOP_NORMAL: begin
+                    trap_req_e              = '0;
+                end
                 SYSOP_ECALL: begin
                     trap_req_e.valid        = 1;
                     trap_req_e.mode         = TRAP_ENTER;

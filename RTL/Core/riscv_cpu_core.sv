@@ -14,13 +14,32 @@ module riscv_cpu_core (
 
     // -------- Backward Signals ---------
 
+    trap_interface                  trap_bus();
+
+    logic                           ex_fire;
+    logic                           mispredict;
+
+    logic [4:0]                     rs1_d, rs2_d;
+    logic [4:0]                     rs1_e, rs2_e, rd_e;
+    logic [4:0]                     rs2_m1, rd_m1;
+    logic [4:0]                     rd_m2;
+    logic [4:0]                     rd_w;
+
+    logic [31:0]                    csr_wdata_e;
     logic [31:0]                    result_m1;
     logic [31:0]                    result_m2;
     logic                           regwrite_w;
-    logic [4:0]                     rd_w;
     logic [31:0]                    result_w;
     logic                           instret_w;
+    trap_req_t                      trap_req_m1;
     
+    // ---------- Control Bus ------------
+    
+    control_bus_t                   control_bus_d;
+    control_bus_t                   control_bus_e;
+    control_bus_t                   control_bus_m1;
+    control_bus_t                   control_bus_m2;
+
     // ---------- Hazard Unit ------------
     
     hazard_interface                hazard_bus();
@@ -58,7 +77,6 @@ module riscv_cpu_core (
     // ----------- Trap Unit -------------
     
     logic [31:0]                    mtvec, mepc;
-    trap_interface                  trap_bus();
 
     trap_unit trap_unit (
         .trap_bus                   (trap_bus),
@@ -101,7 +119,6 @@ module riscv_cpu_core (
     cflow_hint_t                    cflow_hint_reg;
     logic                           pred_taken;
     logic                           cflow_taken;
-    logic                           mispredict;
     
     always_ff@(posedge clk) begin
         if (!start) begin
@@ -198,14 +215,13 @@ module riscv_cpu_core (
 
     // ------------ ID Stage -------------
 
-    control_bus_t                   control_bus_d;
     cflow_hint_t                    cflow_hint_d;
     logic [31:0]                    pc_d;
     logic [31:0]                    pcplus4_d;
     logic [31:0]                    pc_pred_d;
     logic                           pred_taken_d;
 
-    logic [4:0]                     rs1_d, rs2_d, rd_d;
+    logic [4:0]                     rd_d;
     logic [31:0]                    rdata1_d, rdata2_d;
     logic [31:0]                    immext_d;
     trap_req_t                      trap_req_d;
@@ -244,13 +260,9 @@ module riscv_cpu_core (
 
     // ------------ EX Stage -------------
 
-    control_bus_t                   control_bus_e;
-    logic                           ex_fire;
-    logic [4:0]                     rs1_e, rs2_e, rd_e;
     logic                           alu_valid, mul_valid, div_valid;
     logic [31:0]                    aluresult_e, mulresult_e, divresult_e;
     logic [31:0]                    storedata_e;
-    logic [31:0]                    csr_wdata_e;
     trap_req_t                      trap_req_e;
 
     stage_ex stage_ex (
@@ -305,13 +317,8 @@ module riscv_cpu_core (
 
     // ------------ MEM1 Stage -----------
     
-    control_bus_t                   control_bus_m1;
-    logic [4:0]                     rs2_m1;
-    logic [4:0]                     rd_m1;
-    logic [31:0]                    csr_wdata_m1;
     loadsrc_t                       load_source_m1;
     logic [1:0]                     byte_offset_m1;
-    trap_req_t                      trap_req_m1;
 
     stage_mem1 stage_mem1 (
         .start                      (start),
@@ -329,16 +336,13 @@ module riscv_cpu_core (
         .aluresult_e                (aluresult_e),
         .mulresult_e                (mulresult_e),
         .divresult_e                (divresult_e),
-
         .storedata_e                (storedata_e),
-        .csr_wdata_e                (csr_wdata_e),
 
         .result_w                   (result_w),
 
         .control_bus_m1             (control_bus_m1),
         .rd_m1                      (rd_m1),
         .rs2_m1                     (rs2_m1),
-        .csr_wdata_m1               (csr_wdata_m1),
         .load_source_m1             (load_source_m1),
         .byte_offset_m1             (byte_offset_m1),
         .result_m1                  (result_m1),
@@ -362,8 +366,6 @@ module riscv_cpu_core (
 
     // ------------ MEM2 Stage -----------
 
-    control_bus_t                   control_bus_m2;
-    logic [4:0]                     rd_m2;
     logic [31:0]                    memresult_m2;
 
     stage_mem2 stage_mem2 (

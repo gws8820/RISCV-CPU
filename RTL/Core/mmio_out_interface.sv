@@ -9,19 +9,19 @@ interface mmio_out_interface ();
     logic [31:0]    print_data;
 
     modport source (
-        output boot_valid,
-        output exit_valid,
-        output exit_code,
-        output print_valid,
-        output print_data
+        output      boot_valid,
+        output      exit_valid,
+        output      exit_code,
+        output      print_valid,
+        output      print_data
     );
 
     modport sink (
-        input  boot_valid,
-        input  exit_valid,
-        input  exit_code,
-        input  print_valid,
-        input  print_data
+        input       boot_valid,
+        input       exit_valid,
+        input       exit_code,
+        input       print_valid,
+        input       print_data
     );
 
 endinterface

@@ -7,15 +7,15 @@ interface memory_init_interface ();
     logic [31:0]    write_data;
 
     modport source (
-        output write_enable,
-        output write_addr,
-        output write_data
+        output      write_enable,
+        output      write_addr,
+        output      write_data
     );
 
     modport sink (
-        input  write_enable,
-        input  write_addr,
-        input  write_data
+        input       write_enable,
+        input       write_addr,
+        input       write_data
     );
 
 endinterface

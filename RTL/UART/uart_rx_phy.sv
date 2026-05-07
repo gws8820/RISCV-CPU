@@ -4,14 +4,14 @@ timeprecision 1ps;
 import uart_defines::*;
 
 module uart_rx_phy(
-    input   logic       rstn,
-    input   logic       clk,
-    input   logic       sample_tick,
+    input   logic           rstn,
+    input   logic           clk,
+    input   logic           sample_tick,
     
-    input   logic       rx,
+    input   logic           rx,
 
-    output  logic [7:0] rx_data,
-    output  logic       rx_valid
+    output  logic [7:0]     rx_data,
+    output  logic           rx_valid
 );
 
     // 2-FF Synchronizer
@@ -19,22 +19,22 @@ module uart_rx_phy(
 
     always_ff@(posedge clk) begin
         if (!rstn) begin
-            rx_reg  <= 1;
-            rx_sync <= 1;
+            rx_reg          <= 1;
+            rx_sync         <= 1;
         end
         else begin
-            rx_reg  <= rx;
-            rx_sync <= rx_reg;
+            rx_reg          <= rx;
+            rx_sync         <= rx_reg;
         end
     end
 
-    uart_rx_sync_t              rx_sync_state;
+    uart_rx_sync_t                                  rx_sync_state;
 
-    logic [OVERSAMPLE_BITS-1:0] tick_counter;
-    logic [2:0]                 bit_counter;
-    logic [7:0]                 rx_shift;
+    logic [OVERSAMPLE_BITS-1:0]                     tick_counter;
+    logic [2:0]                                     bit_counter;
+    logic [7:0]                                     rx_shift;
 
-    always_ff@(posedge clk)     begin
+    always_ff@(posedge clk) begin
         if (!rstn) begin
             rx_sync_state                           <= RX_SYNC_IDLE;
 
@@ -81,7 +81,7 @@ module uart_rx_phy(
                             tick_counter            <= 0;
                             rx_shift                <= {rx_sync, rx_shift[7:1]};
     
-                            unique case (bit_counter)
+                            case (bit_counter)
                                 7:      begin
                                     rx_sync_state   <= RX_SYNC_STOP;
                                     bit_counter     <= 0;

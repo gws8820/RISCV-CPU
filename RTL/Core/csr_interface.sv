@@ -10,17 +10,17 @@ interface csr_interface ();
     logic [31:0]    rdata;
 
     modport source (
-        input  rdata,
+        input       rdata,
 
-        output req,
-        output wdata
+        output      req,
+        output      wdata
     );
 
     modport sink (
-        input  req,
-        input  wdata,
+        input       req,
+        input       wdata,
 
-        output rdata
+        output      rdata
     );
     
 endinterface

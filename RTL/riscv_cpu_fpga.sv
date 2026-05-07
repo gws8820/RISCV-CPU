@@ -5,152 +5,138 @@ import riscv_defines::*;
 
 module riscv_cpu_fpga (
     // FPGA
-    input   logic                   rstn_push, clk,
-    output  logic                   rstn_led, start_led,
+    input   logic                       rstn_push,
+    output  logic                       rstn_led, start_led,
     
     // UART
-    input   logic                   uart_rx,
-    output  logic                   uart_tx
+    input   logic                       uart_rx,
+    output  logic                       uart_tx,
+
+    // Zynq PS DDR / Fixed IO
+    inout   wire    [14:0]              DDR_addr,
+    inout   wire    [2:0]               DDR_ba,
+    inout   wire                        DDR_cas_n,
+    inout   wire                        DDR_ck_n,
+    inout   wire                        DDR_ck_p,
+    inout   wire                        DDR_cke,
+    inout   wire                        DDR_cs_n,
+    inout   wire    [3:0]               DDR_dm,
+    inout   wire    [31:0]              DDR_dq,
+    inout   wire    [3:0]               DDR_dqs_n,
+    inout   wire    [3:0]               DDR_dqs_p,
+    inout   wire                        DDR_odt,
+    inout   wire                        DDR_ras_n,
+    inout   wire                        DDR_reset_n,
+    inout   wire                        DDR_we_n,
+    inout   wire                        FIXED_IO_ddr_vrn,
+    inout   wire                        FIXED_IO_ddr_vrp,
+    inout   wire    [53:0]              FIXED_IO_mio,
+    inout   wire                        FIXED_IO_ps_clk,
+    inout   wire                        FIXED_IO_ps_porb,
+    inout   wire                        FIXED_IO_ps_srstb
 );
 
-    logic                           rstn50;
-    logic                           start;
-
-    // ------------- Clocking -------------
-    logic                           clk50_ibuf;
-    logic                           clk50_buf;
-
-    logic                           mmcm_locked;
-    logic                           mmcm_reset;
-    logic                           clk100_mmcm;
-    logic                           clk100_buf;
-
-    logic                           clkfb_mmcm;
-    logic                           clkfb_buf;
-
-    // Input Clock Buffer (50MHz)
-    IBUF ibuf_sys_clk (
-        .I  (clk),
-        .O  (clk50_ibuf)
-    );
-
-    // Global Clock Buffer
-    BUFG bufg_clk50 (
-        .I  (clk50_ibuf),
-        .O  (clk50_buf)
-    );
-
-    // Feedback Buffer for MMCM
-    BUFG bufg_mmcm_fb (
-        .I  (clkfb_mmcm),
-        .O  (clkfb_buf)
-    );
-
-    // Output Clock Buffer (100MHz)
-    BUFG bufg_clk100 (
-        .I  (clk100_mmcm),
-        .O  (clk100_buf)
-    );
-
-    // MMCM: 50MHz -> 100MHz
-    // VCO = 50 * 15 / 1 = 750MHz (within 7-series MMCM VCO range)
-    // CLKOUT0 = 750 / 7.5 = 100MHz
+    logic                               clk;
+    logic                               rstn;
+    logic                               start;
     
-    assign mmcm_reset = ~rstn50;
-
-    MMCME2_BASE #(
-        .BANDWIDTH                  ("OPTIMIZED"),
-        .CLKFBOUT_MULT_F            (15.0),
-        .CLKFBOUT_PHASE             (0.0),
-        .CLKIN1_PERIOD              (20.0),
-        .DIVCLK_DIVIDE              (1),
-        .CLKOUT0_DIVIDE_F           (7.5),
-        .CLKOUT0_PHASE              (0.0),
-        .CLKOUT0_DUTY_CYCLE         (0.5)
-    ) mmcm_sys_clk (
-        .CLKIN1                     (clk50_buf),
-        .CLKFBIN                    (clkfb_buf),
-        .RST                        (mmcm_reset),
-        .PWRDWN                     (0),
-        .LOCKED                     (mmcm_locked),
-        .CLKFBOUT                   (clkfb_mmcm),
-        .CLKOUT0                    (clk100_mmcm)
-    );
+    // ---------- Zynq PS Wrapper ---------
     
+    zynq_ps_wrapper zynq_ps (
+        .DDR_addr                       (DDR_addr),
+        .DDR_ba                         (DDR_ba),
+        .DDR_cas_n                      (DDR_cas_n),
+        .DDR_ck_n                       (DDR_ck_n),
+        .DDR_ck_p                       (DDR_ck_p),
+        .DDR_cke                        (DDR_cke),
+        .DDR_cs_n                       (DDR_cs_n),
+        .DDR_dm                         (DDR_dm),
+        .DDR_dq                         (DDR_dq),
+        .DDR_dqs_n                      (DDR_dqs_n),
+        .DDR_dqs_p                      (DDR_dqs_p),
+        .DDR_odt                        (DDR_odt),
+        .DDR_ras_n                      (DDR_ras_n),
+        .DDR_reset_n                    (DDR_reset_n),
+        .DDR_we_n                       (DDR_we_n),
+        .FCLK_CLK0                      (clk),              // 100MHz
+        .FIXED_IO_ddr_vrn               (FIXED_IO_ddr_vrn),
+        .FIXED_IO_ddr_vrp               (FIXED_IO_ddr_vrp),
+        .FIXED_IO_mio                   (FIXED_IO_mio),
+        .FIXED_IO_ps_clk                (FIXED_IO_ps_clk),
+        .FIXED_IO_ps_porb               (FIXED_IO_ps_porb),
+        .FIXED_IO_ps_srstb              (FIXED_IO_ps_srstb)
+    );
+
     // ----------- FPGA Signals -----------
 
-    // CDC synchronizers (mark as async regs for better placement/handling)
-    (* ASYNC_REG = "TRUE" *) logic  rstn_push_reg, rstn_push_sync;
-    logic [DEBOUNCE_BITS-1:0]       rstn_debounce_cnt;
+    // CDC synchronizers
+    (* ASYNC_REG = "TRUE" *) logic      rstn_push_reg, rstn_push_sync;
+    logic [DEBOUNCE_BITS-1:0]           rstn_debounce_cnt;
 
-    initial begin
-        rstn50                      = 0;
-        rstn_debounce_cnt           = 0;
-    end
-     
-    // 2-FF Synchronizer
-    always_ff@(posedge clk50_buf) begin
-        rstn_push_reg               <= rstn_push;
-        rstn_push_sync              <= rstn_push_reg;
-    end
-
-    always_ff@(posedge clk50_buf) begin
-        if (rstn_push_sync != rstn50) begin  // Active Low
-            if (rstn_debounce_cnt == DEBOUNCE_LIMIT - 1) begin
-                rstn50              <= rstn_push_sync;
-                rstn_debounce_cnt   <= 0;
-            end
-            else begin
-                rstn_debounce_cnt   <= rstn_debounce_cnt + 1;
-            end
+    always_ff@(posedge clk or negedge rstn_push) begin
+        if (!rstn_push) begin
+            rstn_push_reg               <= 0;
+            rstn_push_sync              <= 0;
+            rstn                        <= 0;
+            rstn_debounce_cnt           <= '0;
         end
         else begin
-            rstn_debounce_cnt       <= 0;
-        end
-    end
+            rstn_push_reg               <= rstn_push;
+            rstn_push_sync              <= rstn_push_reg;
 
-    (* ASYNC_REG = "TRUE" *) logic  rstn100_reg, rstn100_sync;
-    
-    // 2-FF Synchronizer
-    always_ff @(posedge clk100_buf) begin
-        rstn100_reg                 <= rstn50;
-        rstn100_sync                <= rstn100_reg & mmcm_locked;
+            if (!rstn_push_sync) begin
+                rstn                    <= 0;
+                rstn_debounce_cnt       <= '0;
+            end
+            else if (!rstn) begin
+                if (rstn_debounce_cnt == DEBOUNCE_LIMIT - 1) begin
+                    rstn                <= 1;
+                    rstn_debounce_cnt   <= '0;
+                end
+                else begin
+                    rstn_debounce_cnt   <= rstn_debounce_cnt + 1;
+                end
+            end
+            else begin
+                rstn_debounce_cnt       <= '0;
+            end
+        end
     end
     
     // LED (Active Low)
     always_comb begin
-        rstn_led                    = !rstn100_sync;
-        start_led                   = !start;
+        rstn_led                        = !rstn;
+        start_led                       = !start;
     end
     
     // --------- UART Controller ----------
     
-    memory_init_interface           rom_init();
-    mmio_out_interface              mmio_out();
-    mmio_in_interface               mmio_in();
+    memory_init_interface               rom_init();
+    mmio_out_interface                  mmio_out();
+    mmio_in_interface                   mmio_in();
     
     uart_controller uart_controller (
-        .rstn                       (rstn100_sync),
-        .clk                        (clk100_buf),
-        .rx                         (uart_rx),
-        .tx                         (uart_tx),
+        .rstn                           (rstn),
+        .clk                            (clk),
+        .rx                             (uart_rx),
+        .tx                             (uart_tx),
         
-        .start                      (start),
+        .start                          (start),
         
-        .rom_init                   (rom_init),
-        .mmio_out                   (mmio_out),
-        .mmio_in                    (mmio_in)
+        .rom_init                       (rom_init),
+        .mmio_out                       (mmio_out),
+        .mmio_in                        (mmio_in)
     );
 
     // ------------ CPU Core ------------
 
     riscv_cpu_core  cpu_core (
-        .start                      (start),
-        .clk                        (clk100_buf),
+        .start                          (start),
+        .clk                            (clk),
 
-        .rom_init                   (rom_init),
-        .mmio_out                   (mmio_out),
-        .mmio_in                    (mmio_in)
+        .rom_init                       (rom_init),
+        .mmio_out                       (mmio_out),
+        .mmio_in                        (mmio_in)
     );
     
 endmodule

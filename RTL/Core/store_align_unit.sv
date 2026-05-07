@@ -13,29 +13,33 @@ module store_align_unit (
 );
 
     always_comb begin
+        wstrb = 4'b0000;
+        wdata = 32'b0;
+
         if (memaccess == MEM_WRITE) begin
-            unique case(mask_mode)
+            case (mask_mode)
                 MASK_BYTE:  begin
-                    wstrb = 4'b0001 << byte_offset;
-                    wdata = {24'b0, data[7:0]} << (8 * byte_offset);
+                    wstrb   = 4'b0001 << byte_offset;
+                    wdata   = {24'b0, data[7:0]} << {byte_offset, 3'b000};
                 end
                 MASK_HALF:  begin
-                    wstrb = 4'b0011 << byte_offset;
-                    wdata = {16'b0, data[15:0]} << (8 * byte_offset);
+                    wstrb   = 4'b0011 << byte_offset;
+                    wdata   = {16'b0, data[15:0]} << {byte_offset, 3'b000};
                 end
                 MASK_WORD:  begin
-                    wstrb = 4'b1111;
-                    wdata = data;
+                    wstrb   = 4'b1111;
+                    wdata   = data;
+                end
+                MASK_BYTE_U,
+                MASK_HALF_U: begin
+                    wstrb   = 4'b0000;
+                    wdata   = 32'b0;
                 end
                 default:    begin
-                    wstrb = 4'b0000;
-                    wdata = 32'b0;
+                    wstrb   = 4'b0000;
+                    wdata   = 32'b0;
                 end
             endcase
-        end
-        else begin
-            wstrb = 4'b0000;
-            wdata = 32'b0;
         end
     end
 

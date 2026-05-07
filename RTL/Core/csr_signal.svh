@@ -20,7 +20,6 @@ localparam CSR_VALUE_MSTATUS    = 32'h0000_1800;
 localparam CSR_VALUE_MTVEC      = 32'h0000_0400;
 localparam CSR_VALUE_MHARTID    = 32'h0000_0000;
 
-localparam CSR_MASK_READONLY    = 32'h0000_0000;
 localparam CSR_MASK_MSTATUS     = 32'h0000_1888;
 localparam CSR_MASK_MTVEC       = 32'hFFFF_FFFC;
 localparam CSR_MASK_MIE         = 32'h0000_0888;

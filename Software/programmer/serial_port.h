@@ -9,7 +9,8 @@
 
 // Parameter
 #define START_FLAG      0xA5
-#define TIMEOUT_MS      20000
+#define FRAME_START_TIMEOUT_MS 100
+#define FRAME_BYTE_TIMEOUT_MS  100
 // RES
 typedef enum {
     RES_ACK             = 0x06,

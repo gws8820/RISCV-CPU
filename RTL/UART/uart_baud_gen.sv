@@ -5,10 +5,10 @@ import uart_defines::*;
 import riscv_defines::*;
 
 module uart_baud_gen(
-    input   logic       rstn,
-    input   logic       clk,
-    output  logic       sample_tick,
-    output  logic       baud_tick
+    input   logic                   rstn,
+    input   logic                   clk,
+    output  logic                   sample_tick,
+    output  logic                   baud_tick
 );
 
     localparam  SAMPLE_CNT                      = CLK_FREQ / (BAUD_RATE * OVERSAMPLE_RATE);

@@ -13,14 +13,12 @@ module stage_mem1 (
     input   logic                   alu_valid, mul_valid, div_valid,
     input   logic [31:0]            aluresult_e, mulresult_e, divresult_e,
     input   logic [31:0]            storedata_e,
-    input   logic [31:0]            csr_wdata_e,
 
     input   logic [31:0]            result_w,
 
     output  control_bus_t           control_bus_m1,
     output  logic [4:0]             rd_m1,
     output  logic [4:0]             rs2_m1,
-    output  logic [31:0]            csr_wdata_m1,
     output  loadsrc_t               load_source_m1,
     output  logic [1:0]             byte_offset_m1,
     output  logic [31:0]            result_m1,
@@ -70,7 +68,7 @@ module stage_mem1 (
                 pc_m1               <= pc_e;
                 pcplus4_m1          <= pcplus4_e;
 
-                priority case (1)
+                case (1)
                     mul_valid:      exec_result_m1 <= mulresult_e;
                     div_valid:      exec_result_m1 <= divresult_e;
                     alu_valid:      exec_result_m1 <= aluresult_e;
@@ -78,7 +76,6 @@ module stage_mem1 (
                 endcase
 
                 storedata_m1        <= storedata_e;
-                csr_wdata_m1        <= csr_wdata_e;
                 rs2_m1              <= rs2_e;
                 rd_m1               <= rd_e;
 
@@ -99,7 +96,9 @@ module stage_mem1 (
     logic [31:0] store_data;
 
     always_comb begin
-        unique case(hazard_res.forward_m1)
+        store_data = storedata_m1;
+
+        case (hazard_res.forward_m1)
             0:                      store_data = storedata_m1;
             1:                      store_data = result_w;
             default:                store_data = storedata_m1;
@@ -152,12 +151,17 @@ module stage_mem1 (
     assign ram_addr                 = exec_result_m1;
 
     always_comb begin
-        unique case (1)
-            (data_access == MEM_READ) && ram_hit:         load_source_m1 = LOAD_RAM;
-            (data_access == MEM_READ) && rom_hit:         load_source_m1 = LOAD_ROM;
-            (data_access == MEM_READ) && mmio_input_hit:  load_source_m1 = LOAD_INPUT;
-            default:                                      load_source_m1 = LOAD_ZERO;
-        endcase
+        load_source_m1 = LOAD_ZERO;
+
+        if ((data_access == MEM_READ) && ram_hit) begin
+            load_source_m1 = LOAD_RAM;
+        end
+        else if ((data_access == MEM_READ) && rom_hit) begin
+            load_source_m1 = LOAD_ROM;
+        end
+        else if ((data_access == MEM_READ) && mmio_input_hit) begin
+            load_source_m1 = LOAD_INPUT;
+        end
     end
 
     always_ff@(posedge clk) begin
@@ -219,8 +223,11 @@ module stage_mem1 (
 
     // Pre-Result Selector
     always_comb begin
-        unique case(control_bus_m1.resultsrc)
+        result_m1 = exec_result_m1;
+
+        case (control_bus_m1.resultsrc)
             RESULT_ALU:             result_m1 = exec_result_m1;
+            RESULT_MEM:             result_m1 = exec_result_m1;
             RESULT_PCPLUS4:         result_m1 = pcplus4_m1;
             RESULT_CSR:             result_m1 = csr_result;
             default:                result_m1 = exec_result_m1;

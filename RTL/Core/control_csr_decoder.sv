@@ -4,7 +4,10 @@ timeprecision 1ps;
 import riscv_defines::*;
 
 function automatic logic check_csr_write(input csr_mode_t mode, input logic [4:0] wtarget);
-    unique case (mode)
+    check_csr_write = 0;
+
+    case (mode)
+        CSR_NOP:                            return 0;
         CSR_RW, CSR_RWI:                    return 1;
         CSR_RS, CSR_RC, CSR_RSI, CSR_RCI:   return (wtarget != 5'd0);
         default:                            return 0;
@@ -12,20 +15,25 @@ function automatic logic check_csr_write(input csr_mode_t mode, input logic [4:0
 endfunction
 
 module control_csr_decoder (
-    input   opcode_t        opcode,
-    input   logic [4:0]     wtarget,
-    input   csr_mode_t      csr_mode,
-    input   logic [11:0]    csr_target,
-    output  csr_req_t       csr_req,
-    output  logic           illegal_csr
+    input   opcode_t                        opcode,
+    input   logic [4:0]                     wtarget,
+    input   csr_mode_t                      csr_mode,
+    input   logic [11:0]                    csr_target,
+    output  csr_req_t                       csr_req,
+    output  logic                           illegal_csr
 );
 
     logic csr_write;
     assign csr_write = check_csr_write(csr_mode, wtarget);
 
     always_comb begin
+        illegal_csr                         = 0;
+        csr_req                             = '0;
+
         if (opcode == OP_SYSTEM && csr_mode != CSR_NOP) begin
-            unique case (csr_target)
+            illegal_csr                     = 1;
+
+            case (csr_target)
                 CSR_ADDR_MSTATUS,
                 CSR_ADDR_MIE,
                 CSR_ADDR_MTVEC,
@@ -68,10 +76,6 @@ module control_csr_decoder (
                     csr_req                 = '0;
                 end
             endcase
-        end
-        else begin
-            illegal_csr                     = 0;
-            csr_req                         = '0;
         end
     end
 
