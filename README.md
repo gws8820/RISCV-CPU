@@ -5,6 +5,8 @@
 
 A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featuring an integrated UART controller for system programming and debugging. Achieved **263.7 CoreMark** and **91.0 DMIPS** at 100 MHz.
 
+![CPU Architecture Diagram](architecture.png)
+
 ## Table of Contents
 
 - [Features](#features)
@@ -64,8 +66,6 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
   - **Zifencei**: Instruction-Fetch Fence (FENCE.I)
 
 ### Microarchitecture
-![CPU Architecture Diagram](architecture.png)
-
 - **Pipeline**: 6-stage (Fetch, Decode, Execute, Memory 1, Memory 2, Writeback)
   - **MEM1**: Memory Access & Store Align
   - **MEM2**: Data Ready (FPGA BRAM Latency) & Load Data Extend
