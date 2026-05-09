@@ -42,10 +42,7 @@ module stage_wb (
         result_w = result_w_prev;
 
         case (control_bus_w.resultsrc)
-            RESULT_ALU:             result_w = result_w_prev;
             RESULT_MEM:             result_w = memresult_w;
-            RESULT_PCPLUS4:         result_w = result_w_prev;
-            RESULT_CSR:             result_w = result_w_prev;
             default:                result_w = result_w_prev;
         endcase
     end

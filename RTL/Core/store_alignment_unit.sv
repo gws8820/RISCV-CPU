@@ -3,7 +3,7 @@ timeprecision 1ps;
 
 import riscv_defines::*;
 
-module store_align_unit (
+module store_alignment_unit (
     input   memaccess_t     memaccess,
     input   logic [31:0]    data,
     input   logic [1:0]     byte_offset,

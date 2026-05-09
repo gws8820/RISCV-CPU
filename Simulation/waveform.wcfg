@@ -569,15 +569,15 @@
       <obj_property name="label">Store-Align Unit</obj_property>
       <obj_property name="DisplayName">label</obj_property>
       <obj_property name="isExpanded"></obj_property>
-      <wvobject fp_name="/cpu_testbench/dut/stage_mem1/store_align_unit/mask_mode" type="array">
+      <wvobject fp_name="/cpu_testbench/dut/stage_mem1/store_alignment_unit/mask_mode" type="array">
          <obj_property name="ElementShortName">mask_mode[2:0]</obj_property>
          <obj_property name="ObjectShortName">mask_mode[2:0]</obj_property>
       </wvobject>
-      <wvobject fp_name="/cpu_testbench/dut/stage_mem1/store_align_unit/wstrb" type="array">
+      <wvobject fp_name="/cpu_testbench/dut/stage_mem1/store_alignment_unit/wstrb" type="array">
          <obj_property name="ElementShortName">wstrb[3:0]</obj_property>
          <obj_property name="ObjectShortName">wstrb[3:0]</obj_property>
       </wvobject>
-      <wvobject fp_name="/cpu_testbench/dut/stage_mem1/store_align_unit/wdata" type="array">
+      <wvobject fp_name="/cpu_testbench/dut/stage_mem1/store_alignment_unit/wdata" type="array">
          <obj_property name="ElementShortName">wdata[31:0]</obj_property>
          <obj_property name="ObjectShortName">wdata[31:0]</obj_property>
       </wvobject>

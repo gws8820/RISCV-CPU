@@ -26,6 +26,7 @@ module riscv_cpu_core (
     logic [4:0]                     rd_w;
 
     logic [31:0]                    csr_wdata_e;
+    logic                           mul_valid, div_valid;
     logic [31:0]                    result_m1;
     logic [31:0]                    result_m2;
     logic                           regwrite_w;
@@ -151,7 +152,6 @@ module riscv_cpu_core (
 
     inst_t                          rom_fetch_inst;
     logic [31:0]                    rom_fetch_addr;
-    logic                           rom_fetch_access_fault;
 
     logic                           rom_load_enable;
     logic [31:0]                    rom_load_addr;
@@ -168,7 +168,6 @@ module riscv_cpu_core (
         .clk                        (clk),
 
         .fetch_addr                 (rom_fetch_addr),
-        .fetch_access_fault         (rom_fetch_access_fault),
         .fetch_inst                 (rom_fetch_inst),
 
         .load_enable                (rom_load_enable),
@@ -206,8 +205,6 @@ module riscv_cpu_core (
         .pc_f                       (pc_f),
         .pcplus4_f                  (pcplus4_f),
         .fetch_addr                 (rom_fetch_addr),
-        
-        .fetch_access_fault         (rom_fetch_access_fault),
 
         .trap_res                   (trap_bus.res),
         .trap_req_f                 (trap_req_f),
@@ -261,7 +258,7 @@ module riscv_cpu_core (
 
     // ------------ EX Stage -------------
 
-    logic                           alu_valid, mul_valid, div_valid;
+    logic                           alu_valid;
     logic [31:0]                    aluresult_e, mulresult_e, divresult_e;
     logic [31:0]                    storedata_e;
     trap_req_t                      trap_req_e;

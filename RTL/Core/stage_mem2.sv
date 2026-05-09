@@ -57,8 +57,6 @@ module stage_mem2 (
     end
 
     always_comb begin
-        load_data_m2 = 32'b0;
-
         case (load_source_m2)
             LOAD_ZERO:              load_data_m2 = 32'b0;
             LOAD_RAM:               load_data_m2 = ram_read_data;

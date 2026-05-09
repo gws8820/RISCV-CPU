@@ -8,7 +8,6 @@ module memory_rom(
     memory_init_interface.sink      init,
 
     input   logic [31:0]            fetch_addr,
-    output  logic                   fetch_access_fault,
     output  inst_t                  fetch_inst,
 
     input   logic                   load_enable,
@@ -23,7 +22,6 @@ module memory_rom(
     logic [29:0]                    fetch_word;
     logic [29:0]                    fetch_idx;
     logic                           fetch_hit;
-
     logic [29:0]                    load_word;
     logic [29:0]                    load_idx;
     logic                           load_hit;
@@ -49,8 +47,6 @@ module memory_rom(
     always_ff@(posedge clk) begin
         fetch_inst                  <= fetch_hit ? inst_t'(rom_array[fetch_idx]) : '0;
     end
-
-    assign fetch_access_fault       = start && !fetch_hit;
 
     always_ff@(posedge clk) begin
         if (init.write_enable && init_hit) begin

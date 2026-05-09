@@ -17,8 +17,6 @@ module stage_if (
     output  logic [31:0]            pcplus4_f,
     output  logic [31:0]            fetch_addr,
     
-    input   logic                   fetch_access_fault,
-    
     input   trap_res_t              trap_res,
     output  trap_req_t              trap_req_f,
     input   hazard_res_t            hazard_res
@@ -59,6 +57,14 @@ module stage_if (
         .inst_addr_misaligned       (inst_addr_misaligned)
     );
 
+    logic                           inst_access_fault;
+    logic [29:0]                    fetch_word;
+    logic [29:0]                    fetch_idx;
+
+    assign fetch_word               = pc_f[31:2];
+    assign fetch_idx                = fetch_word - ROM_BASE_WORD;
+    assign inst_access_fault        = !((fetch_word >= ROM_BASE_WORD) && (fetch_idx < ROM_SIZE_WORD));
+
     // Trap Packet
     always_comb begin
         if (!start) begin
@@ -72,7 +78,7 @@ module stage_if (
                 trap_req_f.pc       = pc_f;
                 trap_req_f.tval     = pc_f;
             end
-            else if (fetch_access_fault) begin
+            else if (inst_access_fault) begin
                 trap_req_f.valid    = 1;
                 trap_req_f.mode     = TRAP_ENTER;
                 trap_req_f.cause    = CAUSE_INST_ACCESS_FAULT;

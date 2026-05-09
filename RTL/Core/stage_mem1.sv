@@ -135,10 +135,10 @@ module stage_mem1 (
                                     && !(mmio_print_hit && (data_access == MEM_WRITE))
                                     && !(mmio_input_hit && (data_access == MEM_READ));
     
-    // Store Align Unit
+    // Store Alignment Unit
     assign byte_offset_m1 = exec_result_m1[1:0];
 
-    store_align_unit store_align_unit (
+    store_alignment_unit        store_alignment_unit (
         .memaccess                  (data_access),
         .data                       (store_data),
         .byte_offset                (byte_offset_m1),
@@ -151,17 +151,12 @@ module stage_mem1 (
     assign ram_addr                 = exec_result_m1;
 
     always_comb begin
-        load_source_m1 = LOAD_ZERO;
-
-        if ((data_access == MEM_READ) && ram_hit) begin
-            load_source_m1 = LOAD_RAM;
-        end
-        else if ((data_access == MEM_READ) && rom_hit) begin
-            load_source_m1 = LOAD_ROM;
-        end
-        else if ((data_access == MEM_READ) && mmio_input_hit) begin
-            load_source_m1 = LOAD_INPUT;
-        end
+        case (1)
+            (data_access == MEM_READ) && ram_hit:         load_source_m1 = LOAD_RAM;
+            (data_access == MEM_READ) && rom_hit:         load_source_m1 = LOAD_ROM;
+            (data_access == MEM_READ) && mmio_input_hit:  load_source_m1 = LOAD_INPUT;
+            default:                                      load_source_m1 = LOAD_ZERO;
+        endcase
     end
 
     always_ff@(posedge clk) begin
@@ -225,7 +220,6 @@ module stage_mem1 (
     always_comb begin
         case (control_bus_m1.resultsrc)
             RESULT_ALU:             result_m1 = exec_result_m1;
-            RESULT_MEM:             result_m1 = exec_result_m1;
             RESULT_PCPLUS4:         result_m1 = pcplus4_m1;
             RESULT_CSR:             result_m1 = csr_result;
             default:                result_m1 = exec_result_m1;
