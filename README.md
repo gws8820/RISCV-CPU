@@ -81,6 +81,7 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
   - RAW hazards resolved by forwarding from MEM1/MEM2/WB to EX
   - Store-Data hazards resolved by forwarding from WB to MEM1
   - Load-Use hazards resolved by 2-cycle pipeline stall + WB to EX forwarding
+  - Multi-cycle multiply/divide operations stall the pipeline until the execution unit asserts `mul_valid` or `div_valid`
   - Branch Misprediction resolved by pipeline flush
 - **Trap/Exception Support**:
   - ECALL, EBREAK, MRET
@@ -178,12 +179,14 @@ The current simulation sanity configuration uses `NUMBER_OF_RUNS=10`.
 
 **Multiplier**
 - Inferred DSP48 blocks via `(* use_dsp = "yes" *)` synthesis attribute.
-- 3-stage pipeline: result available 3 cycles after issue, causing a **3-cycle stall** (`MUL_COUNT = 3`).
+- Result readiness is reported by `mul_valid`; the hazard unit holds the pipeline until that valid pulse is observed.
+- Current implementation has a 3-cycle issue-to-result latency.
 
 **Divisor**
 - Algorithm: Shift-compare-subtract. Handles signed/unsigned division and remainder, with special-case handling for divide-by-zero and signed overflow.
 - 2x loop unrolled: computes **2 quotient bits per clock cycle** combinatorially.
-- 32-bit division takes **17 cycles** total (1 setup + 16 compute), causing a **17-cycle stall** (`DIV_COUNT = 17`, `SHIFT_COUNT = 16`).
+- Result readiness is reported by `div_valid`; the hazard unit holds the pipeline until that valid pulse is observed.
+- Current implementation takes 17 cycles total (1 setup + 16 compute) for 32-bit division.
 
 ### Pipeline Performance
 - **Ideal CPI**: 1.0
@@ -197,8 +200,8 @@ The current simulation sanity configuration uses `NUMBER_OF_RUNS=10`.
 | **Load-Use Hazard** | 2 | ID | Stall while load is in EX (`id_ex`) and again in MEM1 (`id_mem1`); 2 bubbles total; result forwarded from WB→EX |
 | **Branch Prediction Hit** | 0 | IF | Zero penalty (Seamless execution) |
 | **Branch Prediction Miss** | 3 | EX | Flush ID/EX/MEM1 stages; redirect PC to correct target |
-| **Multiplication Stall** | 3 | EX | Pipeline stall during multiplication |
-| **Division Stall** | 17 | EX | Pipeline stall during division |
+| **Multiplication Stall** | 3 | EX | Pipeline stalls until `mul_valid` |
+| **Division Stall** | 17 | EX | Pipeline stalls until `div_valid` |
 
 ### Trap/Exception Penalties
 | Trap/Flush Type | Penalty (Cycles) | Processing Stage | Notes |

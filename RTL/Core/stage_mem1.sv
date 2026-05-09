@@ -223,8 +223,6 @@ module stage_mem1 (
 
     // Pre-Result Selector
     always_comb begin
-        result_m1 = exec_result_m1;
-
         case (control_bus_m1.resultsrc)
             RESULT_ALU:             result_m1 = exec_result_m1;
             RESULT_MEM:             result_m1 = exec_result_m1;

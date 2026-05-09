@@ -100,8 +100,8 @@ module exec_divisor (
                     div_exception.valid     <= 1;
 
                     case (alucontrol)
-                        ALU_DIV:    div_exception.data <= 32'h8000_0000;
-                        default:    div_exception.data <= 32'd0;
+                        ALU_DIV:            div_exception.data <= 32'h8000_0000;
+                        default:             div_exception.data <= 32'd0;
                     endcase
 
                     shift_reg               <= {32'b0, abs_a};
@@ -125,7 +125,7 @@ module exec_divisor (
                 end
             end
             else if (div_busy) begin
-                if (shift_counter == (SHIFT_COUNT - 1)) begin
+                if (shift_counter == 6'd15) begin
                     div_valid               <= 1;
                     div_busy                <= 0;
                     shift_counter           <= 6'd0;

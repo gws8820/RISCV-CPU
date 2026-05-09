@@ -19,6 +19,7 @@ typedef struct packed {
     logic           mispredict;
     logic           ex_fire;
     aluop_t         aluop_e;
+    logic           muldiv_valid;
     logic           use_rs1_d, use_rs2_d;
     logic [4:0]     rs1_d, rs1_e;
     logic [4:0]     rs2_d, rs2_e, rs2_m1;

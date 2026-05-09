@@ -9,10 +9,6 @@ localparam int unsigned RAM_SIZE_BYTE     = 128 * 1024;
 localparam int unsigned ROM_SIZE_WORD     = ROM_SIZE_BYTE / 4;
 localparam int unsigned RAM_SIZE_WORD     = RAM_SIZE_BYTE / 4;
 
-localparam int unsigned MUL_COUNT         = 3;
-localparam int unsigned DIV_COUNT         = 17;
-localparam int unsigned SHIFT_COUNT       = DIV_COUNT - 1;
-
 localparam logic [31:0] ROM_BASE_ADDR     = 32'h0000_0000;
 localparam logic [31:0] RAM_BASE_ADDR     = 32'h0002_0000;
 localparam logic [31:0] MMIO_PRINT_ADDR   = 32'hFFFF_0000;

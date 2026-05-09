@@ -55,6 +55,7 @@ module riscv_cpu_core (
         hazard_bus.req.mispredict   = mispredict;
         hazard_bus.req.ex_fire      = ex_fire;
         hazard_bus.req.aluop_e      = control_bus_e.aluop;
+        hazard_bus.req.muldiv_valid = mul_valid || div_valid;
         hazard_bus.req.use_rs1_d    = control_bus_d.use_rs1;
         hazard_bus.req.use_rs2_d    = control_bus_d.use_rs2;
         hazard_bus.req.rs1_d        = rs1_d;

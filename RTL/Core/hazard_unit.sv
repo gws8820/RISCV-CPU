@@ -90,6 +90,7 @@ module hazard_unit (
         .clk                                (clk),
         .ex_fire                            (hazard_bus.req.ex_fire),
         .aluop_e                            (hazard_bus.req.aluop_e),
+        .muldiv_valid                       (hazard_bus.req.muldiv_valid),
         .flush_e                            (flush_e),
         .flag                               (hazard_bus.res.hazard_cause.muldiv_stall),
         .stall                              (stall_muldiv),
