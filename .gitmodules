@@ -4,3 +4,6 @@
 [submodule "Software/apps/coremark"]
 	path = Software/apps/coremark
 	url = https://github.com/eembc/coremark
+[submodule "Software/apps/riscv-arch-tests"]
+	path = Software/apps/riscv-arch-tests
+	url = https://github.com/riscv/riscv-arch-test

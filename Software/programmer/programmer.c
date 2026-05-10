@@ -9,6 +9,20 @@ static int send_byte(uint8_t data, int current_checksum) {
     return (current_checksum + data) & 0xFF;
 }
 
+static int is_safe_test_name(const char *name) {
+    if (name == NULL || name[0] == '\0') {
+        return 0;
+    }
+
+    for (const unsigned char *p = (const unsigned char *)name; *p != '\0'; p++) {
+        if (!isalnum(*p) && *p != '-' && *p != '_' && *p != '.') {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 static int select_program(char *program_path, size_t program_path_size, char *build_cmd, size_t build_cmd_size) {
     int app_input;
 
@@ -19,9 +33,10 @@ static int select_program(char *program_path, size_t program_path_size, char *bu
         printf("2. CoreMark Benchmark\n");
         printf("3. Dhrystone Benchmark\n");
         printf("4. RISC-V Test\n");
-        printf("5. Back\n");
+        printf("5. RISC-V Arch Test\n");
+        printf("6. Back\n");
         printf("\n");
-        printf("Mode (1-5):\t");
+        printf("Mode (1-6):\t");
 
         if (scanf("%d", &app_input) != 1) {
             while (getchar() != '\n');
@@ -37,7 +52,7 @@ static int select_program(char *program_path, size_t program_path_size, char *bu
         if (app_input == 2) {
             snprintf(program_path, program_path_size, "../build/coremark/coremark.hex");
             if (build_cmd != NULL && build_cmd_size > 0) {
-                snprintf(build_cmd, build_cmd_size, "cd /d ..\\apps\\coremark && make -B");
+                snprintf(build_cmd, build_cmd_size, "cd /d ..\\apps\\wrappers\\coremark && make -B");
             }
             return 0;
         }
@@ -56,6 +71,10 @@ static int select_program(char *program_path, size_t program_path_size, char *bu
                 while (getchar() != '\n');
                 continue;
             }
+            if (!is_safe_test_name(test_name)) {
+                printf("Invalid test name.\n");
+                continue;
+            }
 
             snprintf(program_path, program_path_size, "../build/riscv-tests/%s.hex", test_name);
             if (build_cmd != NULL && build_cmd_size > 0) {
@@ -65,6 +84,28 @@ static int select_program(char *program_path, size_t program_path_size, char *bu
         }
 
         if (app_input == 5) {
+            char test_name[128];
+
+            printf("Enter riscv-arch-test name (e.g. I-add-00, M-mul-00, Zicsr-csrrw-00):\t");
+            if (scanf("%127s", test_name) != 1) {
+                while (getchar() != '\n');
+                continue;
+            }
+            if (!is_safe_test_name(test_name)) {
+                printf("Invalid test name.\n");
+                continue;
+            }
+
+            snprintf(program_path, program_path_size, "../build/riscv-arch-tests/%s.hex", test_name);
+            if (build_cmd != NULL && build_cmd_size > 0) {
+                snprintf(build_cmd, build_cmd_size,
+                         "wsl.exe bash -lc \"set -e; export PATH=\\\"$HOME/.local/bin:$HOME/riscv/bin:/usr/local/bin:/usr/bin:/bin\\\"; cd \\\"$(wslpath -a '../apps/wrappers/riscv-arch-tests')\\\" && make -B TEST=%s run\"",
+                         test_name);
+            }
+            return 0;
+        }
+
+        if (app_input == 6) {
             return -1;
         }
 

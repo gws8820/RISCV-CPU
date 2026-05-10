@@ -41,9 +41,10 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
   - [Toolchain Requirements](#toolchain-requirements)
   - [`runtime/` — Common Bare-Metal Runtime](#runtime--common-bare-metal-runtime)
   - [`apps/firmware/` — Custom Test Firmware](#appsfirmware--custom-test-firmware)
-  - [`apps/coremark/` — CoreMark Benchmark](#appscoremark--coremark-benchmark)
+  - [`apps/wrappers/coremark/` — CoreMark Benchmark](#appswrapperscoremark--coremark-benchmark)
   - [`apps/dhrystone/` — Dhrystone Benchmark](#appsdhrystone--dhrystone-benchmark)
   - [`apps/riscv-tests/` — Official RISC-V Test Suite](#appsriscv-tests--official-risc-v-test-suite)
+  - [`apps/riscv-arch-tests/` — Official RISC-V Architectural Test Suite](#appsriscv-arch-tests--official-risc-v-architectural-test-suite)
   - [`programmer/` — Host-Side UART Programming Tool](#programmer--host-side-uart-programming-tool)
   - [Typical Workflow](#typical-workflow)
 - [Release Artifacts](#release-artifacts)
@@ -346,14 +347,20 @@ Software/
 │   └── common.mk       # Shared Makefile rules (compile, link, hex generation)
 ├── apps/           # Application source code
 │   ├── firmware/       # Custom test firmware
-│   ├── coremark/       # CoreMark benchmark
+│   ├── coremark/       # Official CoreMark source (submodule)
 │   ├── dhrystone/      # Dhrystone benchmark
-│   └── riscv-tests/    # Official RISC-V test suite (submodule)
+│   ├── riscv-tests/    # Official RISC-V test suite (submodule)
+│   ├── riscv-arch-tests/ # Official RISC-V architectural tests (submodule)
+│   └── wrappers/       # This CPU's build wrappers for official apps
+│       ├── coremark/   # CoreMark bare-metal build wrapper
+│       ├── riscv-tests/ # Extracted local changes for riscv-tests
+│       └── riscv-arch-tests/ # ACT config and HEX build wrapper
 ├── build/          # Compiled output (per-app subdirectories)
 │   ├── firmware/       # firmware.hex, firmware.elf, *.o
 │   ├── coremark/       # coremark.hex, coremark.elf, *.o
 │   ├── dhrystone/      # dhrystone.hex, dhrystone.elf, *.o
-│   └── riscv-tests/    # add.hex, lw.hex, mul.hex, ...
+│   ├── riscv-tests/    # add.hex, lw.hex, mul.hex, ...
+│   └── riscv-arch-tests/ # I-add-00.hex, M-mul-00.hex, ...
 └── programmer/     # Host-side UART programming tool (Windows)
 ```
 
@@ -365,6 +372,7 @@ Software/
 - **RISC-V ABI**: `ilp32`
 - **RISC-V Compiler Flags**: `-O2 -nostdlib -nostartfiles -ffreestanding`
 - **Host Programmer Build**: Windows C compiler such as GCC/MinGW
+- **RISC-V Architectural Tests**: WSL/Linux with `uv`, Ruby/Bundler, `sail_riscv_sim` 0.11, and `riscv-none-elf-gcc` 15+
 
 ---
 
@@ -377,6 +385,7 @@ Shared startup and syscall code used by all applications.
 | `crt0.S` | Startup code: initializes `sp`, copies `.data` from ROM to RAM, clears `.bss`, installs trap handler, calls `main` then `_exit` |
 | `linker.ld` | Linker script: ROM @ `0x00000000`, RAM @ `0x00020000`, stack top @ `0x00040000` |
 | `syscalls.c` | Bare-metal syscall and standard library implementation (MMIO-based I/O, string utilities, timer functions) |
+| `runtime.h` | Application-facing declarations for the MMIO-backed runtime functions implemented in `syscalls.c` |
 | `common.mk` | Shared build rules: compile `.c`/`.S`, link `.elf`, generate `.hex` via `objcopy` |
 
 #### Supported Functions
@@ -416,11 +425,12 @@ Shared startup and syscall code used by all applications.
 ### `apps/firmware/` — Custom Test Firmware
 
 A bare-metal test program written in C.
+Write custom firmware in `main.c` and include `runtime.h` for runtime I/O, string/memory, and timer function declarations.
 
 #### Files
 | File | Description |
 |------|-------------|
-| `main.c` | User Program |
+| `main.c` | User program |
 | `Makefile` | Sets `APP_NAME`, `APP_SRCS`, includes `../../runtime/common.mk` |
 
 #### Build
@@ -431,9 +441,9 @@ make clean && make
 
 ---
 
-### `apps/coremark/` — CoreMark Benchmark
+### `apps/wrappers/coremark/` — CoreMark Benchmark
 
-Runs the [EEMBC CoreMark](https://github.com/eembc/coremark) benchmark (v1.0) on bare-metal RISC-V.
+Runs the [EEMBC CoreMark](https://github.com/eembc/coremark) benchmark (v1.0) on bare-metal RISC-V using this CPU's wrapper files.
 
 #### Files
 | File | Description |
@@ -444,7 +454,7 @@ Runs the [EEMBC CoreMark](https://github.com/eembc/coremark) benchmark (v1.0) on
 
 #### Build
 ```bash
-cd Software/apps/coremark
+cd Software/apps/wrappers/coremark
 make clean && make
 ```
 
@@ -497,6 +507,29 @@ make all-hex
 
 ---
 
+### `apps/riscv-arch-tests/` — Official RISC-V Architectural Test Suite
+
+Builds official RISC-V architectural tests using this CPU's ACT configuration.
+
+The config generates self-checking `rv32im_zicsr_zifencei` / `ilp32` images, then converts the final ELF to Verilog HEX for the existing FPGA programmer. The FPGA result uses the current `0xFFFF0000` MMIO exit path, so this PASS/FAIL flow does not require RTL changes or RAM signature readback.
+
+#### Build
+```bash
+cd Software/apps/wrappers/riscv-arch-tests
+make TEST=I-add-00 run
+make TEST=M-mul-00 run
+make TEST=Zicsr-csrrw-00 run
+make TEST=Zifencei-fence.i-00 run
+
+# Attempt the full selected architectural set
+make all-hex
+# Output: Software/build/riscv-arch-tests/*.hex
+```
+
+ACT uses `sail_riscv_sim` to generate expected signatures, then emits self-checking FPGA images. Single-test builds copy only the requested `.S` into a temporary build tree; some full ACT images may exceed the current 128 KB Program ROM.
+
+---
+
 ### `programmer/` — Host-Side UART Programming Tool
 
 A Windows-only interactive command-line tool that communicates with the FPGA over UART.
@@ -517,6 +550,18 @@ A Windows-only interactive command-line tool that communicates with the FPGA ove
 4. RUN      Run Program & CPU Monitor
 5. EXIT     End Program
 ```
+
+Program image selection includes:
+```
+1. Custom Firmware
+2. CoreMark Benchmark
+3. Dhrystone Benchmark
+4. RISC-V Test
+5. RISC-V Arch Test
+6. Back
+```
+
+`RISC-V Arch Test` builds are launched through WSL because official ACT self-check generation depends on the Linux Sail/UDB tool flow.
 
 On `BUILD`, after a successful make, the tool asks:
 ```
@@ -652,7 +697,7 @@ Simulation\uart_simulate.bat
 - `Scripts/`: Helper scripts for QSPI programming and JTAG loading
 - `Software/`: Firmware, benchmarks, and host programming tool
   - `runtime/`: Common bare-metal runtime (shared by all apps)
-  - `apps/`: Application source code (firmware, coremark, dhrystone, riscv-tests)
+  - `apps/`: Application source code, official submodules, and local `wrappers/`
   - `build/`: Compiled output per app
   - `programmer/`: Host-side UART programming tool (Windows)
 - `Constraints/`: FPGA constraint files (.xdc)

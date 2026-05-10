@@ -12,6 +12,7 @@ APP_SRCS     ?=
 RUNTIME_SRCS ?= crt0.S syscalls.c
 RUNTIME_DIR  ?= $(APP_DIR)../../runtime/
 BUILD_DIR    ?= $(APP_DIR)../../build/$(APP_NAME)
+APP_SRC_DIRS ?= $(APP_DIR)
 INCS         ?= -I$(APP_DIR) -I$(RUNTIME_DIR)
 OPT          ?= -O2
 EXTRA_CFLAGS ?=
@@ -28,8 +29,8 @@ OBJS         = $(APP_OBJS) $(RUNTIME_OBJS)
 ELF          = $(BUILD_DIR)/$(TARGET).elf
 HEX          = $(BUILD_DIR)/$(TARGET).hex
 
-vpath %.c $(APP_DIR) $(RUNTIME_DIR)
-vpath %.S $(APP_DIR) $(RUNTIME_DIR)
+vpath %.c $(APP_SRC_DIRS) $(RUNTIME_DIR)
+vpath %.S $(APP_SRC_DIRS) $(RUNTIME_DIR)
 
 .DEFAULT_GOAL := all
 

@@ -3,5 +3,7 @@
 
 Releases
 Software/build/*
+Software/apps/firmware/main.c
+Software/programmer/programmer.exe
 
 timing_report.txt

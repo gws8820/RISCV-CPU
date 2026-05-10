@@ -1,0 +1,2 @@
+#define RVMODEL_PMP_GRAIN 4
+#define RVMODEL_NUM_PMPS 0
