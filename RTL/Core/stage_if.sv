@@ -57,13 +57,11 @@ module stage_if (
         .inst_addr_misaligned       (inst_addr_misaligned)
     );
 
-    logic                           inst_access_fault;
-    logic [29:0]                    fetch_word;
     logic [29:0]                    fetch_idx;
+    logic                           inst_access_fault;
 
-    assign fetch_word               = pc_f[31:2];
-    assign fetch_idx                = fetch_word - ROM_BASE_WORD;
-    assign inst_access_fault        = !((fetch_word >= ROM_BASE_WORD) && (fetch_idx < ROM_SIZE_WORD));
+    assign fetch_idx                = pc_f[31:2] - ROM_BASE_WORD;
+    assign inst_access_fault        = fetch_idx >= ROM_SIZE_WORD;
 
     // Trap Packet
     always_comb begin

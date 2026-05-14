@@ -23,11 +23,11 @@ module stage_mem1 (
     output  logic [1:0]             byte_offset_m1,
     output  logic [31:0]            result_m1,
 
-    output  logic                   rom_load_enable,
-    output  logic [31:0]            rom_load_addr,
+    output  logic                   rom_read_enable,
+    output  logic [31:0]            rom_read_addr,
 
     output  memaccess_t             ram_access,
-    output  logic [31:0]            ram_addr,
+    output  logic [31:0]            ram_access_addr,
     output  logic [3:0]             ram_wstrb,
     output  logic [31:0]            ram_write_data,
 
@@ -47,8 +47,6 @@ module stage_mem1 (
     logic [31:0]                    storedata_m1;
     
     logic [31:0]                    exec_result_m1;
-    logic                           data_addr_misaligned;
-    logic                           data_access_fault;
 
     always_ff@(posedge clk) begin
         if (!start) begin
@@ -85,6 +83,8 @@ module stage_mem1 (
     end
 
     // Data Alignment Checker
+    logic                           data_addr_misaligned;
+
     data_alignment_checker data_alignment_checker (
         .addr                       (exec_result_m1),
         .memaccess                  (control_bus_m1.memaccess),
@@ -107,7 +107,6 @@ module stage_mem1 (
     
     // Load Store Unit
     memaccess_t                     data_access;
-    logic [29:0]                    data_word;
     logic [29:0]                    rom_idx;
     logic [29:0]                    ram_idx;
     logic                           rom_hit;
@@ -115,19 +114,23 @@ module stage_mem1 (
     logic                           mmio_print_hit;
     logic                           mmio_input_hit;
     logic                           boot_flag;
+    
+    logic                           data_access_fault;
 
     assign data_access              = (trap_req_prev.valid || data_addr_misaligned) ? MEM_DISABLED : control_bus_m1.memaccess;
 
-    assign data_word                = exec_result_m1[31:2];
-    assign rom_idx                  = data_word - ROM_BASE_WORD;
-    assign ram_idx                  = data_word - RAM_BASE_WORD;
-    assign rom_hit                  = (data_word >= ROM_BASE_WORD) && (rom_idx < ROM_SIZE_WORD);
-    assign ram_hit                  = (data_word >= RAM_BASE_WORD) && (ram_idx < RAM_SIZE_WORD);
-    assign mmio_print_hit           = (data_word == MMIO_PRINT_WORD);
-    assign mmio_input_hit           = (data_word == MMIO_INPUT_WORD);
+    assign rom_idx                  = exec_result_m1[31:2] - ROM_BASE_WORD;
+    assign ram_idx                  = exec_result_m1[31:2] - RAM_BASE_WORD;
+    assign rom_hit                  = rom_idx < ROM_SIZE_WORD;
+    assign ram_hit                  = ram_idx < RAM_SIZE_WORD;
+    assign mmio_print_hit           = (exec_result_m1[31:2] == MMIO_PRINT_WORD);
+    assign mmio_input_hit           = (exec_result_m1[31:2] == MMIO_INPUT_WORD);
 
-    assign rom_load_enable          = (data_access == MEM_READ) && rom_hit;
-    assign rom_load_addr            = exec_result_m1;
+    assign rom_read_enable          = (data_access == MEM_READ) && rom_hit;
+    assign rom_read_addr            = exec_result_m1;
+
+    assign ram_access               = ram_hit ? data_access : MEM_DISABLED;
+    assign ram_access_addr          = exec_result_m1;
 
     assign data_access_fault        = (data_access != MEM_DISABLED)
                                     && !ram_hit
@@ -146,9 +149,6 @@ module stage_mem1 (
         .wstrb                      (ram_wstrb),
         .wdata                      (ram_write_data)
     );
-
-    assign ram_access               = ram_hit ? data_access : MEM_DISABLED;
-    assign ram_addr                 = exec_result_m1;
 
     always_comb begin
         case (1)

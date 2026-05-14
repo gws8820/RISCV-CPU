@@ -14,25 +14,18 @@ module riscv_cpu_core (
 
     // -------- Backward Signals ---------
 
+    hazard_interface                hazard_bus();
     trap_interface                  trap_bus();
+    csr_interface                   csr_bus();
 
-    logic                           ex_fire;
     logic                           mispredict;
 
-    logic [4:0]                     rs1_d, rs2_d;
-    logic [4:0]                     rs1_e, rs2_e, rd_e;
-    logic [4:0]                     rs2_m1, rd_m1;
-    logic [4:0]                     rd_m2;
-    logic [4:0]                     rd_w;
-
-    logic [31:0]                    csr_wdata_e;
-    logic                           mul_valid, div_valid;
     logic [31:0]                    result_m1;
     logic [31:0]                    result_m2;
-    logic                           regwrite_w;
     logic [31:0]                    result_w;
-    logic                           instret_w;
-    trap_req_t                      trap_req_m1;
+
+    logic [4:0]                     rd_w;
+    logic                           regwrite_w;
     
     // ---------- Control Bus ------------
     
@@ -41,73 +34,46 @@ module riscv_cpu_core (
     control_bus_t                   control_bus_m1;
     control_bus_t                   control_bus_m2;
 
-    // ---------- Hazard Unit ------------
-    
-    hazard_interface                hazard_bus();
-    
-    hazard_unit hazard_unit (
-        .start                      (start),
+    // ---------- Memory Blocks ----------
+
+    inst_t                          rom_fetch_inst;
+    logic [31:0]                    rom_fetch_addr;
+
+    logic                           rom_read_enable;
+    logic [31:0]                    rom_read_addr;
+    logic [31:0]                    rom_read_data;
+
+    memaccess_t                     ram_access;
+    logic [31:0]                    ram_access_addr;
+
+    logic [3:0]                     ram_wstrb;
+    logic [31:0]                    ram_write_data;
+    logic [31:0]                    ram_read_data;
+
+    memory_rom memory_rom (
         .clk                        (clk),
-        .hazard_bus                 (hazard_bus)
+
+        .fetch_addr                 (rom_fetch_addr),
+        .fetch_inst                 (rom_fetch_inst),
+
+        .read_enable                (rom_read_enable),
+        .read_addr                  (rom_read_addr),
+        .read_data                  (rom_read_data),
+
+        .init                       (rom_init)
     );
 
-    always_comb begin
-        hazard_bus.req.flushflag    = trap_bus.res.flushflag || control_bus_m1.fencei;
-        hazard_bus.req.mispredict   = mispredict;
-        hazard_bus.req.ex_fire      = ex_fire;
-        hazard_bus.req.aluop_e      = control_bus_e.aluop;
-        hazard_bus.req.muldiv_valid = mul_valid || div_valid;
-        hazard_bus.req.use_rs1_d    = control_bus_d.use_rs1;
-        hazard_bus.req.use_rs2_d    = control_bus_d.use_rs2;
-        hazard_bus.req.rs1_d        = rs1_d;
-        hazard_bus.req.rs1_e        = rs1_e;
-        hazard_bus.req.rs2_d        = rs2_d;
-        hazard_bus.req.rs2_e        = rs2_e;
-        hazard_bus.req.rs2_m1       = rs2_m1;
-        hazard_bus.req.rd_e         = rd_e;
-        hazard_bus.req.rd_m1        = rd_m1;
-        hazard_bus.req.rd_m2        = rd_m2;
-        hazard_bus.req.rd_w         = rd_w;
-        hazard_bus.req.regwrite_m1  = control_bus_m1.regwrite;
-        hazard_bus.req.regwrite_m2  = control_bus_m2.regwrite;
-        hazard_bus.req.regwrite_w   = regwrite_w;
-        hazard_bus.req.memaccess_e  = control_bus_e.memaccess;
-        hazard_bus.req.memaccess_m1 = control_bus_m1.memaccess;
-        hazard_bus.req.memaccess_m2 = control_bus_m2.memaccess;
-    end
-
-    // ----------- Trap Unit -------------
-    
-    logic [31:0]                    mtvec, mepc;
-
-    trap_unit trap_unit (
-        .trap_bus                   (trap_bus),
-        .mtvec_i                    (mtvec),
-        .mepc_i                     (mepc)
-    );
-    
-    always_comb begin
-        trap_bus.req                = trap_req_m1;
-    end
-    
-    // ----------- CSR Unit --------------
-    
-    csr_interface                   csr_bus();
-    csr_unit csr_unit (
-        .start                      (start),
+    memory_ram memory_ram (
         .clk                        (clk),
-        .instret                    (instret_w),
-        .trap                       (trap_bus.req),
-        .csr_bus                    (csr_bus),
-        .mtvec_o                    (mtvec),
-        .mepc_o                     (mepc)
+
+        .access                     (ram_access),
+        .addr                       (ram_access_addr),
+        
+        .wstrb                      (ram_wstrb),
+        .write_data                 (ram_write_data),
+        .read_data                  (ram_read_data)
     );
-    
-    always_comb begin
-        csr_bus.req                 = control_bus_e.csr_req;
-        csr_bus.wdata               = csr_wdata_e;
-    end
-    
+
     // -------- Branch Predictor ---------
 
     logic [31:0]                    pc_f;
@@ -148,44 +114,6 @@ module riscv_cpu_core (
         .cflow_target               (pc_jump)
     );
 
-    // ------------ Memory Blocks --------
-
-    inst_t                          rom_fetch_inst;
-    logic [31:0]                    rom_fetch_addr;
-
-    logic                           rom_load_enable;
-    logic [31:0]                    rom_load_addr;
-    logic [31:0]                    rom_load_data;
-    
-    memaccess_t                     ram_access;
-    logic [31:0]                    ram_addr;
-    logic [3:0]                     ram_wstrb;
-    logic [31:0]                    ram_write_data;
-    logic [31:0]                    ram_read_data;
-
-    memory_rom memory_rom (
-        .start                      (start),
-        .clk                        (clk),
-
-        .fetch_addr                 (rom_fetch_addr),
-        .fetch_inst                 (rom_fetch_inst),
-
-        .load_enable                (rom_load_enable),
-        .load_addr                  (rom_load_addr),
-        .load_data                  (rom_load_data),
-
-        .init                       (rom_init)
-    );
-
-    memory_ram memory_ram (
-        .clk                        (clk),
-        .access                     (ram_access),
-        .addr                       (ram_addr),
-        .wstrb                      (ram_wstrb),
-        .write_data                 (ram_write_data),
-        .read_data                  (ram_read_data)
-    );
-
     // ------------ IF Stage -------------
 
     logic [31:0]                    pcplus4_f;
@@ -219,7 +147,7 @@ module riscv_cpu_core (
     logic [31:0]                    pc_pred_d;
     logic                           pred_taken_d;
 
-    logic [4:0]                     rd_d;
+    logic [4:0]                     rs1_d, rs2_d, rd_d;
     logic [31:0]                    rdata1_d, rdata2_d;
     logic [31:0]                    immext_d;
     trap_req_t                      trap_req_d;
@@ -258,9 +186,12 @@ module riscv_cpu_core (
 
     // ------------ EX Stage -------------
 
-    logic                           alu_valid;
+    logic                           ex_fire;
+    logic                           alu_valid, mul_valid, div_valid;
+    logic [4:0]                     rs1_e, rs2_e, rd_e;
     logic [31:0]                    aluresult_e, mulresult_e, divresult_e;
     logic [31:0]                    storedata_e;
+    logic [31:0]                    csr_wdata_e;
     trap_req_t                      trap_req_e;
 
     stage_ex stage_ex (
@@ -316,7 +247,9 @@ module riscv_cpu_core (
     // ------------ MEM1 Stage -----------
     
     loadsrc_t                       load_source_m1;
+    logic [4:0]                     rs2_m1, rd_m1;
     logic [1:0]                     byte_offset_m1;
+    trap_req_t                      trap_req_m1;
 
     stage_mem1 stage_mem1 (
         .start                      (start),
@@ -345,11 +278,11 @@ module riscv_cpu_core (
         .byte_offset_m1             (byte_offset_m1),
         .result_m1                  (result_m1),
 
-        .rom_load_enable            (rom_load_enable),
-        .rom_load_addr              (rom_load_addr),
+        .rom_read_enable            (rom_read_enable),
+        .rom_read_addr              (rom_read_addr),
 
         .ram_access                 (ram_access),
-        .ram_addr                   (ram_addr),
+        .ram_access_addr            (ram_access_addr),
         .ram_wstrb                  (ram_wstrb),
         .ram_write_data             (ram_write_data),
 
@@ -364,6 +297,7 @@ module riscv_cpu_core (
 
     // ------------ MEM2 Stage -----------
 
+    logic [4:0]                     rd_m2;
     logic [31:0]                    memresult_m2;
 
     stage_mem2 stage_mem2 (
@@ -376,7 +310,7 @@ module riscv_cpu_core (
         .byte_offset_m1             (byte_offset_m1),
         .result_m1                  (result_m1),
         .ram_read_data              (ram_read_data),
-        .rom_load_data              (rom_load_data),
+        .rom_read_data              (rom_read_data),
         .mmio_in_valid              (mmio_in.valid),
         .mmio_in_data               (mmio_in.data),
 
@@ -389,6 +323,8 @@ module riscv_cpu_core (
     );
 
     // ------------ WB Stage -------------
+
+    logic                           instret_w;
 
     stage_wb stage_wb (
         .start                      (start),
@@ -404,5 +340,71 @@ module riscv_cpu_core (
         .result_w                   (result_w),
         .instret_w                  (instret_w)
     );
+
+
+    // ---------- Hazard Unit ------------
+
+    hazard_unit hazard_unit (
+        .start                      (start),
+        .clk                        (clk),
+        .hazard_bus                 (hazard_bus)
+    );
+
+    always_comb begin
+        hazard_bus.req.flushflag    = trap_bus.res.flushflag || control_bus_m1.fencei;
+        hazard_bus.req.mispredict   = mispredict;
+        hazard_bus.req.ex_fire      = ex_fire;
+        hazard_bus.req.aluop_e      = control_bus_e.aluop;
+        hazard_bus.req.muldiv_valid = mul_valid || div_valid;
+        hazard_bus.req.use_rs1_d    = control_bus_d.use_rs1;
+        hazard_bus.req.use_rs2_d    = control_bus_d.use_rs2;
+        hazard_bus.req.rs1_d        = rs1_d;
+        hazard_bus.req.rs1_e        = rs1_e;
+        hazard_bus.req.rs2_d        = rs2_d;
+        hazard_bus.req.rs2_e        = rs2_e;
+        hazard_bus.req.rs2_m1       = rs2_m1;
+        hazard_bus.req.rd_e         = rd_e;
+        hazard_bus.req.rd_m1        = rd_m1;
+        hazard_bus.req.rd_m2        = rd_m2;
+        hazard_bus.req.rd_w         = rd_w;
+        hazard_bus.req.regwrite_m1  = control_bus_m1.regwrite;
+        hazard_bus.req.regwrite_m2  = control_bus_m2.regwrite;
+        hazard_bus.req.regwrite_w   = regwrite_w;
+        hazard_bus.req.memaccess_e  = control_bus_e.memaccess;
+        hazard_bus.req.memaccess_m1 = control_bus_m1.memaccess;
+        hazard_bus.req.memaccess_m2 = control_bus_m2.memaccess;
+    end
+
+    // ----------- Trap Unit -------------
+
+    logic [31:0]                    mtvec, mepc;
+
+    trap_unit trap_unit (
+        .trap_bus                   (trap_bus),
+        .mtvec_i                    (mtvec),
+        .mepc_i                     (mepc)
+    );
+
+    always_comb begin
+        trap_bus.req                = trap_req_m1;
+    end
+
+    // ----------- CSR Unit --------------
+
+    csr_unit csr_unit (
+        .start                      (start),
+        .clk                        (clk),
+        .instret                    (instret_w),
+        .trap                       (trap_bus.req),
+        .csr_bus                    (csr_bus),
+        .mtvec_o                    (mtvec),
+        .mepc_o                     (mepc)
+    );
+
+    always_comb begin
+        csr_bus.req                 = control_bus_e.csr_req;
+        csr_bus.wdata               = csr_wdata_e;
+    end
+
 
 endmodule

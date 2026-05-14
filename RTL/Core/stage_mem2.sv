@@ -12,7 +12,7 @@ module stage_mem2 (
     input   logic [1:0]             byte_offset_m1,
     input   logic [31:0]            result_m1,
     input   logic [31:0]            ram_read_data,
-    input   logic [31:0]            rom_load_data,
+    input   logic [31:0]            rom_read_data,
     input   logic                   mmio_in_valid,
     input   logic [7:0]             mmio_in_data,
 
@@ -60,7 +60,7 @@ module stage_mem2 (
         case (load_source_m2)
             LOAD_ZERO:              load_data_m2 = 32'b0;
             LOAD_RAM:               load_data_m2 = ram_read_data;
-            LOAD_ROM:               load_data_m2 = rom_load_data;
+            LOAD_ROM:               load_data_m2 = rom_read_data;
             LOAD_INPUT:             load_data_m2 = mmio_in_valid_m2 ? {24'b0, mmio_in_data_m2} : 32'hFFFF_FFFF;
             default:                load_data_m2 = 32'b0;
         endcase

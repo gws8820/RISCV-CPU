@@ -1,10 +1,10 @@
 set script_dir [file dirname [file normalize [info script]]]
 set repo_root [file normalize [file join $script_dir ".."]]
-set jtag_dir  [file join $repo_root "Releases" "JTAG"]
+set releases_dir [file join $repo_root "Releases"]
 
-set ps7_init  [file join $jtag_dir "ps7_init.tcl"]
-set bitstream [file join $jtag_dir "riscv_cpu_zynq_pl.bit"]
-set app_elf   [file join $jtag_dir "app.elf"]
+set ps7_init  [file join $releases_dir "ps7_init.tcl"]
+set bitstream [file join $releases_dir "riscv_cpu_zynq_pl.bit"]
+set app_elf   [file join $releases_dir "app.elf"]
 
 foreach path [list $ps7_init $bitstream $app_elf] {
     if {![file exists $path]} {
