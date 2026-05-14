@@ -125,14 +125,14 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 ### Memory Map
 | Region | Base Address | Size | Description |
 |--------|-------------|------|-------------|
-| **ROM** | `0x00000000` | 128 KB | Program ROM (`.text`, `.rodata`, `.data` load image) |
+| **ROM** | `0x00000000` | 256 KB | Program ROM (`.text`, `.rodata`, `.data` load image) |
 | **RAM** | `0x00020000` | 128 KB | Data RAM (`.data`, `.bss`, stack) |
 | **Stack Top** | `0x00040000` | — | Top of RAM (stack grows downward) |
 | **PRINT** | `0xFFFF0000` | — | MMIO: UART TX output (write) |
 | **INPUT** | `0xFFFF0004` | — | MMIO: UART RX input (read) |
 
 ### ROM (Read-Only Memory)
-- **Size**: 128 KB (32768 words)
+- **Size**: 256 KB (65536 words)
 - **Width**: 32-bit
 - **Access**: Read-only from the CPU; writable via UART programmer before `RUN`
 - **Contents**: Full firmware image. Instruction fetches, `.rodata` loads, and `.data` initialization reads come from ROM.
@@ -526,7 +526,7 @@ make all-hex
 # Output: Software/build/riscv-arch-tests/*.hex
 ```
 
-ACT uses `sail_riscv_sim` to generate expected signatures, then emits self-checking FPGA images. Single-test builds copy only the requested `.S` into a temporary build tree; some full ACT images may exceed the current 128 KB Program ROM.
+ACT uses `sail_riscv_sim` to generate expected signatures, then emits self-checking FPGA images. Single-test builds copy only the requested `.S` into a temporary build tree; some full ACT images may exceed the current 256 KB Program ROM.
 
 ---
 

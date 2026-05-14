@@ -23,6 +23,7 @@ module memory_rom(
     
     logic [29:0]                    read_idx;
     logic                           read_hit;
+    logic [29:0]                    mux_idx;
 
     assign init_idx                 = init.write_addr[31:2] - ROM_BASE_WORD;
     assign init_hit                 = init_idx < ROM_SIZE_WORD;
@@ -33,24 +34,25 @@ module memory_rom(
     assign read_idx                 = read_addr[31:2] - ROM_BASE_WORD;
     assign read_hit                 = read_idx < ROM_SIZE_WORD;
 
-    (* ram_style="block", cascade_height=1 *) logic [31:0] rom_array [0:ROM_SIZE_WORD-1];
+    assign mux_idx                  = init.write_enable ? init_idx : read_idx;
+
+    (* ram_style="block" *) logic [31:0] rom_array [0:ROM_SIZE_WORD-1];
 
     `ifndef SYNTHESIS
         initial $readmemh("firmware.hex", rom_array);
     `endif
 
-    always_ff@(posedge clk) begin
-        fetch_inst                  <= fetch_hit ? inst_t'(rom_array[fetch_idx]) : '0;
+    // Initialize
+    always@(posedge clk) begin
+        if (init.write_enable && init_hit) begin
+            rom_array[mux_idx]      <= init.write_data;
+        end
     end
 
+    // Read
     always_ff@(posedge clk) begin
-        // Write
-        if (init.write_enable && init_hit) begin
-            rom_array[init_idx]     <= init.write_data;
-        end
-
-        // Read
-        read_data                   <= (read_enable && read_hit) ? rom_array[read_idx] : 32'b0;
+        fetch_inst                  <= fetch_hit ? inst_t'(rom_array[fetch_idx]) : INST_NOP;
+        read_data                   <= (read_enable && read_hit) ? rom_array[mux_idx] : 32'b0;
     end
 
 endmodule
