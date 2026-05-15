@@ -126,8 +126,8 @@ A 6-stage pipelined RISC-V processor core designed for FPGA deployment, featurin
 | Region | Base Address | Size | Description |
 |--------|-------------|------|-------------|
 | **ROM** | `0x00000000` | 256 KB | Program ROM (`.text`, `.rodata`, `.data` load image) |
-| **RAM** | `0x00020000` | 128 KB | Data RAM (`.data`, `.bss`, stack) |
-| **Stack Top** | `0x00040000` | — | Top of RAM (stack grows downward) |
+| **RAM** | `0x00040000` | 128 KB | Data RAM (`.data`, `.bss`, stack) |
+| **Stack Top** | `0x00060000` | — | Top of RAM (stack grows downward) |
 | **PRINT** | `0xFFFF0000` | — | MMIO: UART TX output (write) |
 | **INPUT** | `0xFFFF0004` | — | MMIO: UART RX input (read) |
 
@@ -342,7 +342,7 @@ Integrated UART controller for communication and system control.
 Software/
 ├── runtime/        # Common bare-metal runtime (shared by all apps)
 │   ├── crt0.S          # Startup code: sp init, data copy, BSS clear, main call, trap handler
-│   ├── linker.ld       # Linker script: ROM @ 0x0, RAM @ 0x20000, stack @ 0x40000
+│   ├── linker.ld       # Linker script: ROM @ 0x0, RAM @ 0x40000, stack @ 0x60000
 │   ├── syscalls.c      # MMIO syscalls: putchar, printf, sprintf, _exit, memcpy, etc.
 │   └── common.mk       # Shared Makefile rules (compile, link, hex generation)
 ├── apps/           # Application source code
@@ -383,7 +383,7 @@ Shared startup and syscall code used by all applications.
 | File | Description |
 |------|-------------|
 | `crt0.S` | Startup code: initializes `sp`, copies `.data` from ROM to RAM, clears `.bss`, installs trap handler, calls `main` then `_exit` |
-| `linker.ld` | Linker script: ROM @ `0x00000000`, RAM @ `0x00020000`, stack top @ `0x00040000` |
+| `linker.ld` | Linker script: ROM @ `0x00000000`, RAM @ `0x00040000`, stack top @ `0x00060000` |
 | `syscalls.c` | Bare-metal syscall and standard library implementation (MMIO-based I/O, string utilities, timer functions) |
 | `runtime.h` | Application-facing declarations for the MMIO-backed runtime functions implemented in `syscalls.c` |
 | `common.mk` | Shared build rules: compile `.c`/`.S`, link `.elf`, generate `.hex` via `objcopy` |
